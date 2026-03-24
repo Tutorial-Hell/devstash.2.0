@@ -4,7 +4,7 @@ Dashboard UI Phase 1 — ShadCN setup, dashboard route, layout with top bar, and
 
 ## Status
 
-In Progress
+Completed
 
 ## Goals
 
