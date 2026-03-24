@@ -1,21 +1,33 @@
-import { Topbar } from "@/components/layout/topbar";
+"use client"
+
+import { useState } from "react"
+import { Topbar } from "@/components/layout/topbar"
+import { Sidebar } from "@/components/layout/sidebar"
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
   return (
     <div className="flex flex-col h-full">
-      <Topbar />
+      <Topbar
+        onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        onMobileMenuOpen={() => setMobileOpen(true)}
+      />
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-56 shrink-0 border-r border-border bg-background p-4">
-          <h2 className="text-sm font-semibold text-foreground">Sidebar</h2>
-        </aside>
+        <Sidebar
+          isOpen={sidebarOpen}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
+        />
         <main className="flex-1 overflow-auto bg-background p-6">
           {children}
         </main>
       </div>
     </div>
-  );
+  )
 }
