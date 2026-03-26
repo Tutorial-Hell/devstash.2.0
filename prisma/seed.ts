@@ -142,6 +142,7 @@ async function main() {
                 description: "Delays updating a value until after a specified delay",
                 contentType: "text",
                 language: "typescript",
+                isPinned: true,
                 content: `import { useState, useEffect } from "react"
 
 export function useDebounce<T>(value: T, delay: number): T {
@@ -249,6 +250,7 @@ export function truncate(str: string, length: number): string {
                 title: "Code Review Prompt",
                 description: "Thorough code review with actionable feedback",
                 contentType: "text",
+                isPinned: true,
                 content: `Review the following code and provide structured feedback covering:
 
 1. **Correctness** — Are there any bugs, edge cases, or logic errors?
@@ -433,6 +435,7 @@ volumes:
                 title: "Git — Undo Last Commit (keep changes)",
                 description: "Soft-reset HEAD by one commit, leaving files staged",
                 contentType: "text",
+                isPinned: true,
                 content: "git reset --soft HEAD~1",
                 userId: user.id,
                 itemTypeId: types.command,
@@ -546,6 +549,16 @@ volumes:
     },
   })
   console.log(`  ✓ ${designResources.name}`)
+
+  // ── Pin specific items (idempotent) ─────────────────────────────────────────
+  await prisma.item.updateMany({
+    where: {
+      userId: user.id,
+      title: { in: ["useDebounce Hook", "Code Review Prompt", "Git — Undo Last Commit (keep changes)"] },
+    },
+    data: { isPinned: true },
+  })
+  console.log("\n  ✓ Pinned items updated")
 
   console.log("\nDone.")
 }
