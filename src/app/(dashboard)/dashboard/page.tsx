@@ -15,10 +15,10 @@ import {
 } from "lucide-react"
 import {
   mockItems,
-  mockCollections,
   mockItemTypes,
   mockTypeCounts,
 } from "@/lib/mock-data"
+import { getCollections, getDemoUserId } from "@/lib/db/collections"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,30 +43,29 @@ function formatDate(dateStr: string) {
   })
 }
 
-// ─── Derived data ─────────────────────────────────────────────────────────────
-
-const totalItems = Object.values(mockTypeCounts).reduce((a, b) => a + b, 0)
-const totalCollections = mockCollections.length
-const favoriteItemsCount = mockItems.filter((i) => i.isFavorite).length
-const favoriteCollectionsCount = mockCollections.filter((c) => c.isFavorite).length
-
-const pinnedItems = mockItems.filter((i) => i.isPinned)
-const recentItems = [...mockItems]
-  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  .slice(0, 10)
-
-// ─── Stats ────────────────────────────────────────────────────────────────────
-
-const stats = [
-  { label: "Items", value: totalItems, icon: Package, color: "#3b82f6", fill: false },
-  { label: "Collections", value: totalCollections, icon: FolderOpen, color: "#8b5cf6", fill: false },
-  { label: "Favorite Items", value: favoriteItemsCount, icon: Star, color: "#fde047", fill: true },
-  { label: "Favorite Collections", value: favoriteCollectionsCount, icon: Heart, color: "#ef4444", fill: false },
-]
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const userId = await getDemoUserId()
+  const collections = userId ? await getCollections(userId) : []
+
+  // ─── Derived data (still mock until auth + items are wired) ───────────────
+  const totalItems = Object.values(mockTypeCounts).reduce((a, b) => a + b, 0)
+  const totalCollections = collections.length
+  const favoriteItemsCount = mockItems.filter((i) => i.isFavorite).length
+  const favoriteCollectionsCount = collections.filter((c) => c.isFavorite).length
+
+  const pinnedItems = mockItems.filter((i) => i.isPinned)
+  const recentItems = [...mockItems]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10)
+
+  const stats = [
+    { label: "Items", value: totalItems, icon: Package, color: "#3b82f6", fill: false },
+    { label: "Collections", value: totalCollections, icon: FolderOpen, color: "#8b5cf6", fill: false },
+    { label: "Favorite Items", value: favoriteItemsCount, icon: Star, color: "#fde047", fill: true },
+    { label: "Favorite Collections", value: favoriteCollectionsCount, icon: Heart, color: "#ef4444", fill: false },
+  ]
   return (
     <div className="space-y-8 max-w-5xl">
       {/* Header */}
@@ -108,10 +107,8 @@ export default function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {mockCollections.map((col) => {
-            const dominantType = getType(col.dominantTypeId)
-            const Icon = dominantType ? (iconMap[dominantType.icon] ?? File) : File
-            const accentColor = dominantType?.color ?? "#6b7280"
+          {collections.map((col) => {
+            const accentColor = col.dominantType?.color ?? "#6b7280"
             return (
               <Link
                 key={col.id}
@@ -132,16 +129,27 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground/70">
-                  {col.itemCount} items
+                  {col.itemCount} {col.itemCount === 1 ? "item" : "items"}
                 </p>
                 {col.description && (
                   <p className="text-xs text-muted-foreground line-clamp-1">
                     {col.description}
                   </p>
                 )}
-                <div className="flex items-center gap-1.5 mt-1">
-                  <Icon className="h-3.5 w-3.5" style={{ color: accentColor }} />
-                </div>
+                {col.allTypes.length > 0 && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {col.allTypes.map((t) => {
+                      const Icon = iconMap[t.icon] ?? File
+                      return (
+                        <Icon
+                          key={t.id}
+                          className="h-3.5 w-3.5"
+                          style={{ color: t.color }}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
               </Link>
             )
           })}
