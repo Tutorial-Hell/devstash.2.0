@@ -1,6 +1,6 @@
 # Current Feature
 
-Dashboard Collections — Replace dummy collection data in the dashboard main area with real data from the Neon database via Prisma.
+Dashboard Items — Replace dummy item data in the dashboard main area (pinned and recent items) with real data from the Neon database via Prisma.
 
 ## Status
 
@@ -8,17 +8,16 @@ Completed
 
 ## Goals
 
-- Create `src/lib/db/collections.ts` with data fetching functions
-- Fetch collections directly in server component
-- Collection card border color derived from most-used content type in that collection
-- Show small icons of all types in that collection
-- Keep the current design
+- Create `src/lib/db/items.ts` with data fetching functions
+- Fetch items directly in server component
+- Item card icon/border derived from item type
+- Display item type tags and all current item card details
+- If there are no pinned items, nothing should display there
 - Update collection stats display
 
 ## Notes
 
-- Spec: `context/features/dashboard-collections-spec.md`
-- Do not add items underneath cards yet — that comes later
+- Spec: `context/features/dashboard-items-spec.md`
 - Reference screenshot: `context/screenshots/dashboard-ui-main.png`
 
 ## History
@@ -33,3 +32,4 @@ Completed
 - **2026-03-25** — Prisma + Neon PostgreSQL setup completed. Installed Prisma 7 with pg adapter, configured prisma.config.ts, defined full schema (User, Item, ItemType, Collection, ItemCollection, Tag + NextAuth models). Ran initial migration (20260326015745_init). Seeded 7 system item types (snippet, prompt, command, note, file, image, link). Added scripts/test-db.ts for connection and data verification.
 - **2026-03-25** — Seed data completed. Added bcryptjs, rewrote prisma/seed.ts to create demo user (demo@devstash.io), re-seed system item types, and populate 5 collections with 14 items: React Patterns (3 snippets), AI Workflows (3 prompts), DevOps (1 snippet, 1 command, 2 links), Terminal Commands (4 commands), Design Resources (4 links).
 - **2026-03-25** — Dashboard Collections completed. Created `src/lib/db/collections.ts` with `getCollections` and `getDemoUserId` functions. Updated dashboard page to async server component fetching real collections from Neon DB via Prisma. Collection cards now show dominant-type accent bar and icons for all content types present in the collection. Collections and Favorite Collections stats derive from real data.
+- **2026-03-26** — Dashboard Items completed. Created `src/lib/db/items.ts` with `getPinnedItems`, `getRecentItems`, and `getItemStats` functions. Dashboard page now fetches all data in parallel; pinned section hidden when no pinned items; item cards derive icon/border color from itemType; tags from DB relations; all four stats cards fully real.
