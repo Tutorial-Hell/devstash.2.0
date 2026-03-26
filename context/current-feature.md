@@ -1,6 +1,6 @@
 # Current Feature
 
-Dashboard Items — Replace dummy item data in the dashboard main area (pinned and recent items) with real data from the Neon database via Prisma.
+Stats & Sidebar — Display stats and sidebar content (item types, collections) from the Neon database instead of mock data.
 
 ## Status
 
@@ -8,17 +8,16 @@ Completed
 
 ## Goals
 
-- Create `src/lib/db/items.ts` with data fetching functions
-- Fetch items directly in server component
-- Item card icon/border derived from item type
-- Display item type tags and all current item card details
-- If there are no pinned items, nothing should display there
-- Update collection stats display
+- Display stats in the main area from real database data (keep current design/layout)
+- Display system item types in the sidebar with icons, linking to `/items/[typename]`
+- Add "View all collections" link under the collections list linking to `/collections`
+- Keep star icons for favorite collections; recent collections show a colored circle based on the most-used item type
+- Create `src/lib/db/items.ts` with the required database functions
 
 ## Notes
 
-- Spec: `context/features/dashboard-items-spec.md`
-- Reference screenshot: `context/screenshots/dashboard-ui-main.png`
+- Spec: `context/features/stats-sidebar-spec.md`
+- Reference: `src/lib/db/collections.ts`
 
 ## History
 
@@ -33,3 +32,4 @@ Completed
 - **2026-03-25** — Seed data completed. Added bcryptjs, rewrote prisma/seed.ts to create demo user (demo@devstash.io), re-seed system item types, and populate 5 collections with 14 items: React Patterns (3 snippets), AI Workflows (3 prompts), DevOps (1 snippet, 1 command, 2 links), Terminal Commands (4 commands), Design Resources (4 links).
 - **2026-03-25** — Dashboard Collections completed. Created `src/lib/db/collections.ts` with `getCollections` and `getDemoUserId` functions. Updated dashboard page to async server component fetching real collections from Neon DB via Prisma. Collection cards now show dominant-type accent bar and icons for all content types present in the collection. Collections and Favorite Collections stats derive from real data.
 - **2026-03-26** — Dashboard Items completed. Created `src/lib/db/items.ts` with `getPinnedItems`, `getRecentItems`, and `getItemStats` functions. Dashboard page now fetches all data in parallel; pinned section hidden when no pinned items; item cards derive icon/border color from itemType; tags from DB relations; all four stats cards fully real.
+- **2026-03-26** — Stats & Sidebar completed. Added `getItemTypes` to `src/lib/db/items.ts`. Converted dashboard layout to a server component; extracted client state into `DashboardShell`. Sidebar now receives real DB data as props: system item types with per-user counts linking to `/items/[typename]`, favorite collections with star icons, other collections with dominant-type colored circle, and a "View all collections" link. Seed data updated so React Patterns and AI Workflows are favorite collections, and useDebounce Hook and Code Review Prompt are favorite items.
