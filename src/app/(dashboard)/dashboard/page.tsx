@@ -13,12 +13,8 @@ import {
   FolderOpen,
   Heart,
 } from "lucide-react"
-import {
-  mockItems,
-  mockItemTypes,
-  mockTypeCounts,
-} from "@/lib/mock-data"
 import { getCollections, getDemoUserId } from "@/lib/db/collections"
+import { getPinnedItems, getRecentItems, getItemStats, type ItemWithMeta } from "@/lib/db/items"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,12 +28,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string; style?: 
   Link: LinkIcon,
 }
 
-function getType(id: string) {
-  return mockItemTypes.find((t) => t.id === id)
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+function formatDate(date: Date) {
+  return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   })
@@ -47,25 +39,24 @@ function formatDate(dateStr: string) {
 
 export default async function DashboardPage() {
   const userId = await getDemoUserId()
-  const collections = userId ? await getCollections(userId) : []
 
-  // ─── Derived data (still mock until auth + items are wired) ───────────────
-  const totalItems = Object.values(mockTypeCounts).reduce((a, b) => a + b, 0)
+  const [collections, pinnedItems, recentItems, itemStats] = await Promise.all([
+    userId ? getCollections(userId) : Promise.resolve([]),
+    userId ? getPinnedItems(userId) : Promise.resolve([]),
+    userId ? getRecentItems(userId) : Promise.resolve([]),
+    userId ? getItemStats(userId) : Promise.resolve({ totalItems: 0, favoriteItemsCount: 0 }),
+  ])
+
   const totalCollections = collections.length
-  const favoriteItemsCount = mockItems.filter((i) => i.isFavorite).length
   const favoriteCollectionsCount = collections.filter((c) => c.isFavorite).length
 
-  const pinnedItems = mockItems.filter((i) => i.isPinned)
-  const recentItems = [...mockItems]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 10)
-
   const stats = [
-    { label: "Items", value: totalItems, icon: Package, color: "#3b82f6", fill: false },
+    { label: "Items", value: itemStats.totalItems, icon: Package, color: "#3b82f6", fill: false },
     { label: "Collections", value: totalCollections, icon: FolderOpen, color: "#8b5cf6", fill: false },
-    { label: "Favorite Items", value: favoriteItemsCount, icon: Star, color: "#fde047", fill: true },
+    { label: "Favorite Items", value: itemStats.favoriteItemsCount, icon: Star, color: "#fde047", fill: true },
     { label: "Favorite Collections", value: favoriteCollectionsCount, icon: Heart, color: "#ef4444", fill: false },
   ]
+
   return (
     <div className="space-y-8 max-w-5xl">
       {/* Header */}
@@ -186,10 +177,10 @@ export default async function DashboardPage() {
 
 // ─── Item Row ─────────────────────────────────────────────────────────────────
 
-function ItemRow({ item }: { item: typeof mockItems[number] }) {
-  const type = getType(item.itemTypeId)
-  const Icon = type ? (iconMap[type.icon] ?? File) : File
-  const color = type?.color ?? "#6b7280"
+function ItemRow({ item }: { item: ItemWithMeta }) {
+  const { itemType } = item
+  const Icon = iconMap[itemType.icon] ?? File
+  const color = itemType.color
 
   return (
     <div className="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3 hover:bg-card/80 transition-colors cursor-pointer">
@@ -214,14 +205,14 @@ function ItemRow({ item }: { item: typeof mockItems[number] }) {
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 shrink-0" />
           )}
         </div>
-        {item.tags && item.tags.length > 0 && (
+        {item.tags.length > 0 && (
           <div className="flex items-center gap-1 mt-1 flex-wrap">
             {item.tags.map((tag) => (
               <span
-                key={tag}
+                key={tag.id}
                 className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground"
               >
-                {tag}
+                {tag.name}
               </span>
             ))}
           </div>
