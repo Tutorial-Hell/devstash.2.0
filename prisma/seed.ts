@@ -132,6 +132,7 @@ async function main() {
     data: {
       name: "React Patterns",
       description: "Reusable React patterns and hooks",
+      isFavorite: true,
       userId: user.id,
       items: {
         create: [
@@ -143,6 +144,7 @@ async function main() {
                 contentType: "text",
                 language: "typescript",
                 isPinned: true,
+                isFavorite: true,
                 content: `import { useState, useEffect } from "react"
 
 export function useDebounce<T>(value: T, delay: number): T {
@@ -241,6 +243,7 @@ export function truncate(str: string, length: number): string {
     data: {
       name: "AI Workflows",
       description: "AI prompts and workflow automations",
+      isFavorite: true,
       userId: user.id,
       items: {
         create: [
@@ -251,6 +254,7 @@ export function truncate(str: string, length: number): string {
                 description: "Thorough code review with actionable feedback",
                 contentType: "text",
                 isPinned: true,
+                isFavorite: true,
                 content: `Review the following code and provide structured feedback covering:
 
 1. **Correctness** — Are there any bugs, edge cases, or logic errors?
@@ -550,7 +554,7 @@ volumes:
   })
   console.log(`  ✓ ${designResources.name}`)
 
-  // ── Pin specific items (idempotent) ─────────────────────────────────────────
+  // ── Pin/favorite items (idempotent) ─────────────────────────────────────────
   await prisma.item.updateMany({
     where: {
       userId: user.id,
@@ -558,7 +562,21 @@ volumes:
     },
     data: { isPinned: true },
   })
-  console.log("\n  ✓ Pinned items updated")
+  await prisma.item.updateMany({
+    where: {
+      userId: user.id,
+      title: { in: ["useDebounce Hook", "Code Review Prompt"] },
+    },
+    data: { isFavorite: true },
+  })
+  await prisma.collection.updateMany({
+    where: {
+      userId: user.id,
+      name: { in: ["React Patterns", "AI Workflows"] },
+    },
+    data: { isFavorite: true },
+  })
+  console.log("\n  ✓ Pinned/favorite items and collections updated")
 
   console.log("\nDone.")
 }

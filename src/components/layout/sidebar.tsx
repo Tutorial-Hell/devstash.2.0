@@ -19,12 +19,9 @@ import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import {
-  mockUser,
-  mockItemTypes,
-  mockCollections,
-  mockTypeCounts,
-} from "@/lib/mock-data"
+import { mockUser } from "@/lib/mock-data"
+import type { ItemTypeWithCount } from "@/lib/db/items"
+import type { CollectionWithMeta } from "@/lib/db/collections"
 
 const iconMap: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   Code,
@@ -40,13 +37,19 @@ function typeToSlug(name: string): string {
   return `${name}s`
 }
 
-function SidebarContent({ isOpen }: { isOpen: boolean }) {
+interface SidebarContentProps {
+  isOpen: boolean
+  itemTypes: ItemTypeWithCount[]
+  collections: CollectionWithMeta[]
+}
+
+function SidebarContent({ isOpen, itemTypes, collections }: SidebarContentProps) {
   const pathname = usePathname()
   const [typesExpanded, setTypesExpanded] = React.useState(true)
   const [collectionsExpanded, setCollectionsExpanded] = React.useState(true)
 
-  const favoriteCollections = mockCollections.filter((c) => c.isFavorite)
-  const otherCollections = mockCollections.filter((c) => !c.isFavorite)
+  const favoriteCollections = collections.filter((c) => c.isFavorite)
+  const otherCollections = collections.filter((c) => !c.isFavorite)
 
   const userInitials = mockUser.name
     .split(" ")
@@ -80,11 +83,10 @@ function SidebarContent({ isOpen }: { isOpen: boolean }) {
         {/* Types list */}
         {(typesExpanded || !isOpen) && (
           <nav className="space-y-0.5 px-2">
-            {mockItemTypes.map((type) => {
+            {itemTypes.map((type) => {
               const Icon = iconMap[type.icon] ?? File
               const slug = typeToSlug(type.name)
               const href = `/items/${slug}`
-              const count = mockTypeCounts[type.id] ?? 0
               const isActive = pathname === href
 
               const linkEl = (
@@ -106,7 +108,7 @@ function SidebarContent({ isOpen }: { isOpen: boolean }) {
                     <>
                       <span className="flex-1 capitalize">{slug}</span>
                       <span className="text-xs text-muted-foreground/60">
-                        {count}
+                        {type.count}
                       </span>
                     </>
                   )}
@@ -118,7 +120,7 @@ function SidebarContent({ isOpen }: { isOpen: boolean }) {
                   <Tooltip key={type.id}>
                     <TooltipTrigger render={linkEl} />
                     <TooltipContent side="right">
-                      <span className="capitalize">{slug}</span> · {count}
+                      <span className="capitalize">{slug}</span> · {type.count}
                     </TooltipContent>
                   </Tooltip>
                 )
@@ -181,6 +183,14 @@ function SidebarContent({ isOpen }: { isOpen: boolean }) {
                           href={`/collections/${col.id}`}
                           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
                         >
+                          {col.dominantType ? (
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: col.dominantType.color }}
+                            />
+                          ) : (
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/30" />
+                          )}
                           <span className="truncate flex-1">{col.name}</span>
                           <span className="text-xs text-muted-foreground/50">
                             {col.itemCount}
@@ -190,6 +200,15 @@ function SidebarContent({ isOpen }: { isOpen: boolean }) {
                     </nav>
                   </>
                 )}
+
+                <div className="px-2 pt-2">
+                  <Link
+                    href="/collections"
+                    className="block rounded-md px-2 py-1.5 text-xs text-muted-foreground/60 hover:text-foreground hover:bg-accent/50 transition-colors"
+                  >
+                    View all collections
+                  </Link>
+                </div>
               </div>
             )}
           </>
@@ -233,9 +252,11 @@ interface SidebarProps {
   isOpen: boolean
   mobileOpen: boolean
   onMobileClose: () => void
+  itemTypes: ItemTypeWithCount[]
+  collections: CollectionWithMeta[]
 }
 
-export function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({ isOpen, mobileOpen, onMobileClose, itemTypes, collections }: SidebarProps) {
   return (
     <>
       {/* Desktop sidebar */}
@@ -245,13 +266,13 @@ export function Sidebar({ isOpen, mobileOpen, onMobileClose }: SidebarProps) {
           isOpen ? "w-56" : "w-12"
         )}
       >
-        <SidebarContent isOpen={isOpen} />
+        <SidebarContent isOpen={isOpen} itemTypes={itemTypes} collections={collections} />
       </aside>
 
       {/* Mobile sheet */}
       <Sheet open={mobileOpen} onOpenChange={(open) => !open && onMobileClose()}>
         <SheetContent side="left" showCloseButton={false} className="w-56 p-0 gap-0">
-          <SidebarContent isOpen={true} />
+          <SidebarContent isOpen={true} itemTypes={itemTypes} collections={collections} />
         </SheetContent>
       </Sheet>
     </>
