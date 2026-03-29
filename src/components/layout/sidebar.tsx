@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { mockUser } from "@/lib/mock-data"
@@ -107,6 +108,11 @@ function SidebarContent({ isOpen, itemTypes, collections }: SidebarContentProps)
                   {isOpen && (
                     <>
                       <span className="flex-1 capitalize">{slug}</span>
+                      {(type.name === "file" || type.name === "image") && (
+                        <Badge variant="secondary" className="h-4 px-1 text-[9px] font-semibold tracking-wide text-muted-foreground/70">
+                          PRO
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground/60">
                         {type.count}
                       </span>

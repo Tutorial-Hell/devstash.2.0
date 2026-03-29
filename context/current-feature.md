@@ -1,23 +1,21 @@
-# Current Feature
-
-Stats & Sidebar — Display stats and sidebar content (item types, collections) from the Neon database instead of mock data.
+# Current Feature: Add Pro Badge to Sidebar
 
 ## Status
 
-Completed
+In Progress
 
 ## Goals
 
-- Display stats in the main area from real database data (keep current design/layout)
-- Display system item types in the sidebar with icons, linking to `/items/[typename]`
-- Add "View all collections" link under the collections list linking to `/collections`
-- Keep star icons for favorite collections; recent collections show a colored circle based on the most-used item type
-- Create `src/lib/db/items.ts` with the required database functions
+- Add a Pro badge to the "files" item type in the sidebar
+- Add a Pro badge to the "images" item type in the sidebar
+- Use the ShadCN UI Badge component
+- Badge should be clean and subtle
+- Badge text should be "PRO" (all uppercase)
 
 ## Notes
 
-- Spec: `context/features/stats-sidebar-spec.md`
-- Reference: `src/lib/db/collections.ts`
+- Spec: `context/features/add-pro-badge-sidebar.md`
+- Reference: ShadCN Badge component (`npx shadcn@latest add badge` if not yet installed)
 
 ## History
 
