@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { prisma } from "@/lib/prisma"
 
 export type CollectionWithMeta = {
@@ -21,7 +22,7 @@ export type CollectionWithMeta = {
   createdAt: Date
 }
 
-export async function getCollections(userId: string): Promise<CollectionWithMeta[]> {
+export const getCollections = cache(async function getCollections(userId: string): Promise<CollectionWithMeta[]> {
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -64,7 +65,7 @@ export async function getCollections(userId: string): Promise<CollectionWithMeta
       createdAt: col.createdAt,
     }
   })
-}
+})
 
 export async function getDemoUserId(): Promise<string | null> {
   const user = await prisma.user.findUnique({

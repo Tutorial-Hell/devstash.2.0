@@ -3,18 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image as ImageIcon,
-  Link as LinkIcon,
-  Star,
-  Settings,
-  ChevronDown,
-} from "lucide-react"
+import { Star, Settings, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -23,16 +12,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { mockUser } from "@/lib/mock-data"
 import type { ItemTypeWithCount } from "@/lib/db/items"
 import type { CollectionWithMeta } from "@/lib/db/collections"
-
-const iconMap: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image: ImageIcon,
-  Link: LinkIcon,
-}
+import { iconMap } from "@/lib/icon-map"
 
 function typeToSlug(name: string): string {
   return `${name}s`
@@ -244,7 +224,12 @@ function SidebarContent({ isOpen, itemTypes, collections }: SidebarContentProps)
                 {mockUser.email}
               </p>
             </div>
-            <button className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
+            <button
+              className="text-muted-foreground transition-colors shrink-0 cursor-not-allowed opacity-50"
+              disabled
+              aria-disabled="true"
+              title="Settings coming soon"
+            >
               <Settings className="h-4 w-4" />
             </button>
           </>

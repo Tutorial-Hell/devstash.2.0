@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { prisma } from "@/lib/prisma"
 
 export type ItemWithMeta = {
@@ -78,7 +79,7 @@ export type ItemTypeWithCount = {
   count: number
 }
 
-export async function getItemTypes(userId: string): Promise<ItemTypeWithCount[]> {
+export const getItemTypes = cache(async function getItemTypes(userId: string): Promise<ItemTypeWithCount[]> {
   const types = await prisma.itemType.findMany({
     where: { OR: [{ isSystem: true }, { userId }] },
     orderBy: { name: "asc" },
@@ -96,4 +97,4 @@ export async function getItemTypes(userId: string): Promise<ItemTypeWithCount[]>
     color: t.color,
     count: t.items.length,
   }))
-}
+})

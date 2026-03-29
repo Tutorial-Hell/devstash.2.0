@@ -1,39 +1,9 @@
 import Link from "next/link"
-import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image as ImageIcon,
-  Link as LinkIcon,
-  Star,
-  Pin,
-  Package,
-  FolderOpen,
-  Heart,
-} from "lucide-react"
+import { Star, Pin, Package, FolderOpen, Heart } from "lucide-react"
 import { getCollections, getDemoUserId } from "@/lib/db/collections"
 import { getPinnedItems, getRecentItems, getItemStats, type ItemWithMeta } from "@/lib/db/items"
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const iconMap: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image: ImageIcon,
-  Link: LinkIcon,
-}
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  })
-}
+import { iconMap } from "@/lib/icon-map"
+import { formatDate } from "@/lib/utils"
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
