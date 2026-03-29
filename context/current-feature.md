@@ -1,21 +1,14 @@
-# Current Feature: Add Pro Badge to Sidebar
+# Current Feature
 
 ## Status
 
-In Progress
-
 ## Goals
 
-- Add a Pro badge to the "files" item type in the sidebar
-- Add a Pro badge to the "images" item type in the sidebar
-- Use the ShadCN UI Badge component
-- Badge should be clean and subtle
-- Badge text should be "PRO" (all uppercase)
+<!-- Add goals here -->
 
 ## Notes
 
-- Spec: `context/features/add-pro-badge-sidebar.md`
-- Reference: ShadCN Badge component (`npx shadcn@latest add badge` if not yet installed)
+<!-- Add notes here -->
 
 ## History
 
@@ -31,3 +24,4 @@ In Progress
 - **2026-03-25** — Dashboard Collections completed. Created `src/lib/db/collections.ts` with `getCollections` and `getDemoUserId` functions. Updated dashboard page to async server component fetching real collections from Neon DB via Prisma. Collection cards now show dominant-type accent bar and icons for all content types present in the collection. Collections and Favorite Collections stats derive from real data.
 - **2026-03-26** — Dashboard Items completed. Created `src/lib/db/items.ts` with `getPinnedItems`, `getRecentItems`, and `getItemStats` functions. Dashboard page now fetches all data in parallel; pinned section hidden when no pinned items; item cards derive icon/border color from itemType; tags from DB relations; all four stats cards fully real.
 - **2026-03-26** — Stats & Sidebar completed. Added `getItemTypes` to `src/lib/db/items.ts`. Converted dashboard layout to a server component; extracted client state into `DashboardShell`. Sidebar now receives real DB data as props: system item types with per-user counts linking to `/items/[typename]`, favorite collections with star icons, other collections with dominant-type colored circle, and a "View all collections" link. Seed data updated so React Patterns and AI Workflows are favorite collections, and useDebounce Hook and Code Review Prompt are favorite items.
+- **2026-03-29** — Add Pro Badge to Sidebar completed. Installed ShadCN Badge component (`src/components/ui/badge.tsx`). Added a subtle secondary-variant PRO badge to the files and images item types in the sidebar, rendered only when the sidebar is expanded.
