@@ -1,28 +1,14 @@
 # Current Feature
 
-## Dashboard Loading Skeletons
-
 ## Status
-In Progress
 
 ## Goals
 
-Add skeleton loading states to the dashboard using Next.js `loading.tsx` and ShadCN's Skeleton component so users see structured placeholders instead of a blank screen while server data fetches.
-
-1. **Install ShadCN Skeleton** — run `npx shadcn@latest add skeleton` to add `src/components/ui/skeleton.tsx`
-2. **Create `loading.tsx`** at `src/app/(dashboard)/dashboard/loading.tsx` — Next.js will automatically render this while `page.tsx` is streaming. It should mirror the dashboard layout with skeletons for:
-   - 4 stats cards (icon placeholder + two lines of text)
-   - Collections grid (6 cards with accent bar + title + meta lines)
-   - Pinned items section (2–3 item row skeletons)
-   - Recent items section (10 row skeletons with icon, title, tags, date)
-3. ~~**Sidebar skeleton**~~ — Removed. Full sidebar streaming requires a context refactor to decouple `isOpen`/`mobileOpen` client state from the data-fetching path — deferred to the auth refactor phase.
+<!-- Add goals here -->
 
 ## Notes
 
-- ShadCN Skeleton is a simple `<div>` with a pulse animation — no logic changes, purely additive.
-- `loading.tsx` is a Next.js App Router convention: it wraps the page in an automatic `<Suspense>` boundary. No changes needed to `page.tsx` itself.
-- Match the skeleton dimensions closely to the real content to avoid layout shift when data loads.
-- If any schema changes are required, run `npx prisma migrate dev --name <description>` locally and commit the generated migration file. For production, run `npx prisma migrate deploy`. Never use `prisma db push` in production.
+<!-- Add notes here -->
 
 ## History
 
@@ -40,3 +26,4 @@ Add skeleton loading states to the dashboard using Next.js `loading.tsx` and Sha
 - **2026-03-26** — Stats & Sidebar completed. Added `getItemTypes` to `src/lib/db/items.ts`. Converted dashboard layout to a server component; extracted client state into `DashboardShell`. Sidebar now receives real DB data as props: system item types with per-user counts linking to `/items/[typename]`, favorite collections with star icons, other collections with dominant-type colored circle, and a "View all collections" link. Seed data updated so React Patterns and AI Workflows are favorite collections, and useDebounce Hook and Code Review Prompt are favorite items.
 - **2026-03-29** — Add Pro Badge to Sidebar completed. Installed ShadCN Badge component (`src/components/ui/badge.tsx`). Added a subtle secondary-variant PRO badge to the files and images item types in the sidebar, rendered only when the sidebar is expanded.
 - **2026-03-29** — Code Quality Quick Wins completed. Removed unused Image import (`page.tsx`); added DATABASE_URL runtime guard (`prisma.ts`); added HTTP security headers to `next.config.ts`; wrapped `getCollections` and `getItemTypes` with `React.cache()` to deduplicate layout/page queries; extracted `iconMap` to `src/lib/icon-map.ts`; moved `formatDate` to `src/lib/utils.ts`; disabled inert Settings button with `aria-disabled`.
+- **2026-03-29** — Dashboard Loading Skeletons completed. Installed ShadCN Skeleton (`src/components/ui/skeleton.tsx`). Added `src/app/(dashboard)/dashboard/loading.tsx` mirroring all four dashboard sections (stats cards, collections grid, pinned items, recent items) with pulse placeholders. Next.js App Router automatically renders it while page data resolves.
