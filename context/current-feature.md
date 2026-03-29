@@ -1,14 +1,28 @@
 # Current Feature
 
+## Dashboard Loading Skeletons
+
 ## Status
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+Add skeleton loading states to the dashboard using Next.js `loading.tsx` and ShadCN's Skeleton component so users see structured placeholders instead of a blank screen while server data fetches.
+
+1. **Install ShadCN Skeleton** — run `npx shadcn@latest add skeleton` to add `src/components/ui/skeleton.tsx`
+2. **Create `loading.tsx`** at `src/app/(dashboard)/dashboard/loading.tsx` — Next.js will automatically render this while `page.tsx` is streaming. It should mirror the dashboard layout with skeletons for:
+   - 4 stats cards (icon placeholder + two lines of text)
+   - Collections grid (6 cards with accent bar + title + meta lines)
+   - Pinned items section (2–3 item row skeletons)
+   - Recent items section (10 row skeletons with icon, title, tags, date)
+3. ~~**Sidebar skeleton**~~ — Removed. Full sidebar streaming requires a context refactor to decouple `isOpen`/`mobileOpen` client state from the data-fetching path — deferred to the auth refactor phase.
 
 ## Notes
 
-<!-- Add notes here -->
+- ShadCN Skeleton is a simple `<div>` with a pulse animation — no logic changes, purely additive.
+- `loading.tsx` is a Next.js App Router convention: it wraps the page in an automatic `<Suspense>` boundary. No changes needed to `page.tsx` itself.
+- Match the skeleton dimensions closely to the real content to avoid layout shift when data loads.
+- If any schema changes are required, run `npx prisma migrate dev --name <description>` locally and commit the generated migration file. For production, run `npx prisma migrate deploy`. Never use `prisma db push` in production.
 
 ## History
 
