@@ -1,37 +1,14 @@
-# Current Feature: Auth Setup - NextAuth + GitHub Provider
+# Current Feature
 
 ## Status
 
-In Progress
-
 ## Goals
 
-- Install NextAuth v5 (`next-auth@beta`) and `@auth/prisma-adapter`
-- Set up split auth config pattern for edge compatibility
-- Add GitHub OAuth provider
-- Protect `/dashboard/*` routes using Next.js 16 proxy
-- Redirect unauthenticated users to sign-in
+<!-- Add goals here -->
 
 ## Notes
 
-**Files to create:**
-- `src/auth.config.ts` — Edge-compatible config (providers only, no adapter)
-- `src/auth.ts` — Full config with Prisma adapter and JWT strategy
-- `src/app/api/auth/[...nextauth]/route.ts` — Export handlers from auth.ts
-- `src/proxy.ts` — Route protection with redirect logic (named export `proxy`)
-- `src/types/next-auth.d.ts` — Extend Session type with user.id
-
-**Key gotchas:**
-- Use `next-auth@beta`, not `@latest` (installs v4)
-- Proxy file must be at `src/proxy.ts` (same level as `app/`)
-- Use named export: `export const proxy = auth(...)` — not default export
-- Use `session: { strategy: 'jwt' }` with split config pattern
-- Don't set custom `pages.signIn` — use NextAuth's default page
-- Use Context7 to verify newest config/conventions before writing
-
-**Environment variables needed:** `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`
-
-**Testing:** Go to `/dashboard` → should redirect to sign-in → sign in with GitHub → verify redirect back to `/dashboard`
+<!-- Add notes here -->
 
 ## History
 
@@ -50,3 +27,4 @@ In Progress
 - **2026-03-29** — Add Pro Badge to Sidebar completed. Installed ShadCN Badge component (`src/components/ui/badge.tsx`). Added a subtle secondary-variant PRO badge to the files and images item types in the sidebar, rendered only when the sidebar is expanded.
 - **2026-03-29** — Code Quality Quick Wins completed. Removed unused Image import (`page.tsx`); added DATABASE_URL runtime guard (`prisma.ts`); added HTTP security headers to `next.config.ts`; wrapped `getCollections` and `getItemTypes` with `React.cache()` to deduplicate layout/page queries; extracted `iconMap` to `src/lib/icon-map.ts`; moved `formatDate` to `src/lib/utils.ts`; disabled inert Settings button with `aria-disabled`.
 - **2026-03-29** — Dashboard Loading Skeletons completed. Installed ShadCN Skeleton (`src/components/ui/skeleton.tsx`). Added `src/app/(dashboard)/dashboard/loading.tsx` mirroring all four dashboard sections (stats cards, collections grid, pinned items, recent items) with pulse placeholders. Next.js App Router automatically renders it while page data resolves.
+- **2026-03-30** — Auth Setup completed. Installed `next-auth@beta` and `@auth/prisma-adapter`. Implemented split config pattern: `src/auth.config.ts` (edge-compatible, GitHub provider), `src/auth.ts` (Prisma adapter + JWT strategy), `src/app/api/auth/[...nextauth]/route.ts` (GET/POST handlers), `src/proxy.ts` (protects `/dashboard/*`, redirects unauthenticated users to sign-in), `src/types/next-auth.d.ts` (extends Session with user.id). `AUTH_SECRET` added to `.env`.
