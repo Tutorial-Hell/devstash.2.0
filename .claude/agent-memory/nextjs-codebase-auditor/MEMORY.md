@@ -1,0 +1,1 @@
+- [dstash project architecture](project_architecture.md) — App Router, Prisma/Neon, no auth runtime yet, demo-user bypass in production paths, duplicate iconMap/formatDate
