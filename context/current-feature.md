@@ -1,14 +1,21 @@
-# Current Feature
+# Current Feature: Auth Credentials - Email/Password Provider
 
 ## Status
+In Progress
 
 ## Goals
-
-<!-- Add goals here -->
+- Add password field to User model via Prisma migration (if not already present)
+- Add Credentials provider placeholder to `auth.config.ts` (`authorize: () => null`)
+- Override Credentials provider in `auth.ts` with bcrypt validation logic
+- Create `POST /api/auth/register` route (accepts name, email, password, confirmPassword)
+- Registration validates passwords match, checks for existing user, hashes with bcryptjs, creates user
+- Email/password sign-in works and redirects to `/dashboard`
+- GitHub OAuth continues to work
 
 ## Notes
-
-<!-- Add notes here -->
+- bcryptjs is already installed
+- Split config pattern: edge-compatible placeholder in `auth.config.ts`, real bcrypt logic in `auth.ts`
+- Registration route returns JSON success/error response
 
 ## History
 
