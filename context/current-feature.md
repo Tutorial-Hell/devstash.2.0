@@ -1,21 +1,14 @@
-# Current Feature: Auth Credentials - Email/Password Provider
+# Current Feature
 
 ## Status
-In Progress
 
 ## Goals
-- Add password field to User model via Prisma migration (if not already present)
-- Add Credentials provider placeholder to `auth.config.ts` (`authorize: () => null`)
-- Override Credentials provider in `auth.ts` with bcrypt validation logic
-- Create `POST /api/auth/register` route (accepts name, email, password, confirmPassword)
-- Registration validates passwords match, checks for existing user, hashes with bcryptjs, creates user
-- Email/password sign-in works and redirects to `/dashboard`
-- GitHub OAuth continues to work
+
+<!-- Add goals here -->
 
 ## Notes
-- bcryptjs is already installed
-- Split config pattern: edge-compatible placeholder in `auth.config.ts`, real bcrypt logic in `auth.ts`
-- Registration route returns JSON success/error response
+
+<!-- Add notes here -->
 
 ## History
 
@@ -35,3 +28,4 @@ In Progress
 - **2026-03-29** — Code Quality Quick Wins completed. Removed unused Image import (`page.tsx`); added DATABASE_URL runtime guard (`prisma.ts`); added HTTP security headers to `next.config.ts`; wrapped `getCollections` and `getItemTypes` with `React.cache()` to deduplicate layout/page queries; extracted `iconMap` to `src/lib/icon-map.ts`; moved `formatDate` to `src/lib/utils.ts`; disabled inert Settings button with `aria-disabled`.
 - **2026-03-29** — Dashboard Loading Skeletons completed. Installed ShadCN Skeleton (`src/components/ui/skeleton.tsx`). Added `src/app/(dashboard)/dashboard/loading.tsx` mirroring all four dashboard sections (stats cards, collections grid, pinned items, recent items) with pulse placeholders. Next.js App Router automatically renders it while page data resolves.
 - **2026-03-30** — Auth Setup completed. Installed `next-auth@beta` and `@auth/prisma-adapter`. Implemented split config pattern: `src/auth.config.ts` (edge-compatible, GitHub provider), `src/auth.ts` (Prisma adapter + JWT strategy), `src/app/api/auth/[...nextauth]/route.ts` (GET/POST handlers), `src/proxy.ts` (protects `/dashboard/*`, redirects unauthenticated users to sign-in), `src/types/next-auth.d.ts` (extends Session with user.id). `AUTH_SECRET` added to `.env`.
+- **2026-03-31** — Auth Credentials completed. Added `password String?` to User model (migration `20260331120136_add_user_password`). Added Credentials provider with edge-safe placeholder in `auth.config.ts` and bcrypt validation override in `auth.ts`. Created `POST /api/auth/register` route (validates required fields, password match, duplicate email, bcrypt cost 12). Email/password sign-in enabled at `/api/auth/signin`; GitHub OAuth preserved.
