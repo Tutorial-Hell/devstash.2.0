@@ -3,16 +3,23 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Star, Settings, ChevronDown } from "lucide-react"
+import { Star, ChevronDown, LogOut, User } from "lucide-react"
+import { signOutAction } from "@/lib/auth-actions"
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { mockUser } from "@/lib/mock-data"
+import { UserAvatar } from "@/components/user-avatar"
 import type { ItemTypeWithCount } from "@/lib/db/items"
 import type { CollectionWithMeta } from "@/lib/db/collections"
 import { iconMap } from "@/lib/icon-map"
+
+interface SessionUser {
+  id: string
+  name?: string | null
+  email?: string | null
+  image?: string | null
+}
 
 function typeToSlug(name: string): string {
   return `${name}s`
@@ -22,21 +29,33 @@ interface SidebarContentProps {
   isOpen: boolean
   itemTypes: ItemTypeWithCount[]
   collections: CollectionWithMeta[]
+  user: SessionUser | null
 }
 
-function SidebarContent({ isOpen, itemTypes, collections }: SidebarContentProps) {
+function SidebarContent({ isOpen, itemTypes, collections, user }: SidebarContentProps) {
   const pathname = usePathname()
   const [typesExpanded, setTypesExpanded] = React.useState(true)
   const [collectionsExpanded, setCollectionsExpanded] = React.useState(true)
+  const [menuOpen, setMenuOpen] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+  const collapsedMenuRef = React.useRef<HTMLDivElement>(null)
 
   const favoriteCollections = collections.filter((c) => c.isFavorite)
   const otherCollections = collections.filter((c) => !c.isFavorite)
 
-  const userInitials = mockUser.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
+  React.useEffect(() => {
+    if (!menuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node
+      const inExpanded = menuRef.current?.contains(target)
+      const inCollapsed = collapsedMenuRef.current?.contains(target)
+      if (!inExpanded && !inCollapsed) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [menuOpen])
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -195,46 +214,86 @@ function SidebarContent({ isOpen, itemTypes, collections }: SidebarContentProps)
                     View all collections
                   </Link>
                 </div>
+
+                {/* User area (expanded) */}
+                <div ref={menuRef} className="px-2 pt-4 pb-2 relative">
+                  {menuOpen && (
+                    <div className="absolute bottom-full left-2 mb-1 w-44 rounded-md border border-border bg-popover shadow-md py-1 z-50">
+                      <Link
+                        href="/profile"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                      >
+                        <User className="h-3.5 w-3.5" />
+                        Profile
+                      </Link>
+                      <form action={signOutAction}>
+                        <button
+                          type="submit"
+                          className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          <LogOut className="h-3.5 w-3.5" />
+                          Sign out
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setMenuOpen((v) => !v)}
+                    className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 hover:bg-accent/50 transition-colors"
+                  >
+                    <UserAvatar name={user?.name} image={user?.image} size="sm" />
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-xs font-medium text-foreground truncate">
+                        {user?.name ?? "User"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {user?.email ?? ""}
+                      </p>
+                    </div>
+                  </button>
+                </div>
               </div>
             )}
           </>
         )}
       </div>
 
-      {/* User area */}
-      <div
-        className={cn(
-          "border-t border-border p-3 flex items-center gap-2 shrink-0",
-          !isOpen && "justify-center"
-        )}
-      >
-        <Avatar size="sm">
-          {mockUser.image && (
-            <AvatarImage src={mockUser.image} alt={mockUser.name} />
-          )}
-          <AvatarFallback>{userInitials}</AvatarFallback>
-        </Avatar>
-        {isOpen && (
-          <>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground truncate">
-                {mockUser.name}
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate">
-                {mockUser.email}
-              </p>
+      {/* User avatar (collapsed state only) */}
+      {!isOpen && (
+        <div
+          ref={collapsedMenuRef}
+          className="border-t border-border shrink-0 relative flex justify-center"
+        >
+          {menuOpen && (
+            <div className="absolute bottom-full left-0 mb-1 w-44 rounded-md border border-border bg-popover shadow-md py-1 z-50">
+              <Link
+                href="/profile"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              >
+                <User className="h-3.5 w-3.5" />
+                Profile
+              </Link>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign out
+                </button>
+              </form>
             </div>
-            <button
-              className="text-muted-foreground transition-colors shrink-0 cursor-not-allowed opacity-50"
-              disabled
-              aria-disabled="true"
-              title="Settings coming soon"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
-          </>
-        )}
-      </div>
+          )}
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex items-center justify-center p-3 hover:bg-accent/50 transition-colors"
+          >
+            <UserAvatar name={user?.name} image={user?.image} size="sm" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -245,9 +304,10 @@ interface SidebarProps {
   onMobileClose: () => void
   itemTypes: ItemTypeWithCount[]
   collections: CollectionWithMeta[]
+  user: SessionUser | null
 }
 
-export function Sidebar({ isOpen, mobileOpen, onMobileClose, itemTypes, collections }: SidebarProps) {
+export function Sidebar({ isOpen, mobileOpen, onMobileClose, itemTypes, collections, user }: SidebarProps) {
   return (
     <>
       {/* Desktop sidebar */}
@@ -257,13 +317,13 @@ export function Sidebar({ isOpen, mobileOpen, onMobileClose, itemTypes, collecti
           isOpen ? "w-56" : "w-12"
         )}
       >
-        <SidebarContent isOpen={isOpen} itemTypes={itemTypes} collections={collections} />
+        <SidebarContent isOpen={isOpen} itemTypes={itemTypes} collections={collections} user={user} />
       </aside>
 
       {/* Mobile sheet */}
       <Sheet open={mobileOpen} onOpenChange={(open) => !open && onMobileClose()}>
         <SheetContent side="left" showCloseButton={false} className="w-56 p-0 gap-0">
-          <SidebarContent isOpen={true} itemTypes={itemTypes} collections={collections} />
+          <SidebarContent isOpen={true} itemTypes={itemTypes} collections={collections} user={user} />
         </SheetContent>
       </Sheet>
     </>
