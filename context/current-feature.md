@@ -1,13 +1,17 @@
-# Current Feature
+# Current Feature: Fix Auth Middleware
 
 ## Status
-Not Started
+In Progress
 
 ## Goals
-<!-- Bullet points of what success looks like -->
+- Rename `src/proxy.ts` to `src/middleware.ts` so Next.js recognizes it as the middleware entry point
+- Verify the middleware manifest is no longer empty after the rename
+- Confirm unauthenticated users are redirected from `/dashboard` to `/sign-in`
 
 ## Notes
-<!-- Additional context, constraints, or details -->
+- Next.js only picks up middleware from `middleware.ts` at the project root or `src/middleware.ts` — any other filename is silently ignored
+- The current `src/proxy.ts` exports the correct `auth` wrapper and `config` matcher, so only the filename needs to change
+- Root cause confirmed via `.next/server/middleware-manifest.json` which showed empty `middleware: {}` and `sortedMiddleware: []`
 
 ## History
 
