@@ -1,17 +1,13 @@
-# Current Feature: Fix Auth Middleware
+# Current Feature
 
 ## Status
-In Progress
+Not Started
 
 ## Goals
-- Rename `src/proxy.ts` to `src/middleware.ts` so Next.js recognizes it as the middleware entry point
-- Verify the middleware manifest is no longer empty after the rename
-- Confirm unauthenticated users are redirected from `/dashboard` to `/sign-in`
+<!-- Bullet points of what success looks like -->
 
 ## Notes
-- Next.js only picks up middleware from `middleware.ts` at the project root or `src/middleware.ts` — any other filename is silently ignored
-- The current `src/proxy.ts` exports the correct `auth` wrapper and `config` matcher, so only the filename needs to change
-- Root cause confirmed via `.next/server/middleware-manifest.json` which showed empty `middleware: {}` and `sortedMiddleware: []`
+<!-- Additional context, constraints, or details -->
 
 ## History
 
@@ -33,3 +29,4 @@ In Progress
 - **2026-03-30** — Auth Setup completed. Installed `next-auth@beta` and `@auth/prisma-adapter`. Implemented split config pattern: `src/auth.config.ts` (edge-compatible, GitHub provider), `src/auth.ts` (Prisma adapter + JWT strategy), `src/app/api/auth/[...nextauth]/route.ts` (GET/POST handlers), `src/proxy.ts` (protects `/dashboard/*`, redirects unauthenticated users to sign-in), `src/types/next-auth.d.ts` (extends Session with user.id). `AUTH_SECRET` added to `.env`.
 - **2026-03-31** — Auth Credentials completed. Added `password String?` to User model (migration `20260331120136_add_user_password`). Added Credentials provider with edge-safe placeholder in `auth.config.ts` and bcrypt validation override in `auth.ts`. Created `POST /api/auth/register` route (validates required fields, password match, duplicate email, bcrypt cost 12). Email/password sign-in enabled at `/api/auth/signin`; GitHub OAuth preserved.
 - **2026-04-01** — Auth UI completed. Custom sign-in page at `/sign-in` (email/password + GitHub OAuth, error display, link to register). Custom register page at `/register` (name/email/password/confirmPassword, server action validation, redirects to sign-in with success toast via sonner). Reusable `UserAvatar` component (GitHub image or initials fallback). Sidebar user area with avatar, name, email, and dropdown (Profile link + sign out). `Providers` wrapper with `SessionProvider`. NextAuth custom pages configured via `auth.config.ts`.
+- **2026-04-02** — Fix Auth Middleware completed. Renamed `src/proxy.ts` to `src/middleware.ts` and changed the export name from `proxy` to `middleware`. Next.js silently ignored the previous filename, leaving the middleware manifest empty and `/dashboard` unprotected in production.
