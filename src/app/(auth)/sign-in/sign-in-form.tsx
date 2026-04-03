@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { toast } from "sonner"
 import { credentialsSignInAction } from "./actions"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,9 @@ export function SignInForm() {
     if (searchParams.get("error") === "invalid_token") {
       toast.error("Invalid verification link.", { id: "invalid_token" })
     }
+    if (searchParams.get("reset") === "1") {
+      toast.success("Password reset! You can now sign in.", { id: "reset" })
+    }
   }, [])
 
   return (
@@ -38,13 +42,20 @@ export function SignInForm() {
         autoComplete="email"
         required
       />
-      <Input
-        name="password"
-        type="password"
-        placeholder="Password"
-        autoComplete="current-password"
-        required
-      />
+      <div className="space-y-1">
+        <Input
+          name="password"
+          type="password"
+          placeholder="Password"
+          autoComplete="current-password"
+          required
+        />
+        <div className="text-right">
+          <Link href="/forgot-password" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            Forgot password?
+          </Link>
+        </div>
+      </div>
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Signing in…" : "Sign in"}
       </Button>
