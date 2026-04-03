@@ -1,13 +1,25 @@
-# Current Feature
+# Current Feature: Forgot Password
 
 ## Status
-Not Started
+In Progress
 
 ## Goals
-<!-- Bullet points of what success looks like -->
+- "Forgot password?" link on the sign-in page opens `/forgot-password`
+- `/forgot-password` page accepts an email address and submits a server action
+- Server action looks up the user by email; if found, creates a password-reset token in the existing `VerificationToken` model (identifier = email, token = random, expires = 1 hour) and sends a reset email via Resend
+- If email not found, show the same success message (no user enumeration)
+- Reset email links to `/reset-password?token=<token>`
+- `/reset-password` page accepts new password + confirm password; server action validates token (exists, not expired), hashes the new password, updates the user, deletes the token, then redirects to `/sign-in?reset=1`
+- Sign-in form shows a success toast for `?reset=1`
+- Expired or invalid token shows a clear error on `/reset-password`
 
 ## Notes
-<!-- Additional context, constraints, or details -->
+- Use the existing `VerificationToken` model: `identifier` (email), `token` (unique string), `expires` (DateTime)
+- Reuse the Resend email utility already in place for email verification
+- Password hashing with bcryptjs at cost 12 (same as registration)
+- No new Prisma models or migrations needed
+- Follow the existing server-action pattern (useActionState in client form components, actions.ts for server logic)
+- Keep pages in `src/app/(auth)/` alongside existing auth pages
 
 ## History
 
