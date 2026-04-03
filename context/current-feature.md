@@ -1,25 +1,13 @@
-# Current Feature: Forgot Password
+# Current Feature
 
 ## Status
-In Progress
+Not Started
 
 ## Goals
-- "Forgot password?" link on the sign-in page opens `/forgot-password`
-- `/forgot-password` page accepts an email address and submits a server action
-- Server action looks up the user by email; if found, creates a password-reset token in the existing `VerificationToken` model (identifier = email, token = random, expires = 1 hour) and sends a reset email via Resend
-- If email not found, show the same success message (no user enumeration)
-- Reset email links to `/reset-password?token=<token>`
-- `/reset-password` page accepts new password + confirm password; server action validates token (exists, not expired), hashes the new password, updates the user, deletes the token, then redirects to `/sign-in?reset=1`
-- Sign-in form shows a success toast for `?reset=1`
-- Expired or invalid token shows a clear error on `/reset-password`
+<!-- Bullet points of what success looks like -->
 
 ## Notes
-- Use the existing `VerificationToken` model: `identifier` (email), `token` (unique string), `expires` (DateTime)
-- Reuse the Resend email utility already in place for email verification
-- Password hashing with bcryptjs at cost 12 (same as registration)
-- No new Prisma models or migrations needed
-- Follow the existing server-action pattern (useActionState in client form components, actions.ts for server logic)
-- Keep pages in `src/app/(auth)/` alongside existing auth pages
+<!-- Additional context, constraints, or details -->
 
 ## History
 
@@ -45,3 +33,4 @@ In Progress
 - **2026-04-03** — Email Verification Toggle Flag completed. Added `src/lib/flags.ts` with `EMAIL_VERIFICATION_ENABLED` boolean driven by env var. When disabled: users created with `emailVerified` pre-set, token/email skipped, redirect to `/sign-in`. When enabled: full Resend verification flow. Flag respected in `auth.ts` authorize and sign-in action.
 - **2026-04-03** — Fix Email Send Blocking Registration completed. Moved `sendVerificationEmail` outside the try/catch in `register/actions.ts` and `api/auth/register/route.ts`, firing it best-effort with `.catch()`. Resend failures are now logged server-side without blocking user creation or the redirect to `/verify-email`.
 - **2026-04-03** — Email Verification on Register completed. Added `EmailVerificationToken` Prisma model (24-hour expiry). Registration sends a verification email via Resend (`onboarding@resend.dev`). `GET /api/auth/verify-email` verifies token and sets `emailVerified`. Unverified credentials users are blocked at sign-in with a clear error. Added `/verify-email` "check your inbox" page. Sign-in form shows toasts for `?verified=1` and token error states. Added `scripts/delete-non-demo-users.ts` utility.
+- **2026-04-03** — Forgot Password completed. Added `/forgot-password` (email form, no user enumeration) and `/reset-password?token=` (new password form). Server actions use the existing `VerificationToken` model (identifier=email, 1hr expiry). Reset email sent via Resend best-effort. Password update and token deletion wrapped in a Prisma transaction. Sign-in form shows `?reset=1` success toast and "Forgot password?" link below password field.
