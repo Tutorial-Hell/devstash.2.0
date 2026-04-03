@@ -1,0 +1,2 @@
+export const EMAIL_VERIFICATION_ENABLED =
+  process.env.EMAIL_VERIFICATION_ENABLED === "true"

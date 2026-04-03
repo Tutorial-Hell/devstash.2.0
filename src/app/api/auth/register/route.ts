@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { createVerificationToken } from "@/lib/verification-token"
 import { sendVerificationEmail } from "@/lib/email"
+import { EMAIL_VERIFICATION_ENABLED } from "@/lib/flags"
 
 export async function POST(request: NextRequest) {
   let name: string, email: string, password: string, confirmPassword: string
@@ -26,14 +27,16 @@ export async function POST(request: NextRequest) {
   }
 
   const hashed = await bcrypt.hash(password, 12)
-  const user = await prisma.user.create({
-    data: { name, email, password: hashed },
-  })
 
-  const token = await createVerificationToken(user.id)
-  sendVerificationEmail(email, token).catch((err) =>
-    console.error("Failed to send verification email:", err)
-  )
+  if (!EMAIL_VERIFICATION_ENABLED) {
+    await prisma.user.create({ data: { name, email, password: hashed, emailVerified: new Date() } })
+  } else {
+    const user = await prisma.user.create({ data: { name, email, password: hashed } })
+    const token = await createVerificationToken(user.id)
+    sendVerificationEmail(email, token).catch((err) =>
+      console.error("Failed to send verification email:", err)
+    )
+  }
 
   return NextResponse.json({ success: true }, { status: 201 })
 }

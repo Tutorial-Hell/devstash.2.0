@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import authConfig from "./auth.config"
+import { EMAIL_VERIFICATION_ENABLED } from "@/lib/flags"
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -27,7 +28,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const isValid = await bcrypt.compare(password, user.password)
         if (!isValid) return null
 
-        if (!user.emailVerified) return null
+        if (EMAIL_VERIFICATION_ENABLED && !user.emailVerified) return null
 
         return user
       },
