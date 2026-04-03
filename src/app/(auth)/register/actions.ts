@@ -33,7 +33,9 @@ export async function registerAction(
     const user = await prisma.user.create({ data: { name, email, password: hashed } })
 
     const token = await createVerificationToken(user.id)
-    await sendVerificationEmail(email, token)
+    sendVerificationEmail(email, token).catch((err) =>
+      console.error("Failed to send verification email:", err)
+    )
   } catch {
     return { error: "Registration failed. Please try again." }
   }
