@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { createVerificationToken } from "@/lib/verification-token"
+import { sendVerificationEmail } from "@/lib/email"
 
 export async function registerAction(
   _prev: { error: string } | null,
@@ -28,10 +30,13 @@ export async function registerAction(
     }
 
     const hashed = await bcrypt.hash(password, 12)
-    await prisma.user.create({ data: { name, email, password: hashed } })
+    const user = await prisma.user.create({ data: { name, email, password: hashed } })
+
+    const token = await createVerificationToken(user.id)
+    await sendVerificationEmail(email, token)
   } catch {
     return { error: "Registration failed. Please try again." }
   }
 
-  redirect("/sign-in?registered=1")
+  redirect("/verify-email")
 }

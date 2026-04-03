@@ -50,6 +50,17 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model EmailVerificationToken {
+  id      String   @id @default(cuid())
+  userId  String
+  token   String   @unique
+  expires DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // User
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,12 +77,13 @@ model User {
   stripeCustomerId     String? @unique
   stripeSubscriptionId String? @unique
 
-  items       Item[]
-  collections Collection[]
-  itemTypes   ItemType[]
-  tags        Tag[]
-  accounts    Account[]
-  sessions    Session[]
+  items                   Item[]
+  collections             Collection[]
+  itemTypes               ItemType[]
+  tags                    Tag[]
+  accounts                Account[]
+  sessions                Session[]
+  emailVerificationTokens EmailVerificationToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

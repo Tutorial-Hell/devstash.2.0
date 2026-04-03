@@ -15,6 +15,15 @@ export function SignInForm() {
     if (searchParams.get("registered") === "1") {
       toast.success("Account created! You can now sign in.", { id: "registered" })
     }
+    if (searchParams.get("verified") === "1") {
+      toast.success("Email verified! You can now sign in.", { id: "verified" })
+    }
+    if (searchParams.get("error") === "expired_token") {
+      toast.error("Verification link expired. Please register again.", { id: "expired_token" })
+    }
+    if (searchParams.get("error") === "invalid_token") {
+      toast.error("Invalid verification link.", { id: "invalid_token" })
+    }
   }, [])
 
   return (

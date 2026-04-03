@@ -2,17 +2,23 @@
 
 import { signIn } from "@/auth"
 import { AuthError } from "next-auth"
+import { prisma } from "@/lib/prisma"
 
 export async function credentialsSignInAction(
   _prev: { error: string } | null,
   formData: FormData
 ) {
+  const email = formData.get("email") as string
+  const password = formData.get("password") as string
+
+  // Check email verification before attempting sign-in so we can show a clear error
+  const user = await prisma.user.findUnique({ where: { email }, select: { emailVerified: true, password: true } })
+  if (user?.password && !user.emailVerified) {
+    return { error: "Please verify your email before signing in. Check your inbox." }
+  }
+
   try {
-    await signIn("credentials", {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-      redirectTo: "/dashboard",
-    })
+    await signIn("credentials", { email, password, redirectTo: "/dashboard" })
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Invalid email or password." }
