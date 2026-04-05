@@ -39,7 +39,7 @@ export default function SignInPage() {
       </div>
 
       <form action={signInWithGitHub}>
-        <Button variant="outline" className="w-full">
+        <Button type="submit" variant="outline" className="w-full">
           <GitHubIcon className="mr-2 h-4 w-4" />
           Sign in with GitHub
         </Button>
