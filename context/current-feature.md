@@ -4,10 +4,12 @@
 Not Started
 
 ## Goals
-<!-- Bullet points of what success looks like -->
+
+<!-- Add goals here -->
 
 ## Notes
-<!-- Additional context, constraints, or details -->
+
+<!-- Add notes here -->
 
 ## History
 
@@ -34,3 +36,4 @@ Not Started
 - **2026-04-03** — Fix Email Send Blocking Registration completed. Moved `sendVerificationEmail` outside the try/catch in `register/actions.ts` and `api/auth/register/route.ts`, firing it best-effort with `.catch()`. Resend failures are now logged server-side without blocking user creation or the redirect to `/verify-email`.
 - **2026-04-03** — Email Verification on Register completed. Added `EmailVerificationToken` Prisma model (24-hour expiry). Registration sends a verification email via Resend (`onboarding@resend.dev`). `GET /api/auth/verify-email` verifies token and sets `emailVerified`. Unverified credentials users are blocked at sign-in with a clear error. Added `/verify-email` "check your inbox" page. Sign-in form shows toasts for `?verified=1` and token error states. Added `scripts/delete-non-demo-users.ts` utility.
 - **2026-04-03** — Forgot Password completed. Added `/forgot-password` (email form, no user enumeration) and `/reset-password?token=` (new password form). Server actions use the existing `VerificationToken` model (identifier=email, 1hr expiry). Reset email sent via Resend best-effort. Password update and token deletion wrapped in a Prisma transaction. Sign-in form shows `?reset=1` success toast and "Forgot password?" link below password field.
+- **2026-04-05** — Profile Page completed. Added `/profile` route (server component, protected by middleware + page-level auth). Displays user info (name, email, avatar, member since), usage stats (total items, collections, per-type breakdown), change password form (credentials users only), and delete account with confirmation dialog. `getProfileData` in `src/lib/db/profile.ts` fetches all data in parallel. `src/components/ui/dialog.tsx` added (Base UI). JWT/session callbacks added to `src/auth.ts` to expose `session.user.id`.
