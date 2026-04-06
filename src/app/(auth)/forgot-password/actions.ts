@@ -3,6 +3,7 @@
 import { randomBytes } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { sendPasswordResetEmail } from "@/lib/email"
+import { rateLimit, getClientIp, rateLimitErrorMessage } from "@/lib/rate-limit"
 
 export async function forgotPasswordAction(
   _prev: { error?: string; success?: boolean } | null,
@@ -16,6 +17,12 @@ export async function forgotPasswordAction(
 
   if (!email) {
     return { error: "Email is required." }
+  }
+
+  const ip = await getClientIp()
+  const rl = await rateLimit("forgot-password", ip)
+  if (!rl.success) {
+    return { error: rateLimitErrorMessage(rl.retryAfterMinutes!) }
   }
 
   const user = await prisma.user.findUnique({ where: { email }, select: { id: true, password: true } })

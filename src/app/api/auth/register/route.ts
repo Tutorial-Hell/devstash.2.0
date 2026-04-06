@@ -4,8 +4,21 @@ import { prisma } from "@/lib/prisma"
 import { createVerificationToken } from "@/lib/verification-token"
 import { sendVerificationEmail } from "@/lib/email"
 import { EMAIL_VERIFICATION_ENABLED } from "@/lib/flags"
+import { rateLimit, getClientIp, rateLimitErrorMessage } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
+  const ip = await getClientIp(request)
+  const rl = await rateLimit("register", ip)
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: rateLimitErrorMessage(rl.retryAfterMinutes!) },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rl.retryAfterMinutes! * 60) },
+      }
+    )
+  }
+
   let name: string, email: string, password: string, confirmPassword: string
   try {
     ;({ name, email, password, confirmPassword } = await request.json())
