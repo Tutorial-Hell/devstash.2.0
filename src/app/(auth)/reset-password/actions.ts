@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { rateLimit, getClientIp, rateLimitErrorMessage } from "@/lib/rate-limit"
 
 export async function resetPasswordAction(
   _prev: { error: string } | null,
@@ -11,6 +12,12 @@ export async function resetPasswordAction(
   const token = formData.get("token") as string
   const password = formData.get("password") as string
   const confirmPassword = formData.get("confirmPassword") as string
+
+  const ip = await getClientIp()
+  const rl = await rateLimit("reset-password", ip)
+  if (!rl.success) {
+    return { error: rateLimitErrorMessage(rl.retryAfterMinutes!) }
+  }
 
   if (!password || !confirmPassword) {
     return { error: "All fields are required." }
