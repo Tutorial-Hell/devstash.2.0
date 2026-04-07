@@ -1,15 +1,16 @@
-# Current Feature
+# Current Feature: Item Listing View 3-Column Layout
 
 ## Status
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- Update the item listing grid at `/items/[type]` to show 3 columns on large screens
+- Keep it responsive: 1 column on mobile, 2 columns on medium, 3 columns on large
 
 ## Notes
 
-<!-- Add notes here -->
+- Only change is the grid column classes in `src/app/(dashboard)/items/[type]/page.tsx`
 
 ## History
 
