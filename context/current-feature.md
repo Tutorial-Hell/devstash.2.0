@@ -1,16 +1,15 @@
-# Current Feature: Item Listing View 3-Column Layout
+# Current Feature
 
 ## Status
-In Progress
+Not Started
 
 ## Goals
 
-- Update the item listing grid at `/items/[type]` to show 3 columns on large screens
-- Keep it responsive: 1 column on mobile, 2 columns on medium, 3 columns on large
+<!-- Add goals here -->
 
 ## Notes
 
-- Only change is the grid column classes in `src/app/(dashboard)/items/[type]/page.tsx`
+<!-- Add notes here -->
 
 ## History
 
@@ -40,4 +39,5 @@ In Progress
 - **2026-04-05** — Profile Page completed. Added `/profile` route (server component, protected by middleware + page-level auth). Displays user info (name, email, avatar, member since), usage stats (total items, collections, per-type breakdown), change password form (credentials users only), and delete account with confirmation dialog. `getProfileData` in `src/lib/db/profile.ts` fetches all data in parallel. `src/components/ui/dialog.tsx` added (Base UI). JWT/session callbacks added to `src/auth.ts` to expose `session.user.id`.
 - **2026-04-06** — Rate Limiting for Auth completed. Installed `@upstash/ratelimit` and `@upstash/redis`. Created `src/lib/rate-limit.ts` with sliding window limits, fail-open behavior, and `getClientIp` helper for both API routes and server actions. Protected login (5/15min, IP+email), register (3/hr, IP), forgot-password (3/hr, IP), and reset-password (5/15min, IP). API route returns 429 + `Retry-After` header; server actions return inline error strings.
 - **2026-04-06** — GitHub OAuth Redirect Fix investigated. Spec described switching from client-side `signIn` (next-auth/react) to a server action — already implemented in `src/app/(auth)/sign-in/page.tsx`. No code changes required. Likely dev issue is GitHub OAuth app callback URL missing `http://localhost:3000/api/auth/callback/github`.
+- **2026-04-07** — Item Listing View 3-Column Layout completed. Updated grid in `src/app/(dashboard)/items/[type]/page.tsx` from 2 to 3 columns on `lg` screens. Responsive: 1 col mobile, 2 col `md`, 3 col `lg`.
 - **2026-04-07** — Items List View completed. Dynamic route at `/items/[type]` fetches items filtered by type using `getItemsByType` in `src/lib/db/items.ts`. Page renders a responsive two-column grid of cards with left accent border colored by item type, plus title, description, tags, pin/favorite indicators, and date. Empty state shown when no items. Uses `getDemoUserId` to match dashboard data source.
