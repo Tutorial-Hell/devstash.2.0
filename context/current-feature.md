@@ -1,15 +1,21 @@
-# Current Feature
+# Current Feature: Items List View
 
 ## Status
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- Create dynamic route `/items/[type]` (e.g., `/items/snippets`, `/items/notes`)
+- Fetch and display items filtered by type from the database
+- Render a responsive two-column grid (md and up) of item cards
+- Each card has a left border colored by item type
+- Follow existing codebase patterns
 
 ## Notes
 
-<!-- Add notes here -->
+- Route param is the item type slug (e.g., `snippets`, `notes`)
+- Sidebar already links to these routes
+- Left border color pattern already established on dashboard item rows
 
 ## History
 
