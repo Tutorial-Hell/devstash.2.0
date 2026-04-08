@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
-import { Star, Pin, File } from "lucide-react"
+import Link from "next/link"
+import { Star, Pin, File, ArrowLeft } from "lucide-react"
 import { getDemoUserId, getCollectionById } from "@/lib/db/collections"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
@@ -18,6 +19,15 @@ export default async function CollectionDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      {/* Back button */}
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Dashboard
+      </Link>
+
       {/* Header */}
       <div className="flex items-center gap-2">
         <h1 className="text-2xl font-bold text-foreground">{collection.name}</h1>

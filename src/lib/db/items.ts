@@ -119,6 +119,75 @@ export async function getItemsByType(
   return { items: items.map(mapItem), itemType }
 }
 
+export type UpdateItemData = {
+  title: string
+  description: string | null
+  content: string | null
+  url: string | null
+  language: string | null
+  tags: string[]
+}
+
+export async function updateItemById(
+  userId: string,
+  itemId: string,
+  data: UpdateItemData
+): Promise<ItemDetail | null> {
+  // Verify ownership (update's where only accepts unique fields)
+  const existing = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { id: true },
+  })
+  if (!existing) return null
+
+  // Upsert each tag, then set the full list (set + connectOrCreate can't be combined in Prisma)
+  const tagRecords = await Promise.all(
+    data.tags.map((name) =>
+      prisma.tag.upsert({
+        where: { name_userId: { name, userId } },
+        create: { name, userId },
+        update: {},
+        select: { id: true },
+      })
+    )
+  )
+
+  const updated = await prisma.item.update({
+    where: { id: itemId },
+    data: {
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      url: data.url,
+      language: data.language,
+      tags: { set: tagRecords },
+    },
+    include: {
+      itemType: { select: { id: true, name: true, icon: true, color: true } },
+      tags: { select: { id: true, name: true } },
+      collections: {
+        select: { collection: { select: { id: true, name: true } } },
+      },
+    },
+  })
+
+  return {
+    id: updated.id,
+    title: updated.title,
+    description: updated.description,
+    content: updated.content,
+    url: updated.url,
+    language: updated.language,
+    isFavorite: updated.isFavorite,
+    isPinned: updated.isPinned,
+    tags: updated.tags,
+    collections: updated.collections.map((ic) => ic.collection),
+    itemType: updated.itemType,
+    createdAt: updated.createdAt,
+    updatedAt: updated.updatedAt,
+  }
+}
+
 export async function getItemById(userId: string, itemId: string): Promise<ItemDetail | null> {
   const item = await prisma.item.findFirst({
     where: { id: itemId, userId },
