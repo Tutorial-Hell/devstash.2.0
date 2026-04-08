@@ -11,10 +11,21 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { cn } from "@/lib/utils"
-import { updateItem } from "@/actions/items"
+import { updateItem, deleteItem } from "@/actions/items"
 import type { ItemDetail } from "@/lib/db/items"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -147,6 +158,7 @@ function DrawerBody({
         <ViewBody
           item={item}
           onEdit={enterEdit}
+          onClose={onClose}
         />
       )}
     </>
@@ -158,10 +170,33 @@ function DrawerBody({
 function ViewBody({
   item,
   onEdit,
+  onClose,
 }: {
   item: ItemDetailResponse
   onEdit: () => void
+  onClose: () => void
 }) {
+  const router = useRouter()
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      const result = await deleteItem(item.id)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      onClose()
+      router.refresh()
+      toast.success("Item deleted.")
+    } catch {
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <>
       {/* Action bar */}
@@ -190,13 +225,37 @@ function ViewBody({
           Edit
         </Button>
         <div className="flex-1" />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                disabled={deleting}
+              />
+            }
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete item?</AlertDialogTitle>
+              <AlertDialogDescription>
+                &ldquo;{item.title}&rdquo; will be permanently deleted. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Scrollable body */}

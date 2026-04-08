@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 import { getDemoUserId } from "@/lib/db/collections"
-import { updateItemById, type ItemDetail } from "@/lib/db/items"
+import { updateItemById, deleteItemById, type ItemDetail } from "@/lib/db/items"
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -59,4 +59,23 @@ export async function updateItem(
   }
 
   return { success: true, data: updated }
+}
+
+// ─── Delete ───────────────────────────────────────────────────────────────────
+
+export async function deleteItem(
+  itemId: string
+): Promise<{ success: true } | { success: false; error: string }> {
+  const userId = await getDemoUserId()
+
+  if (!userId) {
+    return { success: false, error: "Not authenticated." }
+  }
+
+  const deleted = await deleteItemById(userId, itemId)
+  if (!deleted) {
+    return { success: false, error: "Item not found or access denied." }
+  }
+
+  return { success: true }
 }
