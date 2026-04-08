@@ -1,29 +1,15 @@
-# Current Feature: Item Drawer — Edit Mode
+# Current Feature
 
 ## Status
-In Progress
+Not Started
 
 ## Goals
 
-- Edit button in drawer action bar toggles inline edit mode
-- In edit mode, action bar replaced with Save and Cancel buttons
-- Cancel discards changes and returns to view mode
-- Save persists via server action, returns to view mode, refreshes drawer data, toasts on success/error
-- Editable fields (all types): Title (required), Description, Tags (comma-separated input → tag array)
-- Type-specific fields: Content textarea (snippet/prompt/command/note), Language input (snippet/command), URL input (link)
-- Non-editable in edit mode: item type, collections, dates
-- Zod validation in server action — return `{ success, data, error }` with field errors to client
-- After save, call `router.refresh()` so underlying card lists reflect changes
+<!-- Add goals here -->
 
 ## Notes
 
-- Server action: `updateItem(itemId, data)` in `src/actions/items.ts`
-- DB query: `updateItemById` in `src/lib/db/items.ts` — disconnect all tags, connect-or-create new ones, returns updated `ItemDetail`
-- Zod schema validates: title (non-empty trimmed), description/content/url/language (string|null optional), tags (trimmed non-empty string array)
-- No form library — controlled inputs with local state
-- Disable Save when title is empty (client-side guard only; Zod is source of truth)
-- Content textarea is plain text for now (code editor comes later)
-- Type-specific fields determined by `item.itemType.name`
+<!-- Add notes here -->
 
 ## History
 
@@ -55,4 +41,5 @@ In Progress
 - **2026-04-06** — GitHub OAuth Redirect Fix investigated. Spec described switching from client-side `signIn` (next-auth/react) to a server action — already implemented in `src/app/(auth)/sign-in/page.tsx`. No code changes required. Likely dev issue is GitHub OAuth app callback URL missing `http://localhost:3000/api/auth/callback/github`.
 - **2026-04-07** — Item Listing View 3-Column Layout completed. Updated grid in `src/app/(dashboard)/items/[type]/page.tsx` from 2 to 3 columns on `lg` screens. Responsive: 1 col mobile, 2 col `md`, 3 col `lg`.
 - **2026-04-07** — Items List View completed. Dynamic route at `/items/[type]` fetches items filtered by type using `getItemsByType` in `src/lib/db/items.ts`. Page renders a responsive two-column grid of cards with left accent border colored by item type, plus title, description, tags, pin/favorite indicators, and date. Empty state shown when no items. Uses `getDemoUserId` to match dashboard data source.
-- **2026-04-08** — Item Drawer + Collection Detail completed. `ItemDrawerProvider` wraps the dashboard shell; `useItemDrawer` context exposes `openDrawer(id)`. `ClickableItemCard` client wrapper makes any server-rendered card clickable. Drawer fetches full item detail via `GET /api/items/[id]` (auth-gated), shows skeleton while loading, then renders header with type chip + title, action bar (favorite/pin/copy/edit/delete), and body sections for description, content, tags, collections, and created/updated dates. Collection cards now navigate to `/collections/[id]` — new page fetches `getCollectionById` and renders the collection's items in the same clickable grid, also wired to the drawer.
+- **2026-04-08** — Item Drawer + Collection Detail completed.
+- **2026-04-08** — Item Drawer Edit Mode completed. Edit button toggles the drawer inline from view to edit mode. Action bar swaps to Save/Cancel. Editable fields: title, description, tags for all types; content textarea (snippet/prompt/command/note), language (snippet/command), URL (link). Item type, collections, and dates stay read-only. `updateItem` server action in `src/actions/items.ts` validates with Zod, calls `updateItemById` in `src/lib/db/items.ts` (ownership check via findFirst, tag upsert + set). Saves toast success, show inline errors, and call `router.refresh()`. Collection detail page also gained a Dashboard back-link. `ItemDrawerProvider` wraps the dashboard shell; `useItemDrawer` context exposes `openDrawer(id)`. `ClickableItemCard` client wrapper makes any server-rendered card clickable. Drawer fetches full item detail via `GET /api/items/[id]` (auth-gated), shows skeleton while loading, then renders header with type chip + title, action bar (favorite/pin/copy/edit/delete), and body sections for description, content, tags, collections, and created/updated dates. Collection cards now navigate to `/collections/[id]` — new page fetches `getCollectionById` and renders the collection's items in the same clickable grid, also wired to the drawer.
