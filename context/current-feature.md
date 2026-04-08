@@ -1,24 +1,15 @@
-# Current Feature: Item Drawer
+# Current Feature
 
 ## Status
-In Progress
+Not Started
 
 ## Goals
 
-- Right-side slide-in drawer opens when clicking an item card
-- Works on both dashboard and items list pages
-- Action bar with Favorite (star, yellow when active), Pin, Copy, Edit (pencil), and Delete (trash, right-aligned)
-- Drawer detail display (no code editor or item-specific extras yet)
-- Client wrapper component manages drawer state (pages are server components)
-- Fetch item detail on click via `/api/items/[id]` — no page navigation
-- Skeleton/loading state while fetching
+<!-- Add goals here -->
 
 ## Notes
 
-- Use ShadCN Sheet component, opens from the right
-- Card data already fetched by server component; full detail (content, collections, language, etc.) fetched on click
-- Query function in `lib/db/items.ts`; API route calls it with auth check
-- Reference: `context/screenshots/dashboard-ui-drawer.png` for visual design
+<!-- Add notes here -->
 
 ## History
 
@@ -50,3 +41,4 @@ In Progress
 - **2026-04-06** — GitHub OAuth Redirect Fix investigated. Spec described switching from client-side `signIn` (next-auth/react) to a server action — already implemented in `src/app/(auth)/sign-in/page.tsx`. No code changes required. Likely dev issue is GitHub OAuth app callback URL missing `http://localhost:3000/api/auth/callback/github`.
 - **2026-04-07** — Item Listing View 3-Column Layout completed. Updated grid in `src/app/(dashboard)/items/[type]/page.tsx` from 2 to 3 columns on `lg` screens. Responsive: 1 col mobile, 2 col `md`, 3 col `lg`.
 - **2026-04-07** — Items List View completed. Dynamic route at `/items/[type]` fetches items filtered by type using `getItemsByType` in `src/lib/db/items.ts`. Page renders a responsive two-column grid of cards with left accent border colored by item type, plus title, description, tags, pin/favorite indicators, and date. Empty state shown when no items. Uses `getDemoUserId` to match dashboard data source.
+- **2026-04-08** — Item Drawer + Collection Detail completed. `ItemDrawerProvider` wraps the dashboard shell; `useItemDrawer` context exposes `openDrawer(id)`. `ClickableItemCard` client wrapper makes any server-rendered card clickable. Drawer fetches full item detail via `GET /api/items/[id]` (auth-gated), shows skeleton while loading, then renders header with type chip + title, action bar (favorite/pin/copy/edit/delete), and body sections for description, content, tags, collections, and created/updated dates. Collection cards now navigate to `/collections/[id]` — new page fetches `getCollectionById` and renders the collection's items in the same clickable grid, also wired to the drawer.
