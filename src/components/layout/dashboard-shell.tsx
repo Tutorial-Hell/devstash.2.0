@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Topbar } from "@/components/layout/topbar"
 import { Sidebar } from "@/components/layout/sidebar"
+import { ItemDrawerProvider } from "@/components/item-drawer"
 import type { ItemTypeWithCount } from "@/lib/db/items"
 import type { CollectionWithMeta } from "@/lib/db/collections"
 
@@ -25,24 +26,26 @@ export function DashboardShell({ children, itemTypes, collections, user }: Dashb
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="flex flex-col h-full">
-      <Topbar
-        onToggleSidebar={() => setSidebarOpen((v) => !v)}
-        onMobileMenuOpen={() => setMobileOpen(true)}
-      />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          isOpen={sidebarOpen}
-          mobileOpen={mobileOpen}
-          onMobileClose={() => setMobileOpen(false)}
-          itemTypes={itemTypes}
-          collections={collections}
-          user={user}
+    <ItemDrawerProvider>
+      <div className="flex flex-col h-full">
+        <Topbar
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
+          onMobileMenuOpen={() => setMobileOpen(true)}
         />
-        <main className="flex-1 overflow-auto bg-background p-6">
-          {children}
-        </main>
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar
+            isOpen={sidebarOpen}
+            mobileOpen={mobileOpen}
+            onMobileClose={() => setMobileOpen(false)}
+            itemTypes={itemTypes}
+            collections={collections}
+            user={user}
+          />
+          <main className="flex-1 overflow-auto bg-background p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ItemDrawerProvider>
   )
 }

@@ -67,6 +67,64 @@ export const getCollections = cache(async function getCollections(userId: string
   })
 })
 
+export type CollectionDetail = {
+  id: string
+  name: string
+  description: string | null
+  isFavorite: boolean
+  items: {
+    id: string
+    title: string
+    description: string | null
+    isFavorite: boolean
+    isPinned: boolean
+    tags: { id: string; name: string }[]
+    itemType: { id: string; name: string; icon: string; color: string }
+    createdAt: Date
+  }[]
+}
+
+export async function getCollectionById(
+  userId: string,
+  collectionId: string
+): Promise<CollectionDetail | null> {
+  const col = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    include: {
+      items: {
+        orderBy: { addedAt: "desc" },
+        include: {
+          item: {
+            include: {
+              itemType: { select: { id: true, name: true, icon: true, color: true } },
+              tags: { select: { id: true, name: true } },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!col) return null
+
+  return {
+    id: col.id,
+    name: col.name,
+    description: col.description,
+    isFavorite: col.isFavorite,
+    items: col.items.map(({ item }) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      isFavorite: item.isFavorite,
+      isPinned: item.isPinned,
+      tags: item.tags,
+      itemType: item.itemType,
+      createdAt: item.createdAt,
+    })),
+  }
+}
+
 export async function getDemoUserId(): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { email: "demo@devstash.io" },

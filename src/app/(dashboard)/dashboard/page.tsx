@@ -4,6 +4,7 @@ import { getCollections, getDemoUserId } from "@/lib/db/collections"
 import { getPinnedItems, getRecentItems, getItemStats, type ItemWithMeta } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
+import { ClickableItemCard } from "@/components/clickable-item-card"
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -153,7 +154,10 @@ function ItemRow({ item }: { item: ItemWithMeta }) {
   const color = itemType.color
 
   return (
-    <div className="relative overflow-hidden flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3 hover:bg-card/80 transition-colors cursor-pointer">
+    <ClickableItemCard
+      itemId={item.id}
+      className="relative overflow-hidden flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3 hover:bg-card/80 transition-colors cursor-pointer"
+    >
       {/* Left accent bar */}
       <div className="absolute left-0 top-0 bottom-0 w-0.5" style={{ backgroundColor: color }} />
       {/* Type icon */}
@@ -200,6 +204,6 @@ function ItemRow({ item }: { item: ItemWithMeta }) {
       <span className="text-xs text-muted-foreground/60 shrink-0 mt-0.5">
         {formatDate(item.createdAt)}
       </span>
-    </div>
+    </ClickableItemCard>
   )
 }

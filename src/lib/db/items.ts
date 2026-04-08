@@ -1,6 +1,22 @@
 import { cache } from "react"
 import { prisma } from "@/lib/prisma"
 
+export type ItemDetail = {
+  id: string
+  title: string
+  description: string | null
+  content: string | null
+  url: string | null
+  language: string | null
+  isFavorite: boolean
+  isPinned: boolean
+  tags: { id: string; name: string }[]
+  collections: { id: string; name: string }[]
+  itemType: { id: string; name: string; icon: string; color: string }
+  createdAt: Date
+  updatedAt: Date
+}
+
 export type ItemWithMeta = {
   id: string
   title: string
@@ -101,6 +117,37 @@ export async function getItemsByType(
   })
 
   return { items: items.map(mapItem), itemType }
+}
+
+export async function getItemById(userId: string, itemId: string): Promise<ItemDetail | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    include: {
+      itemType: { select: { id: true, name: true, icon: true, color: true } },
+      tags: { select: { id: true, name: true } },
+      collections: {
+        select: { collection: { select: { id: true, name: true } } },
+      },
+    },
+  })
+
+  if (!item) return null
+
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    content: item.content,
+    url: item.url,
+    language: item.language,
+    isFavorite: item.isFavorite,
+    isPinned: item.isPinned,
+    tags: item.tags,
+    collections: item.collections.map((ic) => ic.collection),
+    itemType: item.itemType,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
 }
 
 export const getItemTypes = cache(async function getItemTypes(userId: string): Promise<ItemTypeWithCount[]> {

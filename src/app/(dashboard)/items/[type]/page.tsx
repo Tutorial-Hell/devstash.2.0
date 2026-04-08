@@ -4,6 +4,7 @@ import { getItemsByType } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { Pin, Star, File } from "lucide-react"
+import { ClickableItemCard } from "@/components/clickable-item-card"
 
 interface Props {
   params: Promise<{ type: string }>
@@ -49,8 +50,9 @@ export default async function ItemsTypePage({ params }: Props) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {items.map((item) => (
-            <div
+            <ClickableItemCard
               key={item.id}
+              itemId={item.id}
               className="relative overflow-hidden flex flex-col gap-2 rounded-lg border border-border bg-card px-4 py-3 hover:bg-card/80 transition-colors cursor-pointer"
             >
               {/* Left accent bar */}
@@ -92,7 +94,7 @@ export default async function ItemsTypePage({ params }: Props) {
                   ))}
                 </div>
               )}
-            </div>
+            </ClickableItemCard>
           ))}
         </div>
       )}
