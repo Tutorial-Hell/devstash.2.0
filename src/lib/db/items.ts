@@ -219,6 +219,75 @@ export async function getItemById(userId: string, itemId: string): Promise<ItemD
   }
 }
 
+export type CreateItemData = {
+  typeName: string
+  title: string
+  description: string | null
+  content: string | null
+  url: string | null
+  language: string | null
+  tags: string[]
+}
+
+export async function createItemInDb(
+  userId: string,
+  data: CreateItemData
+): Promise<ItemDetail | null> {
+  const itemType = await prisma.itemType.findFirst({
+    where: { name: data.typeName, OR: [{ isSystem: true }, { userId }] },
+    select: { id: true, name: true, icon: true, color: true },
+  })
+  if (!itemType) return null
+
+  const tagRecords = await Promise.all(
+    data.tags.map((name) =>
+      prisma.tag.upsert({
+        where: { name_userId: { name, userId } },
+        create: { name, userId },
+        update: {},
+        select: { id: true },
+      })
+    )
+  )
+
+  const item = await prisma.item.create({
+    data: {
+      userId,
+      itemTypeId: itemType.id,
+      contentType: "text",
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      url: data.url,
+      language: data.language,
+      tags: { connect: tagRecords },
+    },
+    include: {
+      itemType: { select: { id: true, name: true, icon: true, color: true } },
+      tags: { select: { id: true, name: true } },
+      collections: {
+        select: { collection: { select: { id: true, name: true } } },
+      },
+    },
+  })
+
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    content: item.content,
+    url: item.url,
+    language: item.language,
+    isFavorite: item.isFavorite,
+    isPinned: item.isPinned,
+    tags: item.tags,
+    collections: item.collections.map((ic) => ic.collection),
+    itemType: item.itemType,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
+}
+
 export async function deleteItemById(userId: string, itemId: string): Promise<boolean> {
   const existing = await prisma.item.findFirst({
     where: { id: itemId, userId },

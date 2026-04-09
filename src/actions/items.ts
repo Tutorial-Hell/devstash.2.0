@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 import { getDemoUserId } from "@/lib/db/collections"
-import { updateItemById, deleteItemById, type ItemDetail } from "@/lib/db/items"
+import { updateItemById, deleteItemById, createItemInDb, type ItemDetail } from "@/lib/db/items"
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -78,4 +78,74 @@ export async function deleteItem(
   }
 
   return { success: true }
+}
+
+// ─── Create ───────────────────────────────────────────────────────────────────
+
+const ITEM_TYPES = ["snippet", "prompt", "command", "note", "link"] as const
+type ItemTypeName = (typeof ITEM_TYPES)[number]
+
+const createItemSchema = z
+  .object({
+    type: z.enum(ITEM_TYPES),
+    title: z.string().trim().min(1, "Title is required"),
+    description: z.string().trim().nullable().optional().transform((v) => v ?? null),
+    content: z.string().nullable().optional().transform((v) => v ?? null),
+    url: z
+      .string()
+      .trim()
+      .nullable()
+      .optional()
+      .transform((v) => (v === "" ? null : (v ?? null))),
+    language: z.string().trim().nullable().optional().transform((v) => v ?? null),
+    tags: z.array(z.string().trim().min(1)).default([]),
+  })
+  .refine((d) => d.type !== "link" || (d.url != null && d.url.length > 0), {
+    message: "URL is required for link items",
+    path: ["url"],
+  })
+  .refine((d) => d.type !== "link" || /^https?:\/\/.+/.test(d.url ?? ""), {
+    message: "Invalid URL",
+    path: ["url"],
+  })
+
+export type CreateItemInput = {
+  type: ItemTypeName
+  title: string
+  description?: string | null
+  content?: string | null
+  url?: string | null
+  language?: string | null
+  tags?: string[]
+}
+
+export async function createItem(
+  input: CreateItemInput
+): Promise<{ success: true; data: ItemDetail } | { success: false; error: string }> {
+  const userId = await getDemoUserId()
+  if (!userId) {
+    return { success: false, error: "Not authenticated." }
+  }
+
+  const parsed = createItemSchema.safeParse(input)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { success: false, error: first?.message ?? "Invalid input." }
+  }
+
+  const item = await createItemInDb(userId, {
+    typeName: parsed.data.type,
+    title: parsed.data.title,
+    description: parsed.data.description ?? null,
+    content: parsed.data.content ?? null,
+    url: parsed.data.url ?? null,
+    language: parsed.data.language ?? null,
+    tags: parsed.data.tags,
+  })
+
+  if (!item) {
+    return { success: false, error: "Invalid item type." }
+  }
+
+  return { success: true, data: item }
 }
