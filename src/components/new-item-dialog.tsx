@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { iconMap } from "@/lib/icon-map"
 import { CodeEditor } from "@/components/code-editor"
+import { MarkdownEditor } from "@/components/markdown-editor"
 import { createItem, type CreateItemInput } from "@/actions/items"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -23,6 +24,7 @@ type ItemTypeName = (typeof ITEM_TYPES)[number]
 
 const CONTENT_TYPES = new Set<ItemTypeName>(["snippet", "prompt", "command", "note"])
 const LANGUAGE_TYPES = new Set<ItemTypeName>(["snippet", "command"])
+const MARKDOWN_TYPES = new Set<ItemTypeName>(["note", "prompt"])
 
 const TYPE_META: Record<ItemTypeName, { icon: string; color: string }> = {
   snippet: { icon: "Code",       color: "#3b82f6" },
@@ -122,6 +124,7 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
 
   const showContent = CONTENT_TYPES.has(type)
   const showLanguage = LANGUAGE_TYPES.has(type)
+  const showMarkdown = MARKDOWN_TYPES.has(type)
   const showUrl = type === "link"
 
   function resetForm() {
@@ -242,6 +245,8 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
                   onChange={setContent}
                   language={language || "plaintext"}
                 />
+              ) : showMarkdown ? (
+                <MarkdownEditor value={content} onChange={setContent} />
               ) : (
                 <textarea
                   value={content}

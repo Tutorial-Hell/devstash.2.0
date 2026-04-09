@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { CodeEditor } from "@/components/code-editor"
+import { MarkdownEditor } from "@/components/markdown-editor"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { cn } from "@/lib/utils"
@@ -100,6 +101,7 @@ export function ItemDrawerProvider({ children }: { children: React.ReactNode }) 
 
 const CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"])
 const LANGUAGE_TYPES = new Set(["snippet", "command"])
+const MARKDOWN_TYPES = new Set(["note", "prompt"])
 
 function DrawerBody({
   item,
@@ -278,6 +280,8 @@ function ViewBody({
                 language={item.language ?? "plaintext"}
                 readOnly
               />
+            ) : MARKDOWN_TYPES.has(typeName) ? (
+              <MarkdownEditor value={item.content} readOnly />
             ) : (
               <pre className="text-xs text-foreground bg-muted rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-words font-mono">
                 {item.content}
@@ -367,6 +371,7 @@ function EditBody({
 
   const showContent = CONTENT_TYPES.has(typeName)
   const showLanguage = LANGUAGE_TYPES.has(typeName)
+  const showMarkdown = MARKDOWN_TYPES.has(typeName)
   const showUrl = typeName === "link"
 
   async function handleSave() {
@@ -462,6 +467,8 @@ function EditBody({
                 onChange={setContent}
                 language={language || "plaintext"}
               />
+            ) : showMarkdown ? (
+              <MarkdownEditor value={content} onChange={setContent} />
             ) : (
               <textarea
                 value={content}
