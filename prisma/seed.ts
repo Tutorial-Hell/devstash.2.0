@@ -75,27 +75,17 @@ async function seedSystemTypes() {
 }
 
 async function seedUser() {
-  const existing = await prisma.user.findUnique({
-    where: { email: "demo@devstash.io" },
-  })
-  if (existing) return existing
-
   const passwordHash = await bcrypt.hash("12345678", 12)
-  return prisma.user.create({
-    data: {
+
+  return prisma.user.upsert({
+    where: { email: "demo@devstash.io" },
+    update: { password: passwordHash },
+    create: {
       email: "demo@devstash.io",
       name: "Demo User",
       isPro: false,
       emailVerified: new Date(),
-      // Store hash in the Account relation via a credentials account
-      accounts: {
-        create: {
-          type: "credentials",
-          provider: "credentials",
-          providerAccountId: "demo@devstash.io",
-          access_token: passwordHash,
-        },
-      },
+      password: passwordHash,
     },
   })
 }

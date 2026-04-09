@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { CodeEditor } from "@/components/code-editor"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { cn } from "@/lib/utils"
@@ -157,6 +158,7 @@ function DrawerBody({
       ) : (
         <ViewBody
           item={item}
+          typeName={typeName}
           onEdit={enterEdit}
           onClose={onClose}
         />
@@ -169,10 +171,12 @@ function DrawerBody({
 
 function ViewBody({
   item,
+  typeName,
   onEdit,
   onClose,
 }: {
   item: ItemDetailResponse
+  typeName: string
   onEdit: () => void
   onClose: () => void
 }) {
@@ -268,9 +272,17 @@ function ViewBody({
 
         {item.content && (
           <Section label="Content">
-            <pre className="text-xs text-foreground bg-muted rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-words font-mono">
-              {item.content}
-            </pre>
+            {LANGUAGE_TYPES.has(typeName) ? (
+              <CodeEditor
+                value={item.content}
+                language={item.language ?? "plaintext"}
+                readOnly
+              />
+            ) : (
+              <pre className="text-xs text-foreground bg-muted rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-words font-mono">
+                {item.content}
+              </pre>
+            )}
           </Section>
         )}
 
@@ -444,13 +456,21 @@ function EditBody({
         {showContent && (
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Content</label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Item content"
-              rows={8}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y"
-            />
+            {showLanguage ? (
+              <CodeEditor
+                value={content}
+                onChange={setContent}
+                language={language || "plaintext"}
+              />
+            ) : (
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Item content"
+                rows={8}
+                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y"
+              />
+            )}
           </div>
         )}
 

@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { iconMap } from "@/lib/icon-map"
+import { CodeEditor } from "@/components/code-editor"
 import { createItem, type CreateItemInput } from "@/actions/items"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -93,18 +94,23 @@ function TypeDropdown({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function NewItemDialog() {
+interface NewItemDialogProps {
+  defaultType?: ItemTypeName
+}
+
+export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
 
   function handleOpenChange(next: boolean) {
+    if (next) setType(defaultType ?? "snippet")
     setOpen(next)
     if (!next) resetForm()
   }
 
   // ─── Form state ────────────────────────────────────────────────────────────
 
-  const [type, setType] = useState<ItemTypeName>("snippet")
+  const [type, setType] = useState<ItemTypeName>(defaultType ?? "snippet")
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [content, setContent] = useState("")
@@ -177,7 +183,9 @@ export function NewItemDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <Button size="sm" onClick={() => setOpen(true)}>
         <Plus className="h-4 w-4" />
-        New Item
+        {defaultType
+          ? `New ${defaultType.charAt(0).toUpperCase() + defaultType.slice(1)}`
+          : "New Item"}
       </Button>
 
       <DialogContent className="sm:max-w-md" showCloseButton={false}>
@@ -228,13 +236,21 @@ export function NewItemDialog() {
           {showContent && (
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Content</label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Item content"
-                rows={3}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-              />
+              {showLanguage ? (
+                <CodeEditor
+                  value={content}
+                  onChange={setContent}
+                  language={language || "plaintext"}
+                />
+              ) : (
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Item content"
+                  rows={3}
+                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                />
+              )}
             </div>
           )}
 

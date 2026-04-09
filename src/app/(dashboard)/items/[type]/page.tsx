@@ -5,6 +5,9 @@ import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { Pin, Star, File } from "lucide-react"
 import { ClickableItemCard } from "@/components/clickable-item-card"
+import { NewItemDialog } from "@/components/new-item-dialog"
+
+const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link"])
 
 interface Props {
   params: Promise<{ type: string }>
@@ -22,24 +25,29 @@ export default async function ItemsTypePage({ params }: Props) {
 
   const Icon = iconMap[itemType.icon] ?? File
   const color = itemType.color
-  const label = type.charAt(0).toUpperCase() + type.slice(1)
+  const typeName = type.replace(/s$/, "")
+  const label = typeName.charAt(0).toUpperCase() + typeName.slice(1)
+  const dialogType = DIALOG_TYPES.has(typeName) ? typeName as "snippet" | "prompt" | "command" | "note" | "link" : null
 
   return (
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div
-          className="flex h-8 w-8 items-center justify-center rounded-md"
-          style={{ backgroundColor: `${color}20` }}
-        >
-          <Icon className="h-4 w-4" style={{ color }} />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-md"
+            style={{ backgroundColor: `${color}20` }}
+          >
+            <Icon className="h-4 w-4" style={{ color }} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{label}s</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {items.length} {items.length === 1 ? "item" : "items"}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{label}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {items.length} {items.length === 1 ? "item" : "items"}
-          </p>
-        </div>
+        {dialogType && <NewItemDialog defaultType={dialogType} />}
       </div>
 
       {/* Grid */}
