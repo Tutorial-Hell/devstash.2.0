@@ -1,8 +1,9 @@
 "use client"
 
-import { Search, Plus, PanelLeft, Menu } from "lucide-react"
+import { Search, PanelLeft, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NewItemDialog } from "@/components/new-item-dialog"
 
 interface TopbarProps {
   onToggleSidebar?: () => void
@@ -57,10 +58,7 @@ export function Topbar({ onToggleSidebar, onMobileMenuOpen }: TopbarProps) {
         <Button variant="outline" size="sm" className="hidden sm:inline-flex">
           New Collection
         </Button>
-        <Button size="sm">
-          <Plus className="h-4 w-4" />
-          New Item
-        </Button>
+        <NewItemDialog />
       </div>
     </header>
   )
