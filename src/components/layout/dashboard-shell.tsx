@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Toaster } from "sonner"
 import { Topbar } from "@/components/layout/topbar"
 import { Sidebar } from "@/components/layout/sidebar"
 import { ItemDrawerProvider } from "@/components/item-drawer"
@@ -27,6 +28,7 @@ export function DashboardShell({ children, itemTypes, collections, user }: Dashb
 
   return (
     <ItemDrawerProvider>
+      <Toaster position="bottom-right" />
       <div className="flex flex-col h-full">
         <Topbar
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
