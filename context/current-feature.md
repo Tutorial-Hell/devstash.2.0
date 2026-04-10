@@ -1,25 +1,15 @@
-# Current Feature: File Upload with Cloudflare R2
+# Current Feature
 
 ## Status
-In Progress
+Not Started
 
 ## Goals
 
-- Create upload API route for R2
-- Create `FileUpload` component with drag-and-drop and progress indicator
-- Update New Item dialog to use `FileUpload` for file/image types
-- Display image preview for images, file info for files in drawer
-- Add download button in `ItemDrawer` for file types via a download proxy API route
-- Delete files from R2 when items are deleted
+<!-- Add goals here -->
 
 ## Notes
 
-- Keep all Prisma/DB functions in `src/lib/db/items.ts`
-- File constraints:
-  - Images: max 5 MB — `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`
-  - Files: max 10 MB — `.pdf`, `.txt`, `.md`, `.json`, `.yaml`, `.yml`, `.xml`, `.csv`, `.toml`, `.ini`
-- Download proxy route avoids CORS issues with direct R2 URLs
-- MIME type mappings defined in spec for both image and file categories
+<!-- Add notes here -->
 
 ## History
 
@@ -57,3 +47,4 @@ In Progress
 - **2026-04-09** — Item Create completed. "New Item" topbar button opens a Dialog with a custom type dropdown (icon + brand color per type), dynamic fields based on selected type (content/language for snippet/command, content for prompt/note, URL for link), and a `createItem` server action with Zod validation including URL refinement for link type. `createItemInDb` in `src/lib/db/items.ts` handles tag upsert and item creation. On success: toast, modal close, page refresh. Unit tests cover 8 branches including URL validation edge cases. Trash button in item drawer opens a ShadCN AlertDialog (Base UI) confirming deletion with item title quoted. On confirm: `deleteItem` server action (ownership-checked via `deleteItemById`) runs, drawer closes, `router.refresh()` resyncs the page, and a Sonner success toast is shown. On cancel: nothing changes. Unit tests cover not-authenticated, item-not-found, and success branches.
 - **2026-04-09** — Code Editor completed. `CodeEditor` component (`src/components/code-editor.tsx`) using Monaco with `vs-dark` theme, macOS window dots (red/yellow/green), language label, and copy button in header. Dynamic height via `onDidContentSizeChange` (min 80px, max 400px) with themed scrollbar. Replaces `<textarea>` in item drawer and new item dialog for snippet/command types; all other types keep existing textarea. `NewItemDialog` accepts `defaultType` prop — pre-selects type and labels trigger button accordingly. Type-specific add button added to each item type page header. `normalizeLanguage` utility moved to `src/lib/utils.ts` with alias mapping (js→javascript, ts→typescript, bash→shell, etc.). 9 unit tests added. Also fixed seed bug where password hash was stored in `Account.access_token` instead of `user.password`.
 - **2026-04-09** — Markdown Editor completed. `MarkdownEditor` component (`src/components/markdown-editor.tsx`) with Write/Preview tabs, `bg-[#2d2d2d]` header and `bg-[#1e1e1e]` body matching CodeEditor dark theme, copy button, and `react-markdown` + `remark-gfm` for GitHub Flavored Markdown. Readonly mode shows Preview tab only; edit mode defaults to Write tab. Fluid height (min 200px, max 400px). Full GFM prose styling via `.markdown-preview` CSS class in `globals.css` (headings, code blocks, inline code, lists, blockquotes, links, tables). Shared `.editor-scrollbar` utility (6px thumb, transparent track) matches Monaco scrollbar. Integrated into `NewItemDialog` and `ItemDrawer` (view + edit) for note and prompt types.
+- **2026-04-10** — File Upload with Cloudflare R2 completed. R2 client (`src/lib/r2.ts`) with upload/download/delete helpers; fail-open when env vars absent. `POST /api/upload` validates auth, MIME type (5 image / 10 file types), and size limits (5 MB images, 10 MB files) before uploading to R2. `GET /api/download/[id]` proxies file from R2 auth-gated (inline for images, attachment for files). `FileUpload` component with drag-and-drop, XHR progress bar, local image preview, and error display. `NewItemDialog` extended with file and image types (pink/slate icons); `FileUpload` shown for those types; switching type clears uploaded file state. `ItemDrawer` shows image preview via download proxy, file info card, and Download link in action bar. `deleteItem` action deletes R2 object when fileKey is present after DB deletion. New File/Image buttons added to `/items/files` and `/items/images` listing pages. 18 new tests covering upload route validation and file/image action branches (52 total, up from 34).
