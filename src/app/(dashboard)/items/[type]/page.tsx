@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/utils"
 import { Pin, Star, File } from "lucide-react"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { NewItemDialog } from "@/components/new-item-dialog"
+import { ImageThumbnailCard } from "@/components/image-thumbnail-card"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
@@ -54,6 +55,12 @@ export default async function ItemsTypePage({ params }: Props) {
       {items.length === 0 ? (
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">No {label.toLowerCase()} yet.</p>
+        </div>
+      ) : type === "images" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {items.map((item) => (
+            <ImageThumbnailCard key={item.id} item={item} />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
