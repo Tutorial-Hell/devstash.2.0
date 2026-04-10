@@ -140,7 +140,7 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
   }
 
   function resetForm() {
-    setType("snippet")
+    setType(defaultType ?? "snippet")
     setTitle("")
     setDescription("")
     setContent("")
