@@ -7,6 +7,9 @@ export type ItemDetail = {
   description: string | null
   content: string | null
   url: string | null
+  fileUrl: string | null
+  fileName: string | null
+  fileSize: number | null
   language: string | null
   isFavorite: boolean
   isPinned: boolean
@@ -177,6 +180,9 @@ export async function updateItemById(
     description: updated.description,
     content: updated.content,
     url: updated.url,
+    fileUrl: updated.fileUrl,
+    fileName: updated.fileName,
+    fileSize: updated.fileSize,
     language: updated.language,
     isFavorite: updated.isFavorite,
     isPinned: updated.isPinned,
@@ -208,6 +214,9 @@ export async function getItemById(userId: string, itemId: string): Promise<ItemD
     description: item.description,
     content: item.content,
     url: item.url,
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
     language: item.language,
     isFavorite: item.isFavorite,
     isPinned: item.isPinned,
@@ -225,6 +234,9 @@ export type CreateItemData = {
   description: string | null
   content: string | null
   url: string | null
+  fileUrl: string | null
+  fileName: string | null
+  fileSize: number | null
   language: string | null
   tags: string[]
 }
@@ -254,11 +266,14 @@ export async function createItemInDb(
     data: {
       userId,
       itemTypeId: itemType.id,
-      contentType: "text",
+      contentType: data.fileUrl ? "file" : "text",
       title: data.title,
       description: data.description,
       content: data.content,
       url: data.url,
+      fileUrl: data.fileUrl,
+      fileName: data.fileName,
+      fileSize: data.fileSize,
       language: data.language,
       tags: { connect: tagRecords },
     },
@@ -277,6 +292,9 @@ export async function createItemInDb(
     description: item.description,
     content: item.content,
     url: item.url,
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
     language: item.language,
     isFavorite: item.isFavorite,
     isPinned: item.isPinned,
@@ -288,15 +306,18 @@ export async function createItemInDb(
   }
 }
 
-export async function deleteItemById(userId: string, itemId: string): Promise<boolean> {
+export async function deleteItemById(
+  userId: string,
+  itemId: string
+): Promise<{ deleted: boolean; fileKey: string | null }> {
   const existing = await prisma.item.findFirst({
     where: { id: itemId, userId },
-    select: { id: true },
+    select: { id: true, fileUrl: true },
   })
-  if (!existing) return false
+  if (!existing) return { deleted: false, fileKey: null }
 
   await prisma.item.delete({ where: { id: itemId } })
-  return true
+  return { deleted: true, fileKey: existing.fileUrl }
 }
 
 export const getItemTypes = cache(async function getItemTypes(userId: string): Promise<ItemTypeWithCount[]> {
