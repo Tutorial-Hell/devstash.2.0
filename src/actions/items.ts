@@ -3,6 +3,7 @@
 import { z } from "zod"
 import { getDemoUserId } from "@/lib/db/collections"
 import { updateItemById, deleteItemById, createItemInDb, type ItemDetail } from "@/lib/db/items"
+import { deleteFromR2 } from "@/lib/r2"
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -72,9 +73,13 @@ export async function deleteItem(
     return { success: false, error: "Not authenticated." }
   }
 
-  const deleted = await deleteItemById(userId, itemId)
-  if (!deleted) {
+  const result = await deleteItemById(userId, itemId)
+  if (!result.deleted) {
     return { success: false, error: "Item not found or access denied." }
+  }
+
+  if (result.fileKey) {
+    await deleteFromR2(result.fileKey).catch(console.error)
   }
 
   return { success: true }
@@ -82,7 +87,7 @@ export async function deleteItem(
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 
-const ITEM_TYPES = ["snippet", "prompt", "command", "note", "link"] as const
+const ITEM_TYPES = ["snippet", "prompt", "command", "note", "link", "file", "image"] as const
 type ItemTypeName = (typeof ITEM_TYPES)[number]
 
 const createItemSchema = z
@@ -97,6 +102,9 @@ const createItemSchema = z
       .nullable()
       .optional()
       .transform((v) => (v === "" ? null : (v ?? null))),
+    fileUrl: z.string().nullable().optional().transform((v) => v ?? null),
+    fileName: z.string().nullable().optional().transform((v) => v ?? null),
+    fileSize: z.number().nullable().optional().transform((v) => v ?? null),
     language: z.string().trim().nullable().optional().transform((v) => v ?? null),
     tags: z.array(z.string().trim().min(1)).default([]),
   })
@@ -108,6 +116,10 @@ const createItemSchema = z
     message: "Invalid URL",
     path: ["url"],
   })
+  .refine((d) => !["file", "image"].includes(d.type) || d.fileUrl != null, {
+    message: "A file must be uploaded",
+    path: ["fileUrl"],
+  })
 
 export type CreateItemInput = {
   type: ItemTypeName
@@ -115,6 +127,9 @@ export type CreateItemInput = {
   description?: string | null
   content?: string | null
   url?: string | null
+  fileUrl?: string | null
+  fileName?: string | null
+  fileSize?: number | null
   language?: string | null
   tags?: string[]
 }
@@ -139,6 +154,9 @@ export async function createItem(
     description: parsed.data.description ?? null,
     content: parsed.data.content ?? null,
     url: parsed.data.url ?? null,
+    fileUrl: parsed.data.fileUrl ?? null,
+    fileName: parsed.data.fileName ?? null,
+    fileSize: parsed.data.fileSize ?? null,
     language: parsed.data.language ?? null,
     tags: parsed.data.tags,
   })

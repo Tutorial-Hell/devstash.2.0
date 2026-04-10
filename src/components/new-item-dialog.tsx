@@ -16,15 +16,17 @@ import { iconMap } from "@/lib/icon-map"
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { createItem, type CreateItemInput } from "@/actions/items"
+import { FileUpload, type UploadedFile } from "@/components/file-upload"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ITEM_TYPES = ["snippet", "prompt", "command", "note", "link"] as const
+const ITEM_TYPES = ["snippet", "prompt", "command", "note", "link", "file", "image"] as const
 type ItemTypeName = (typeof ITEM_TYPES)[number]
 
 const CONTENT_TYPES = new Set<ItemTypeName>(["snippet", "prompt", "command", "note"])
 const LANGUAGE_TYPES = new Set<ItemTypeName>(["snippet", "command"])
 const MARKDOWN_TYPES = new Set<ItemTypeName>(["note", "prompt"])
+const FILE_TYPES = new Set<ItemTypeName>(["file", "image"])
 
 const TYPE_META: Record<ItemTypeName, { icon: string; color: string }> = {
   snippet: { icon: "Code",       color: "#3b82f6" },
@@ -32,6 +34,8 @@ const TYPE_META: Record<ItemTypeName, { icon: string; color: string }> = {
   command: { icon: "Terminal",   color: "#f97316" },
   note:    { icon: "StickyNote", color: "#fde047" },
   link:    { icon: "Link",       color: "#10b981" },
+  file:    { icon: "File",       color: "#64748b" },
+  image:   { icon: "Image",      color: "#ec4899" },
 }
 
 // ─── TypeDropdown ─────────────────────────────────────────────────────────────
@@ -122,10 +126,18 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
+
   const showContent = CONTENT_TYPES.has(type)
   const showLanguage = LANGUAGE_TYPES.has(type)
   const showMarkdown = MARKDOWN_TYPES.has(type)
   const showUrl = type === "link"
+  const showFileUpload = FILE_TYPES.has(type)
+
+  function handleTypeChange(newType: ItemTypeName) {
+    if (!FILE_TYPES.has(newType)) setUploadedFile(null)
+    setType(newType)
+  }
 
   function resetForm() {
     setType("snippet")
@@ -135,6 +147,7 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
     setUrl("")
     setLanguage("")
     setTagsInput("")
+    setUploadedFile(null)
     setError(null)
     setSaving(false)
   }
@@ -158,6 +171,9 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
         description: description || null,
         content: content || null,
         url: url || null,
+        fileUrl: uploadedFile?.key ?? null,
+        fileName: uploadedFile?.fileName ?? null,
+        fileSize: uploadedFile?.fileSize ?? null,
         language: language || null,
         tags,
       }
@@ -206,7 +222,7 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
           {/* Type selector */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Type</label>
-            <TypeDropdown value={type} onChange={setType} />
+            <TypeDropdown value={type} onChange={handleTypeChange} />
           </div>
 
           {/* Title */}
@@ -234,6 +250,21 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
               className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
             />
           </div>
+
+          {/* File upload — file, image */}
+          {showFileUpload && (
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                {type === "image" ? "Image" : "File"} <span className="text-destructive">*</span>
+              </label>
+              <FileUpload
+                itemType={type as "file" | "image"}
+                uploaded={uploadedFile}
+                onUpload={setUploadedFile}
+                onClear={() => setUploadedFile(null)}
+              />
+            </div>
+          )}
 
           {/* Content — snippet, prompt, command, note */}
           {showContent && (
@@ -309,7 +340,11 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={saving || !title.trim()}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={saving || !title.trim() || (showFileUpload && !uploadedFile)}
+            >
               {saving ? "Creating…" : "Create"}
             </Button>
           </div>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   Star, Pin, Copy, Pencil, Trash2, File,
-  FolderOpen, Tag as TagIcon, Calendar,
+  FolderOpen, Tag as TagIcon, Calendar, Download,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -29,6 +29,14 @@ import { formatDate } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { updateItem, deleteItem } from "@/actions/items"
 import type { ItemDetail } from "@/lib/db/items"
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -230,6 +238,16 @@ function ViewBody({
           <Pencil className="h-3.5 w-3.5" />
           Edit
         </Button>
+        {item.fileUrl && (
+          <a
+            href={`/api/download/${item.id}`}
+            download={item.fileName ?? undefined}
+            className="inline-flex items-center gap-1.5 rounded-md px-2 text-xs h-8 font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download
+          </a>
+        )}
         <div className="flex-1" />
         <AlertDialog>
           <AlertDialogTrigger
@@ -266,6 +284,33 @@ function ViewBody({
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        {/* Image preview */}
+        {typeName === "image" && item.fileUrl && (
+          <Section label="Preview">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/download/${item.id}`}
+              alt={item.fileName ?? item.title}
+              className="max-h-64 w-full rounded-md object-contain bg-[#1e1e1e] border border-input"
+            />
+          </Section>
+        )}
+
+        {/* File info */}
+        {(typeName === "file" || typeName === "image") && item.fileName && (
+          <Section label="File">
+            <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2">
+              <File className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-sm text-foreground">{item.fileName}</p>
+                {item.fileSize && (
+                  <p className="text-xs text-muted-foreground">{formatBytes(item.fileSize)}</p>
+                )}
+              </div>
+            </div>
+          </Section>
+        )}
+
         {item.description && (
           <Section label="Description">
             <p className="text-sm text-muted-foreground">{item.description}</p>

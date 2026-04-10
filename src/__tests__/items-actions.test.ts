@@ -9,14 +9,20 @@ vi.mock("@/lib/db/items", () => ({
   createItemInDb: vi.fn(),
 }))
 
+vi.mock("@/lib/r2", () => ({
+  deleteFromR2: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { getDemoUserId } from "@/lib/db/collections"
 import { deleteItemById, createItemInDb } from "@/lib/db/items"
+import { deleteFromR2 } from "@/lib/r2"
 import { deleteItem, createItem } from "@/actions/items"
 
 describe("deleteItem", () => {
   beforeEach(() => {
     vi.mocked(getDemoUserId).mockReset()
     vi.mocked(deleteItemById).mockReset()
+    vi.mocked(deleteFromR2).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
@@ -30,7 +36,7 @@ describe("deleteItem", () => {
 
   it("returns not-found error when item does not belong to user", async () => {
     vi.mocked(getDemoUserId).mockResolvedValue("user-1")
-    vi.mocked(deleteItemById).mockResolvedValue(false)
+    vi.mocked(deleteItemById).mockResolvedValue({ deleted: false, fileKey: null })
 
     const result = await deleteItem("item-999")
 
@@ -40,12 +46,31 @@ describe("deleteItem", () => {
 
   it("returns success when item is deleted", async () => {
     vi.mocked(getDemoUserId).mockResolvedValue("user-1")
-    vi.mocked(deleteItemById).mockResolvedValue(true)
+    vi.mocked(deleteItemById).mockResolvedValue({ deleted: true, fileKey: null })
 
     const result = await deleteItem("item-123")
 
     expect(result).toEqual({ success: true })
     expect(deleteItemById).toHaveBeenCalledWith("user-1", "item-123")
+  })
+
+  it("calls deleteFromR2 when deleted item has a fileKey", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(deleteItemById).mockResolvedValue({ deleted: true, fileKey: "user-1/abc.png" })
+    vi.mocked(deleteFromR2).mockResolvedValue(undefined)
+
+    await deleteItem("item-123")
+
+    expect(deleteFromR2).toHaveBeenCalledWith("user-1/abc.png")
+  })
+
+  it("does not call deleteFromR2 when fileKey is null", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(deleteItemById).mockResolvedValue({ deleted: true, fileKey: null })
+
+    await deleteItem("item-123")
+
+    expect(deleteFromR2).not.toHaveBeenCalled()
   })
 })
 
@@ -57,6 +82,9 @@ const mockItem = {
   description: null,
   content: null,
   url: null,
+  fileUrl: null,
+  fileName: null,
+  fileSize: null,
   language: null,
   isFavorite: false,
   isPinned: false,
@@ -153,6 +181,48 @@ describe("createItem", () => {
     expect(createItemInDb).toHaveBeenCalledWith(
       "user-1",
       expect.objectContaining({ tags: ["react", "hooks"] })
+    )
+  })
+
+  it("returns validation error when file type has no fileUrl", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+
+    const result = await createItem({ type: "file", title: "My File" })
+
+    expect(result).toEqual({ success: false, error: "A file must be uploaded" })
+    expect(createItemInDb).not.toHaveBeenCalled()
+  })
+
+  it("returns validation error when image type has no fileUrl", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+
+    const result = await createItem({ type: "image", title: "My Image" })
+
+    expect(result).toEqual({ success: false, error: "A file must be uploaded" })
+    expect(createItemInDb).not.toHaveBeenCalled()
+  })
+
+  it("creates file item with fileUrl, fileName, fileSize", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(createItemInDb).mockResolvedValue(mockItem)
+
+    const result = await createItem({
+      type: "file",
+      title: "My Doc",
+      fileUrl: "user-1/uuid.pdf",
+      fileName: "report.pdf",
+      fileSize: 102400,
+    })
+
+    expect(result).toEqual({ success: true, data: mockItem })
+    expect(createItemInDb).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({
+        typeName: "file",
+        fileUrl: "user-1/uuid.pdf",
+        fileName: "report.pdf",
+        fileSize: 102400,
+      })
     )
   })
 })

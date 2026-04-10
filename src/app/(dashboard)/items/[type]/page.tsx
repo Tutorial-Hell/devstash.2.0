@@ -7,7 +7,7 @@ import { Pin, Star, File } from "lucide-react"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { NewItemDialog } from "@/components/new-item-dialog"
 
-const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link"])
+const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
 interface Props {
   params: Promise<{ type: string }>
@@ -27,7 +27,7 @@ export default async function ItemsTypePage({ params }: Props) {
   const color = itemType.color
   const typeName = type.replace(/s$/, "")
   const label = typeName.charAt(0).toUpperCase() + typeName.slice(1)
-  const dialogType = DIALOG_TYPES.has(typeName) ? typeName as "snippet" | "prompt" | "command" | "note" | "link" : null
+  const dialogType = DIALOG_TYPES.has(typeName) ? typeName as "snippet" | "prompt" | "command" | "note" | "link" | "file" | "image" : null
 
   return (
     <div className="space-y-6 max-w-5xl">
