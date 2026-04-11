@@ -1,22 +1,15 @@
-# Current Feature: File List View
+# Current Feature
 
 ## Status
-In Progress
+Not Started
 
 ## Goals
 
-- Replace grid card layout on `/items/files` with a single-column list (Google Drive/Dropbox style)
-- Each row shows: file icon (by extension), file name, file size, upload date, download button
-- Row hover highlight
-- Clicking a row opens the ItemDrawer
-- Download button triggers direct download (stop propagation so it doesn't open drawer)
-- Responsive: stack info vertically on mobile
+<!-- Add feature goals here -->
 
 ## Notes
 
-- Images page (`/items/images`) uses a thumbnail grid — files page needs a different, list-based layout
-- File icon should vary by extension (e.g. PDF, ZIP, DOCX, etc.)
-- Download should use the existing `/api/download/[id]` proxy with attachment disposition
+<!-- Add notes here -->
 
 ## History
 
@@ -56,3 +49,4 @@ In Progress
 - **2026-04-09** — Markdown Editor completed. `MarkdownEditor` component (`src/components/markdown-editor.tsx`) with Write/Preview tabs, `bg-[#2d2d2d]` header and `bg-[#1e1e1e]` body matching CodeEditor dark theme, copy button, and `react-markdown` + `remark-gfm` for GitHub Flavored Markdown. Readonly mode shows Preview tab only; edit mode defaults to Write tab. Fluid height (min 200px, max 400px). Full GFM prose styling via `.markdown-preview` CSS class in `globals.css` (headings, code blocks, inline code, lists, blockquotes, links, tables). Shared `.editor-scrollbar` utility (6px thumb, transparent track) matches Monaco scrollbar. Integrated into `NewItemDialog` and `ItemDrawer` (view + edit) for note and prompt types.
 - **2026-04-10** — File Upload with Cloudflare R2 completed. R2 client (`src/lib/r2.ts`) with upload/download/delete helpers; fail-open when env vars absent. `POST /api/upload` validates auth, MIME type (5 image / 10 file types), and size limits (5 MB images, 10 MB files) before uploading to R2. `GET /api/download/[id]` proxies file from R2 auth-gated (inline for images, attachment for files). `FileUpload` component with drag-and-drop, XHR progress bar, local image preview, and error display. `NewItemDialog` extended with file and image types (pink/slate icons); `FileUpload` shown for those types; switching type clears uploaded file state. `ItemDrawer` shows image preview via download proxy, file info card, and Download link in action bar. `deleteItem` action deletes R2 object when fileKey is present after DB deletion. New File/Image buttons added to `/items/files` and `/items/images` listing pages. 18 new tests covering upload route validation and file/image action branches (52 total, up from 34).
 - **2026-04-10** — Image Gallery View completed. Images listing page (`/items/images`) now renders a 3-column thumbnail grid instead of the standard item card layout. `ImageThumbnailCard` component (`src/components/image-thumbnail-card.tsx`) shows a 16:9 image preview via `/api/download/[id]` with `object-cover` and a 5% hover zoom (300ms transition). Clicking a card opens the item drawer. `fileUrl` exposed on `ItemWithMeta` type. `NewItemDialog` reset now preserves `defaultType` prop.
+- **2026-04-11** — File List View completed. `/items/files` now renders a single-column list (Google Drive style) instead of grid cards. `FileListRow` component (`src/components/file-list-row.tsx`) shows a file-type icon (by extension: PDF/doc→FileText, archive→FileArchive, video→FileVideo, audio→FileAudio, spreadsheet→FileSpreadsheet, default→File), file name, size (B/KB/MB), upload date, and a download button. Download uses `/api/download/[id]` with `stopPropagation` to avoid opening the drawer. Row click opens ItemDrawer. `ItemWithMeta` extended with `fileName` and `fileSize` fields.
