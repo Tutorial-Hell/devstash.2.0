@@ -27,6 +27,8 @@ export type ItemWithMeta = {
   isFavorite: boolean
   isPinned: boolean
   fileUrl: string | null
+  fileName: string | null
+  fileSize: number | null
   tags: { id: string; name: string }[]
   itemType: {
     id: string
@@ -37,8 +39,17 @@ export type ItemWithMeta = {
   createdAt: Date
 }
 
-const itemInclude = {
-  itemType: true,
+const itemSelect = {
+  id: true,
+  title: true,
+  description: true,
+  isFavorite: true,
+  isPinned: true,
+  fileUrl: true,
+  fileName: true,
+  fileSize: true,
+  createdAt: true,
+  itemType: { select: { id: true, name: true, icon: true, color: true } },
   tags: { select: { id: true, name: true } },
 } as const
 
@@ -49,6 +60,8 @@ function mapItem(item: {
   isFavorite: boolean
   isPinned: boolean
   fileUrl: string | null
+  fileName: string | null
+  fileSize: number | null
   createdAt: Date
   itemType: { id: string; name: string; icon: string; color: string }
   tags: { id: string; name: string }[]
@@ -60,6 +73,8 @@ function mapItem(item: {
     isFavorite: item.isFavorite,
     isPinned: item.isPinned,
     fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
     tags: item.tags,
     itemType: item.itemType,
     createdAt: item.createdAt,
@@ -70,7 +85,7 @@ export async function getPinnedItems(userId: string): Promise<ItemWithMeta[]> {
   const items = await prisma.item.findMany({
     where: { userId, isPinned: true },
     orderBy: { updatedAt: "desc" },
-    include: itemInclude,
+    select: itemSelect,
   })
   return items.map(mapItem)
 }
@@ -80,7 +95,7 @@ export async function getRecentItems(userId: string, limit = 10): Promise<ItemWi
     where: { userId },
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: itemInclude,
+    select: itemSelect,
   })
   return items.map(mapItem)
 }
@@ -119,7 +134,7 @@ export async function getItemsByType(
   const items = await prisma.item.findMany({
     where: { userId, itemTypeId: itemType.id },
     orderBy: { createdAt: "desc" },
-    include: itemInclude,
+    select: itemSelect,
   })
 
   return { items: items.map(mapItem), itemType }

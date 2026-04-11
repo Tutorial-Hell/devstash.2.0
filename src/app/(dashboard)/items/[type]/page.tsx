@@ -7,6 +7,7 @@ import { Pin, Star, File } from "lucide-react"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { NewItemDialog } from "@/components/new-item-dialog"
 import { ImageThumbnailCard } from "@/components/image-thumbnail-card"
+import { FileListRow } from "@/components/file-list-row"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
@@ -60,6 +61,12 @@ export default async function ItemsTypePage({ params }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {items.map((item) => (
             <ImageThumbnailCard key={item.id} item={item} />
+          ))}
+        </div>
+      ) : type === "files" ? (
+        <div className="flex flex-col gap-1.5">
+          {items.map((item) => (
+            <FileListRow key={item.id} item={item} />
           ))}
         </div>
       ) : (
