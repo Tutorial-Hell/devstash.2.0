@@ -37,7 +37,7 @@ export async function GET(
   const isImage = contentType?.startsWith("image/")
   const disposition = isImage
     ? "inline"
-    : `attachment; filename="${encodeURIComponent(item.fileName ?? "file")}"`
+    : `attachment; filename="${item.fileName ?? "file"}"; filename*=UTF-8''${encodeURIComponent(item.fileName ?? "file")}`
 
   return new Response(body, {
     headers: {

@@ -55,7 +55,9 @@ export function FileListRow({ item }: Props) {
         <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">
           {formatFileSize(item.fileSize)}
         </span>
-        <span className="text-xs text-muted-foreground shrink-0">
+        {/* suppressHydrationWarning: toLocaleDateString is timezone-sensitive; server (UTC)
+            and browser (local tz) can produce different day strings near UTC midnight */}
+        <span className="text-xs text-muted-foreground shrink-0" suppressHydrationWarning>
           {formatDate(item.createdAt)}
         </span>
       </div>

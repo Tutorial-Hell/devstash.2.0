@@ -1,5 +1,6 @@
 import { cache } from "react"
 import { prisma } from "@/lib/prisma"
+import { slugToTypeName } from "@/lib/utils"
 
 export type ItemDetail = {
   id: string
@@ -128,7 +129,7 @@ export async function getItemsByType(
   userId: string,
   typeSlug: string
 ): Promise<{ items: ItemWithMeta[]; itemType: { name: string; icon: string; color: string } | null }> {
-  const typeName = typeSlug.replace(/s$/, "")
+  const typeName = slugToTypeName(typeSlug)
   const itemType = await prisma.itemType.findFirst({
     where: {
       name: typeName,
