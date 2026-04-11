@@ -1,24 +1,16 @@
 # Current Feature
 
-Component Refactors
-
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Extract `UserMenu` dropdown from `sidebar.tsx` — duplicate JSX at lines 220–239 (expanded) and 268–287 (collapsed)
-- Extract `CollectionSection` from `sidebar.tsx` — duplicate favorite/all-collections list structure at lines 159–206
-- Extract `BadgeList` from `item-drawer.tsx` — duplicate tag/collection badge markup in both `ViewBody` and `EditBody`
-- Split `item-drawer.tsx` into `item-drawer-view.tsx` (ViewBody) and `item-drawer-edit.tsx` (EditBody) — 650-line file
-- Extract `FormField` wrapper from `new-item-dialog.tsx` — 4 repeated conditional label+editor blocks at lines 255–320
-- Extract `StatCard` from `dashboard/page.tsx` — inline card JSX rendered from stats array
-- Extract `UploadedFilePreview` from `file-upload.tsx` — self-contained uploaded state block at lines 106–139
+<!-- Add goals here -->
 
 ## Notes
 
-Pure refactors only — no behavior changes. Each extraction should keep the same rendered output and props flowing through. No new files except sub-components that are used immediately. Shared sub-components (BadgeList, FormField, StatCard, CollectionSection, UserMenu) should live in the same file as their parent unless used by multiple files.
+<!-- Add notes here -->
 
 ## History
 
@@ -60,3 +52,4 @@ Pure refactors only — no behavior changes. Each extraction should keep the sam
 - **2026-04-10** — Image Gallery View completed. Images listing page (`/items/images`) now renders a 3-column thumbnail grid instead of the standard item card layout. `ImageThumbnailCard` component (`src/components/image-thumbnail-card.tsx`) shows a 16:9 image preview via `/api/download/[id]` with `object-cover` and a 5% hover zoom (300ms transition). Clicking a card opens the item drawer. `fileUrl` exposed on `ItemWithMeta` type. `NewItemDialog` reset now preserves `defaultType` prop.
 - **2026-04-11** — File List View completed. `/items/files` now renders a single-column list (Google Drive style) instead of grid cards. `FileListRow` component (`src/components/file-list-row.tsx`) shows a file-type icon (by extension: PDF/doc→FileText, archive→FileArchive, video→FileVideo, audio→FileAudio, spreadsheet→FileSpreadsheet, default→File), file name, size (B/KB/MB), upload date, and a download button. Download uses `/api/download/[id]` with `stopPropagation` to avoid opening the drawer. Row click opens ItemDrawer. `ItemWithMeta` extended with `fileName` and `fileSize` fields.
 - **2026-04-11** — Code Quality Quick Wins completed. Deleted dead `src/lib/mock-data.ts`; added `loading="lazy"` to img tags in `item-drawer.tsx` and `image-thumbnail-card.tsx`; added `Strict-Transport-Security` and `Permissions-Policy` headers to `next.config.ts`; fixed `useEffect` deps in `sign-in-form.tsx`; fixed `Content-Disposition` encoding in download route; added min password length (8 chars) to register action and API route; extracted `formatBytes`, `slugToTypeName` to `src/lib/utils.ts`; changed `ClickableItemCard` and `ImageThumbnailCard` to `role="button"` divs with keyboard handlers; fixed `formatFileSize` hydration warning in `file-list-row.tsx`.
+- **2026-04-11** — Component Refactors completed. Extracted `UserMenu` and `CollectionSection` from `sidebar.tsx` (eliminated two sets of duplicate JSX). Split `item-drawer.tsx` into `item-drawer-view.tsx` (ViewBody, Section, DetailRow, BadgeList, shared types/constants) and `item-drawer-edit.tsx` (EditBody), reducing the main file from ~650 to ~115 lines. Extracted `FormField` from `new-item-dialog.tsx` (7 usages replacing repeated label+div wrappers), `StatCard` from `dashboard/page.tsx` (4 stats cards), and `UploadedFilePreview` from `file-upload.tsx` (self-contained uploaded state block).
