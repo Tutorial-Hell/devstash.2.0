@@ -24,6 +24,8 @@ export type ItemWithMeta = {
   id: string
   title: string
   description: string | null
+  content: string | null
+  url: string | null
   isFavorite: boolean
   isPinned: boolean
   fileUrl: string | null
@@ -43,6 +45,8 @@ const itemSelect = {
   id: true,
   title: true,
   description: true,
+  content: true,
+  url: true,
   isFavorite: true,
   isPinned: true,
   fileUrl: true,
@@ -57,6 +61,8 @@ function mapItem(item: {
   id: string
   title: string
   description: string | null
+  content: string | null
+  url: string | null
   isFavorite: boolean
   isPinned: boolean
   fileUrl: string | null
@@ -70,6 +76,8 @@ function mapItem(item: {
     id: item.id,
     title: item.title,
     description: item.description,
+    content: item.content,
+    url: item.url,
     isFavorite: item.isFavorite,
     isPinned: item.isPinned,
     fileUrl: item.fileUrl,

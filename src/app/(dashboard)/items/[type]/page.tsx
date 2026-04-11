@@ -8,6 +8,7 @@ import { ClickableItemCard } from "@/components/clickable-item-card"
 import { NewItemDialog } from "@/components/new-item-dialog"
 import { ImageThumbnailCard } from "@/components/image-thumbnail-card"
 import { FileListRow } from "@/components/file-list-row"
+import { CopyButton } from "@/components/copy-button"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
@@ -114,6 +115,12 @@ export default async function ItemsTypePage({ params }: Props) {
                       {tag.name}
                     </span>
                   ))}
+                </div>
+              )}
+              {/* Copy button */}
+              {(item.content ?? item.url) && (
+                <div className="flex justify-end">
+                  <CopyButton value={(item.content ?? item.url)!} />
                 </div>
               )}
             </ClickableItemCard>
