@@ -28,7 +28,7 @@ export function SignInForm() {
     if (searchParams.get("reset") === "1") {
       toast.success("Password reset! You can now sign in.", { id: "reset" })
     }
-  }, [])
+  }, [searchParams])
 
   return (
     <form action={action} className="space-y-3">

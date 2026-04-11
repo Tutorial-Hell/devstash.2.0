@@ -98,6 +98,27 @@ function TypeDropdown({
   )
 }
 
+// ─── FormField ────────────────────────────────────────────────────────────────
+
+function FormField({
+  label,
+  required,
+  children,
+}: {
+  label: string
+  required?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-muted-foreground">
+        {label}{required && <span className="text-destructive"> *</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface NewItemDialogProps {
@@ -220,16 +241,12 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
           )}
 
           {/* Type selector */}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Type</label>
+          <FormField label="Type">
             <TypeDropdown value={type} onChange={handleTypeChange} />
-          </div>
+          </FormField>
 
           {/* Title */}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">
-              Title <span className="text-destructive">*</span>
-            </label>
+          <FormField label="Title" required>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -237,11 +254,10 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
               className="h-8 text-sm"
               required
             />
-          </div>
+          </FormField>
 
           {/* Description */}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Description</label>
+          <FormField label="Description">
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -249,27 +265,23 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
               rows={1}
               className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
             />
-          </div>
+          </FormField>
 
           {/* File upload — file, image */}
           {showFileUpload && (
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                {type === "image" ? "Image" : "File"} <span className="text-destructive">*</span>
-              </label>
+            <FormField label={type === "image" ? "Image" : "File"} required>
               <FileUpload
                 itemType={type as "file" | "image"}
                 uploaded={uploadedFile}
                 onUpload={setUploadedFile}
                 onClear={() => setUploadedFile(null)}
               />
-            </div>
+            </FormField>
           )}
 
           {/* Content — snippet, prompt, command, note */}
           {showContent && (
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Content</label>
+            <FormField label="Content">
               {showLanguage ? (
                 <CodeEditor
                   value={content}
@@ -287,28 +299,24 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
                   className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                 />
               )}
-            </div>
+            </FormField>
           )}
 
           {/* Language — snippet, command */}
           {showLanguage && (
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Language</label>
+            <FormField label="Language">
               <Input
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
                 placeholder="e.g. typescript"
                 className="h-8 text-sm"
               />
-            </div>
+            </FormField>
           )}
 
           {/* URL — link */}
           {showUrl && (
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                URL <span className="text-destructive">*</span>
-              </label>
+            <FormField label="URL" required>
               <Input
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -316,19 +324,18 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
                 className="h-8 text-sm"
                 type="url"
               />
-            </div>
+            </FormField>
           )}
 
           {/* Tags */}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Tags</label>
+          <FormField label="Tags">
             <Input
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               placeholder="react, hooks, typescript"
               className="h-8 text-sm"
             />
-          </div>
+          </FormField>
 
           <div className="flex justify-end gap-2 pt-1">
             <Button

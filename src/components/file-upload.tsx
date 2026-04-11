@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from "react"
 import { Upload, X, File, ImageIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatBytes } from "@/lib/utils"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,12 +20,52 @@ interface FileUploadProps {
   uploaded: UploadedFile | null
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── UploadedFilePreview ──────────────────────────────────────────────────────
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+function UploadedFilePreview({
+  uploaded,
+  previewUrl,
+  itemType,
+  onClear,
+}: {
+  uploaded: UploadedFile
+  previewUrl: string | null
+  itemType: "file" | "image"
+  onClear: () => void
+}) {
+  return (
+    <div className="rounded-md border border-input bg-muted/30 px-3 py-2.5">
+      {previewUrl ? (
+        <div className="relative mb-2 overflow-hidden rounded border border-input">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl}
+            alt={uploaded.fileName}
+            className="max-h-40 w-full object-contain bg-[#1e1e1e]"
+          />
+        </div>
+      ) : null}
+      <div className="flex items-center gap-2">
+        {itemType === "image" ? (
+          <ImageIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        ) : (
+          <File className="h-4 w-4 shrink-0 text-muted-foreground" />
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="truncate text-sm text-foreground">{uploaded.fileName}</p>
+          <p className="text-xs text-muted-foreground">{formatBytes(uploaded.fileSize)}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Remove file</span>
+        </button>
+      </div>
+    </div>
+  )
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -113,37 +153,12 @@ export function FileUpload({ itemType, onUpload, onClear, uploaded }: FileUpload
 
   if (uploaded) {
     return (
-      <div className="rounded-md border border-input bg-muted/30 px-3 py-2.5">
-        {previewUrl ? (
-          <div className="relative mb-2 overflow-hidden rounded border border-input">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={previewUrl}
-              alt={uploaded.fileName}
-              className="max-h-40 w-full object-contain bg-[#1e1e1e]"
-            />
-          </div>
-        ) : null}
-        <div className="flex items-center gap-2">
-          {itemType === "image" ? (
-            <ImageIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-          ) : (
-            <File className="h-4 w-4 shrink-0 text-muted-foreground" />
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="truncate text-sm text-foreground">{uploaded.fileName}</p>
-            <p className="text-xs text-muted-foreground">{formatBytes(uploaded.fileSize)}</p>
-          </div>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Remove file</span>
-          </button>
-        </div>
-      </div>
+      <UploadedFilePreview
+        uploaded={uploaded}
+        previewUrl={previewUrl}
+        itemType={itemType}
+        onClear={handleClear}
+      />
     )
   }
 

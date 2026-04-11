@@ -20,6 +20,10 @@ export async function registerAction(
     return { error: "All fields are required." }
   }
 
+  if (password.length < 8) {
+    return { error: "Password must be at least 8 characters." }
+  }
+
   if (password !== confirmPassword) {
     return { error: "Passwords do not match." }
   }

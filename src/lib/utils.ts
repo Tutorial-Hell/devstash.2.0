@@ -28,6 +28,16 @@ const LANGUAGE_ALIAS_MAP: Record<string, string> = {
   tf: "hcl",
 }
 
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+export function slugToTypeName(slug: string): string {
+  return slug.replace(/s$/, "")
+}
+
 export function normalizeLanguage(lang: string): string {
   const lower = lang.toLowerCase()
   return LANGUAGE_ALIAS_MAP[lower] ?? lower

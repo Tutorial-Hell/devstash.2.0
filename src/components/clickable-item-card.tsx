@@ -12,7 +12,19 @@ interface Props {
 export function ClickableItemCard({ itemId, className, style, children }: Props) {
   const { openDrawer } = useItemDrawer()
   return (
-    <div className={className} style={style} onClick={() => openDrawer(itemId)}>
+    <div
+      role="button"
+      tabIndex={0}
+      className={className}
+      style={style}
+      onClick={() => openDrawer(itemId)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          openDrawer(itemId)
+        }
+      }}
+    >
       {children}
     </div>
   )

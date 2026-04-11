@@ -1,50 +1,14 @@
 "use client"
 
 import { createContext, useCallback, useContext, useState } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import {
-  Star, Pin, Copy, Pencil, Trash2, File,
-  FolderOpen, Tag as TagIcon, Calendar, Download,
-} from "lucide-react"
+import { File } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { CodeEditor } from "@/components/code-editor"
-import { MarkdownEditor } from "@/components/markdown-editor"
 import { iconMap } from "@/lib/icon-map"
-import { formatDate } from "@/lib/utils"
 import { cn } from "@/lib/utils"
-import { updateItem, deleteItem } from "@/actions/items"
-import type { ItemDetail } from "@/lib/db/items"
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-// Dates come back as ISO strings from the API
-type ItemDetailResponse = Omit<ItemDetail, "createdAt" | "updatedAt"> & {
-  createdAt: string
-  updatedAt: string
-}
+import { ViewBody, type ItemDetailResponse } from "@/components/item-drawer-view"
+import { EditBody } from "@/components/item-drawer-edit"
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -107,10 +71,6 @@ export function ItemDrawerProvider({ children }: { children: React.ReactNode }) 
 
 // ─── Drawer body ──────────────────────────────────────────────────────────────
 
-const CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"])
-const LANGUAGE_TYPES = new Set(["snippet", "command"])
-const MARKDOWN_TYPES = new Set(["note", "prompt"])
-
 function DrawerBody({
   item,
   onClose,
@@ -124,9 +84,6 @@ function DrawerBody({
   const Icon = iconMap[item.itemType.icon] ?? File
   const color = item.itemType.color
   const typeName = item.itemType.name.toLowerCase()
-
-  function enterEdit() { setEditMode(true) }
-  function exitEdit() { setEditMode(false) }
 
   return (
     <>
@@ -159,466 +116,21 @@ function DrawerBody({
         <EditBody
           item={item}
           typeName={typeName}
-          onCancel={exitEdit}
+          onCancel={() => setEditMode(false)}
           onSaved={(updated) => {
             onUpdate(updated)
-            exitEdit()
+            setEditMode(false)
           }}
         />
       ) : (
         <ViewBody
           item={item}
           typeName={typeName}
-          onEdit={enterEdit}
+          onEdit={() => setEditMode(true)}
           onClose={onClose}
         />
       )}
     </>
-  )
-}
-
-// ─── View mode ────────────────────────────────────────────────────────────────
-
-function ViewBody({
-  item,
-  typeName,
-  onEdit,
-  onClose,
-}: {
-  item: ItemDetailResponse
-  typeName: string
-  onEdit: () => void
-  onClose: () => void
-}) {
-  const router = useRouter()
-  const [deleting, setDeleting] = useState(false)
-
-  async function handleDelete() {
-    setDeleting(true)
-    try {
-      const result = await deleteItem(item.id)
-      if (!result.success) {
-        toast.error(result.error)
-        return
-      }
-      onClose()
-      router.refresh()
-      toast.success("Item deleted.")
-    } catch {
-      toast.error("Something went wrong. Please try again.")
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  return (
-    <>
-      {/* Action bar */}
-      <div className="flex items-center gap-0.5 px-3 py-1.5 border-y border-border">
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn(
-            "gap-1.5 text-xs h-8 px-2",
-            item.isFavorite && "text-yellow-400 hover:text-yellow-400"
-          )}
-        >
-          <Star className={cn("h-3.5 w-3.5", item.isFavorite ? "fill-yellow-400 text-yellow-400" : "")} />
-          Favorite
-        </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2">
-          <Pin className="h-3.5 w-3.5" />
-          Pin
-        </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2">
-          <Copy className="h-3.5 w-3.5" />
-          Copy
-        </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2" onClick={onEdit}>
-          <Pencil className="h-3.5 w-3.5" />
-          Edit
-        </Button>
-        {item.fileUrl && (
-          <a
-            href={`/api/download/${item.id}`}
-            download={item.fileName ?? undefined}
-            className="inline-flex items-center gap-1.5 rounded-md px-2 text-xs h-8 font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Download
-          </a>
-        )}
-        <div className="flex-1" />
-        <AlertDialog>
-          <AlertDialogTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                disabled={deleting}
-              />
-            }
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete item?</AlertDialogTitle>
-              <AlertDialogDescription>
-                &ldquo;{item.title}&rdquo; will be permanently deleted. This cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-        {/* Image preview */}
-        {typeName === "image" && item.fileUrl && (
-          <Section label="Preview">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/api/download/${item.id}`}
-              alt={item.fileName ?? item.title}
-              className="max-h-64 w-full rounded-md object-contain bg-[#1e1e1e] border border-input"
-            />
-          </Section>
-        )}
-
-        {/* File info */}
-        {(typeName === "file" || typeName === "image") && item.fileName && (
-          <Section label="File">
-            <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2">
-              <File className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm text-foreground">{item.fileName}</p>
-                {item.fileSize && (
-                  <p className="text-xs text-muted-foreground">{formatBytes(item.fileSize)}</p>
-                )}
-              </div>
-            </div>
-          </Section>
-        )}
-
-        {item.description && (
-          <Section label="Description">
-            <p className="text-sm text-muted-foreground">{item.description}</p>
-          </Section>
-        )}
-
-        {item.content && (
-          <Section label="Content">
-            {LANGUAGE_TYPES.has(typeName) ? (
-              <CodeEditor
-                value={item.content}
-                language={item.language ?? "plaintext"}
-                readOnly
-              />
-            ) : MARKDOWN_TYPES.has(typeName) ? (
-              <MarkdownEditor value={item.content} readOnly />
-            ) : (
-              <pre className="text-xs text-foreground bg-muted rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-words font-mono">
-                {item.content}
-              </pre>
-            )}
-          </Section>
-        )}
-
-        {item.url && (
-          <Section label="URL">
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary break-all hover:underline"
-            >
-              {item.url}
-            </a>
-          </Section>
-        )}
-
-        {item.tags.length > 0 && (
-          <Section label="Tags" icon={<TagIcon className="h-3.5 w-3.5" />}>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {item.tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground"
-                >
-                  {tag.name}
-                </span>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {item.collections.length > 0 && (
-          <Section label="Collections" icon={<FolderOpen className="h-3.5 w-3.5" />}>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {item.collections.map((col) => (
-                <span
-                  key={col.id}
-                  className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground"
-                >
-                  {col.name}
-                </span>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        <Section label="Details" icon={<Calendar className="h-3.5 w-3.5" />}>
-          <div className="space-y-1.5">
-            <DetailRow label="Created" value={formatDate(new Date(item.createdAt))} />
-            <DetailRow label="Updated" value={formatDate(new Date(item.updatedAt))} />
-          </div>
-        </Section>
-      </div>
-
-    </>
-  )
-}
-
-// ─── Edit mode ────────────────────────────────────────────────────────────────
-
-function EditBody({
-  item,
-  typeName,
-  onCancel,
-  onSaved,
-}: {
-  item: ItemDetailResponse
-  typeName: string
-  onCancel: () => void
-  onSaved: (updated: ItemDetailResponse) => void
-}) {
-  const router = useRouter()
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const [title, setTitle] = useState(item.title)
-  const [description, setDescription] = useState(item.description ?? "")
-  const [content, setContent] = useState(item.content ?? "")
-  const [url, setUrl] = useState(item.url ?? "")
-  const [language, setLanguage] = useState(item.language ?? "")
-  const [tagsInput, setTagsInput] = useState(item.tags.map((t) => t.name).join(", "))
-
-  const showContent = CONTENT_TYPES.has(typeName)
-  const showLanguage = LANGUAGE_TYPES.has(typeName)
-  const showMarkdown = MARKDOWN_TYPES.has(typeName)
-  const showUrl = typeName === "link"
-
-  async function handleSave() {
-    setError(null)
-    setSaving(true)
-    try {
-      const tags = tagsInput
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean)
-
-      const result = await updateItem(item.id, {
-        title,
-        description: description || null,
-        content: content || null,
-        url: url || null,
-        language: language || null,
-        tags,
-      })
-
-      if (!result.success) {
-        setError(result.error)
-        return
-      }
-
-      // Convert Date fields back to ISO strings to match ItemDetailResponse
-      const updated: ItemDetailResponse = {
-        ...result.data,
-        createdAt: new Date(result.data.createdAt).toISOString(),
-        updatedAt: new Date(result.data.updatedAt).toISOString(),
-      }
-
-      toast.success("Item saved.")
-      router.refresh()
-      onSaved(updated)
-    } catch {
-      setError("Something went wrong. Please try again.")
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <>
-      {/* Edit action bar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-y border-border">
-        <Button size="sm" onClick={handleSave} disabled={saving || !title.trim()}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onCancel} disabled={saving}>
-          Cancel
-        </Button>
-      </div>
-
-      {/* Edit form */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-        {error && (
-          <p className="text-xs text-destructive rounded-md bg-destructive/10 px-3 py-2">
-            {error}
-          </p>
-        )}
-
-        {/* Title */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Title</label>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Item title"
-            className="h-8 text-sm"
-          />
-        </div>
-
-        {/* Description */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description"
-            rows={2}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-          />
-        </div>
-
-        {/* Content — snippet, prompt, command, note */}
-        {showContent && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Content</label>
-            {showLanguage ? (
-              <CodeEditor
-                value={content}
-                onChange={setContent}
-                language={language || "plaintext"}
-              />
-            ) : showMarkdown ? (
-              <MarkdownEditor value={content} onChange={setContent} />
-            ) : (
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Item content"
-                rows={8}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y"
-              />
-            )}
-          </div>
-        )}
-
-        {/* Language — snippet, command */}
-        {showLanguage && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Language</label>
-            <Input
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              placeholder="e.g. typescript"
-              className="h-8 text-sm"
-            />
-          </div>
-        )}
-
-        {/* URL — link */}
-        {showUrl && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">URL</label>
-            <Input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://…"
-              className="h-8 text-sm"
-              type="url"
-            />
-          </div>
-        )}
-
-        {/* Tags */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Tags</label>
-          <Input
-            value={tagsInput}
-            onChange={(e) => setTagsInput(e.target.value)}
-            placeholder="react, hooks, typescript"
-            className="h-8 text-sm"
-          />
-          <p className="text-[11px] text-muted-foreground">Comma-separated</p>
-        </div>
-
-        {/* Non-editable: collections + dates */}
-        {item.collections.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Collections</p>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {item.collections.map((col) => (
-                <span
-                  key={col.id}
-                  className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground"
-                >
-                  {col.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-1.5 pt-1 border-t border-border">
-          <DetailRow label="Created" value={formatDate(new Date(item.createdAt))} />
-          <DetailRow label="Updated" value={formatDate(new Date(item.updatedAt))} />
-        </div>
-      </div>
-    </>
-  )
-}
-
-// ─── Shared sub-components ────────────────────────────────────────────────────
-
-function Section({
-  label,
-  icon,
-  children,
-}: {
-  label: string
-  icon?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-foreground">{value}</span>
-    </div>
   )
 }
 
@@ -656,3 +168,6 @@ function DrawerSkeleton() {
     </div>
   )
 }
+
+// Re-export the unused `cn` suppressor — cn is still needed by DrawerBody callers
+export { cn }

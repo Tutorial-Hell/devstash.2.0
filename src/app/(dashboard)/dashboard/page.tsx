@@ -40,20 +40,8 @@ export default async function DashboardPage() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {stats.map(({ label, value, icon: Icon, color, fill }) => (
-          <div
-            key={label}
-            className="rounded-lg border border-border bg-card p-4 flex flex-col gap-1.5"
-          >
-            <div className="flex items-center gap-2.5">
-              <Icon
-                className="h-5 w-5 shrink-0"
-                style={{ color, ...(fill ? { fill: color } : {}) }}
-              />
-              <p className="text-2xl font-bold text-foreground">{value}</p>
-            </div>
-            <p className="text-xs text-muted-foreground">{label}</p>
-          </div>
+        {stats.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
         ))}
       </div>
 
@@ -142,6 +130,35 @@ export default async function DashboardPage() {
           ))}
         </div>
       </section>
+    </div>
+  )
+}
+
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  fill,
+}: {
+  label: string
+  value: number
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+  color: string
+  fill: boolean
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-1.5">
+      <div className="flex items-center gap-2.5">
+        <Icon
+          className="h-5 w-5 shrink-0"
+          style={{ color, ...(fill ? { fill: color } : {}) }}
+        />
+        <p className="text-2xl font-bold text-foreground">{value}</p>
+      </div>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   )
 }

@@ -12,8 +12,16 @@ export function ImageThumbnailCard({ item }: Props) {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className="group rounded-lg border border-border bg-card overflow-hidden cursor-pointer"
       onClick={() => openDrawer(item.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          openDrawer(item.id)
+        }
+      }}
     >
       {/* Thumbnail */}
       <div className="aspect-video overflow-hidden bg-muted">
@@ -21,6 +29,7 @@ export function ImageThumbnailCard({ item }: Props) {
           <img
             src={`/api/download/${item.id}`}
             alt={item.title}
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (

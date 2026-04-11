@@ -25,6 +25,73 @@ function typeToSlug(name: string): string {
   return `${name}s`
 }
 
+function UserMenu({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <div className="absolute bottom-full left-0 mb-1 w-44 rounded-md border border-border bg-popover shadow-md py-1 z-50">
+      <Link
+        href="/profile"
+        onClick={onNavigate}
+        className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      >
+        <User className="h-3.5 w-3.5" />
+        Profile
+      </Link>
+      <form action={signOutAction}>
+        <button
+          type="submit"
+          className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          Sign out
+        </button>
+      </form>
+    </div>
+  )
+}
+
+function CollectionSection({
+  title,
+  collections,
+  onNavigate,
+}: {
+  title: string
+  collections: CollectionWithMeta[]
+  onNavigate?: () => void
+}) {
+  return (
+    <>
+      <div className="px-4 py-1 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest">
+        {title}
+      </div>
+      <nav className="space-y-0.5 px-2">
+        {collections.map((col) => (
+          <Link
+            key={col.id}
+            href={`/collections/${col.id}`}
+            onClick={onNavigate}
+            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+          >
+            {title === "Favorites" ? (
+              <Star className="h-3.5 w-3.5 shrink-0 fill-yellow-400 text-yellow-400" />
+            ) : col.dominantType ? (
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: col.dominantType.color }}
+              />
+            ) : (
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/30" />
+            )}
+            <span className="truncate flex-1">{col.name}</span>
+            {title !== "Favorites" && (
+              <span className="text-xs text-muted-foreground/50">{col.itemCount}</span>
+            )}
+          </Link>
+        ))}
+      </nav>
+    </>
+  )
+}
+
 interface SidebarContentProps {
   isOpen: boolean
   itemTypes: ItemTypeWithCount[]
@@ -157,53 +224,13 @@ function SidebarContent({ isOpen, itemTypes, collections, user }: SidebarContent
             {collectionsExpanded && (
               <div>
                 {favoriteCollections.length > 0 && (
-                  <>
-                    <div className="px-4 py-1 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest">
-                      Favorites
-                    </div>
-                    <nav className="space-y-0.5 px-2">
-                      {favoriteCollections.map((col) => (
-                        <Link
-                          key={col.id}
-                          href={`/collections/${col.id}`}
-                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
-                        >
-                          <Star className="h-3.5 w-3.5 shrink-0 fill-yellow-400 text-yellow-400" />
-                          <span className="truncate">{col.name}</span>
-                        </Link>
-                      ))}
-                    </nav>
-                  </>
+                  <CollectionSection title="Favorites" collections={favoriteCollections} />
                 )}
 
                 {otherCollections.length > 0 && (
-                  <>
-                    <div className="px-4 py-1 mt-2 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest">
-                      All Collections
-                    </div>
-                    <nav className="space-y-0.5 px-2">
-                      {otherCollections.map((col) => (
-                        <Link
-                          key={col.id}
-                          href={`/collections/${col.id}`}
-                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
-                        >
-                          {col.dominantType ? (
-                            <span
-                              className="h-2.5 w-2.5 shrink-0 rounded-full"
-                              style={{ backgroundColor: col.dominantType.color }}
-                            />
-                          ) : (
-                            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/30" />
-                          )}
-                          <span className="truncate flex-1">{col.name}</span>
-                          <span className="text-xs text-muted-foreground/50">
-                            {col.itemCount}
-                          </span>
-                        </Link>
-                      ))}
-                    </nav>
-                  </>
+                  <div className="mt-2">
+                    <CollectionSection title="All Collections" collections={otherCollections} />
+                  </div>
                 )}
 
                 <div className="px-2 pt-2">
@@ -218,25 +245,7 @@ function SidebarContent({ isOpen, itemTypes, collections, user }: SidebarContent
                 {/* User area (expanded) */}
                 <div ref={menuRef} className="px-2 pt-4 pb-2 relative">
                   {menuOpen && (
-                    <div className="absolute bottom-full left-2 mb-1 w-44 rounded-md border border-border bg-popover shadow-md py-1 z-50">
-                      <Link
-                        href="/profile"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                      >
-                        <User className="h-3.5 w-3.5" />
-                        Profile
-                      </Link>
-                      <form action={signOutAction}>
-                        <button
-                          type="submit"
-                          className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                        >
-                          <LogOut className="h-3.5 w-3.5" />
-                          Sign out
-                        </button>
-                      </form>
-                    </div>
+                    <UserMenu onNavigate={() => setMenuOpen(false)} />
                   )}
                   <button
                     onClick={() => setMenuOpen((v) => !v)}
@@ -266,25 +275,7 @@ function SidebarContent({ isOpen, itemTypes, collections, user }: SidebarContent
           className="border-t border-border shrink-0 relative flex justify-center"
         >
           {menuOpen && (
-            <div className="absolute bottom-full left-0 mb-1 w-44 rounded-md border border-border bg-popover shadow-md py-1 z-50">
-              <Link
-                href="/profile"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              >
-                <User className="h-3.5 w-3.5" />
-                Profile
-              </Link>
-              <form action={signOutAction}>
-                <button
-                  type="submit"
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  Sign out
-                </button>
-              </form>
-            </div>
+            <UserMenu onNavigate={() => setMenuOpen(false)} />
           )}
           <button
             onClick={() => setMenuOpen((v) => !v)}

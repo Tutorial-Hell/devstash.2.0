@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { getDemoUserId } from "@/lib/db/collections"
 import { getItemsByType } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
-import { formatDate } from "@/lib/utils"
+import { formatDate, slugToTypeName } from "@/lib/utils"
 import { Pin, Star, File } from "lucide-react"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { NewItemDialog } from "@/components/new-item-dialog"
@@ -28,7 +28,7 @@ export default async function ItemsTypePage({ params }: Props) {
 
   const Icon = iconMap[itemType.icon] ?? File
   const color = itemType.color
-  const typeName = type.replace(/s$/, "")
+  const typeName = slugToTypeName(type)
   const label = typeName.charAt(0).toUpperCase() + typeName.slice(1)
   const dialogType = DIALOG_TYPES.has(typeName) ? typeName as "snippet" | "prompt" | "command" | "note" | "link" | "file" | "image" : null
 
