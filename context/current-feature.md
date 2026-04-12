@@ -1,24 +1,16 @@
-# Current Feature: Collection Create
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add `createCollectionInDb` to `src/lib/db/collections.ts` — inserts a new collection owned by the current user (name required, description optional)
-- Add `createCollection` server action to `src/actions/collections.ts` — Zod validation, auth check, calls `createCollectionInDb`, returns `{ success, data | error }`
-- Create `NewCollectionDialog` component (`src/components/new-collection-dialog.tsx`) — modal with name (required) and description (optional textarea) fields, Save/Cancel, inline error display, matches `NewItemDialog` styling
-- Add a "New Collection" button to the collections page header (`/collections`) and dashboard shell topbar — opens `NewCollectionDialog`
-- On save: show Sonner success toast, close modal, call `router.refresh()` to sync sidebar and page; on error: show inline error inside modal
+<!-- Add goals here -->
 
 ## Notes
 
-- Follow same patterns as items: server action in `src/actions/`, DB function in `src/lib/db/`, client component dialog
-- Collections are user-scoped — server action must get userId from `auth()` session, not from client
-- `NewCollectionDialog` should be a self-contained client component with its own open/close state (no context needed, unlike ItemDrawer)
-- Check where the "New Item" button lives in the topbar and mirror that placement for "New Collection" on the collections page
-- `getCollections` uses `React.cache` — `router.refresh()` will bust Next.js server cache and re-run the query
+<!-- Add notes here -->
 
 ## History
 
@@ -61,3 +53,4 @@ In Progress
 - **2026-04-11** — File List View completed. `/items/files` now renders a single-column list (Google Drive style) instead of grid cards. `FileListRow` component (`src/components/file-list-row.tsx`) shows a file-type icon (by extension: PDF/doc→FileText, archive→FileArchive, video→FileVideo, audio→FileAudio, spreadsheet→FileSpreadsheet, default→File), file name, size (B/KB/MB), upload date, and a download button. Download uses `/api/download/[id]` with `stopPropagation` to avoid opening the drawer. Row click opens ItemDrawer. `ItemWithMeta` extended with `fileName` and `fileSize` fields.
 - **2026-04-11** — Code Quality Quick Wins completed. Deleted dead `src/lib/mock-data.ts`; added `loading="lazy"` to img tags in `item-drawer.tsx` and `image-thumbnail-card.tsx`; added `Strict-Transport-Security` and `Permissions-Policy` headers to `next.config.ts`; fixed `useEffect` deps in `sign-in-form.tsx`; fixed `Content-Disposition` encoding in download route; added min password length (8 chars) to register action and API route; extracted `formatBytes`, `slugToTypeName` to `src/lib/utils.ts`; changed `ClickableItemCard` and `ImageThumbnailCard` to `role="button"` divs with keyboard handlers; fixed `formatFileSize` hydration warning in `file-list-row.tsx`.
 - **2026-04-11** — Component Refactors completed. Extracted `UserMenu` and `CollectionSection` from `sidebar.tsx` (eliminated two sets of duplicate JSX). Split `item-drawer.tsx` into `item-drawer-view.tsx` (ViewBody, Section, DetailRow, BadgeList, shared types/constants) and `item-drawer-edit.tsx` (EditBody), reducing the main file from ~650 to ~115 lines. Extracted `FormField` from `new-item-dialog.tsx` (7 usages replacing repeated label+div wrappers), `StatCard` from `dashboard/page.tsx` (4 stats cards), and `UploadedFilePreview` from `file-upload.tsx` (self-contained uploaded state block).
+- **2026-04-12** — Collection Create completed. `NewCollectionDialog` component (name required, description optional) wired to topbar and new `/collections` listing page. `createCollection` server action with Zod validation in `src/actions/collections.ts`; `createCollectionInDb` added to `src/lib/db/collections.ts`. Removed `take: 6` limit from `getCollections` so collections page shows all. Toast on success, inline error on failure, `router.refresh()` syncs sidebar. 6 unit tests added (58 total).
