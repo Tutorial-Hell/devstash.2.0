@@ -1,23 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FolderOpen } from "lucide-react"
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { formatDate } from "@/lib/utils"
 import { updateItem } from "@/actions/items"
+import { fetchCollectionsForSelect } from "@/actions/collections"
+import { CollectionSelect } from "@/components/collection-select"
 import {
   type ItemDetailResponse,
   CONTENT_TYPES,
   LANGUAGE_TYPES,
   MARKDOWN_TYPES,
-  Section,
   DetailRow,
-  BadgeList,
 } from "@/components/item-drawer-view"
 
 // ─── EditBody ─────────────────────────────────────────────────────────────────
@@ -44,6 +43,16 @@ export function EditBody({
   const [language, setLanguage] = useState(item.language ?? "")
   const [tagsInput, setTagsInput] = useState(item.tags.map((t) => t.name).join(", "))
 
+  const [allCollections, setAllCollections] = useState<{ id: string; name: string }[]>([])
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>(
+    item.collections.map((c) => c.id)
+  )
+  const [collectionSelectOpen, setCollectionSelectOpen] = useState(false)
+
+  useEffect(() => {
+    fetchCollectionsForSelect().then(setAllCollections)
+  }, [])
+
   const showContent = CONTENT_TYPES.has(typeName)
   const showLanguage = LANGUAGE_TYPES.has(typeName)
   const showMarkdown = MARKDOWN_TYPES.has(typeName)
@@ -65,6 +74,7 @@ export function EditBody({
         url: url || null,
         language: language || null,
         tags,
+        collectionIds: selectedCollectionIds,
       })
 
       if (!result.success) {
@@ -194,12 +204,17 @@ export function EditBody({
           <p className="text-[11px] text-muted-foreground">Comma-separated</p>
         </div>
 
-        {/* Non-editable: collections + dates */}
-        {item.collections.length > 0 && (
-          <Section label="Collections" icon={<FolderOpen className="h-3.5 w-3.5" />}>
-            <BadgeList items={item.collections} />
-          </Section>
-        )}
+        {/* Collections */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Collections</label>
+          <CollectionSelect
+            collections={allCollections}
+            selected={selectedCollectionIds}
+            onChange={setSelectedCollectionIds}
+            open={collectionSelectOpen}
+            onOpenChange={setCollectionSelectOpen}
+          />
+        </div>
 
         <div className="space-y-1.5 pt-1 border-t border-border">
           <DetailRow label="Created" value={formatDate(new Date(item.createdAt))} />
