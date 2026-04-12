@@ -5,6 +5,7 @@ import { getDemoUserId, getCollectionById } from "@/lib/db/collections"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { ClickableItemCard } from "@/components/clickable-item-card"
+import { CollectionDetailActions } from "@/components/collection-detail-actions"
 
 interface Props {
   params: Promise<{ id: string }>
@@ -29,11 +30,19 @@ export default async function CollectionDetailPage({ params }: Props) {
       </Link>
 
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <h1 className="text-2xl font-bold text-foreground">{collection.name}</h1>
-        {collection.isFavorite && (
-          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 shrink-0" />
-        )}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="text-2xl font-bold text-foreground truncate">{collection.name}</h1>
+          {collection.isFavorite && (
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 shrink-0" />
+          )}
+        </div>
+        <CollectionDetailActions
+          collectionId={collection.id}
+          collectionName={collection.name}
+          collectionDescription={collection.description}
+          isFavorite={collection.isFavorite}
+        />
       </div>
       {collection.description && (
         <p className="text-sm text-muted-foreground -mt-4">{collection.description}</p>
