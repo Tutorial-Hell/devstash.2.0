@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star, Pin, Package, FolderOpen, Heart } from "lucide-react"
+import { Star, Pin, Package, FolderOpen, Heart, File } from "lucide-react"
 import { getCollections, getDemoUserId } from "@/lib/db/collections"
 import { getPinnedItems, getRecentItems, getItemStats, type ItemWithMeta } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
@@ -198,6 +198,11 @@ function ItemRow({ item }: { item: ItemWithMeta }) {
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 shrink-0" />
           )}
         </div>
+        {item.description && (
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            {item.description}
+          </p>
+        )}
         {item.tags.length > 0 && (
           <div className="flex items-center gap-1 mt-1 flex-wrap">
             {item.tags.map((tag) => (
@@ -209,11 +214,6 @@ function ItemRow({ item }: { item: ItemWithMeta }) {
               </span>
             ))}
           </div>
-        )}
-        {item.description && (
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {item.description}
-          </p>
         )}
       </div>
 

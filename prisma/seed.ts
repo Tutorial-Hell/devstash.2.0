@@ -568,6 +568,45 @@ volumes:
   })
   console.log("\n  ✓ Pinned/favorite items and collections updated")
 
+  // ── Tags (idempotent) ────────────────────────────────────────────────────────
+  const tagAssignments: { title: string; tags: string[] }[] = [
+    { title: "useDebounce Hook",                       tags: ["react", "hooks", "typescript"] },
+    { title: "Context Provider Pattern",               tags: ["react", "context", "typescript"] },
+    { title: "useFetch Hook",                          tags: ["react", "hooks", "async"] },
+    { title: "Code Review Prompt",                     tags: ["ai", "code-review"] },
+    { title: "Explain Code Prompt",                    tags: ["ai", "debugging"] },
+    { title: "Write Tests Prompt",                     tags: ["ai", "testing"] },
+    { title: "Docker Compose — Dev Stack",             tags: ["docker", "devops"] },
+    { title: "Nginx Config — Reverse Proxy",           tags: ["nginx", "devops"] },
+    { title: "Git — Undo Last Commit (keep changes)",  tags: ["git", "cli"] },
+    { title: "Git — Interactive Rebase",               tags: ["git", "cli"] },
+    { title: "List Ports in Use",                      tags: ["cli", "networking"] },
+    { title: "Kill Process on Port",                   tags: ["cli", "networking"] },
+    { title: "Tailwind CSS Docs",                      tags: ["css", "tailwind"] },
+    { title: "Radix UI Primitives",                    tags: ["react", "ui"] },
+    { title: "Lucide Icons",                           tags: ["ui", "icons"] },
+  ]
+
+  for (const { title, tags } of tagAssignments) {
+    const item = await prisma.item.findFirst({ where: { userId: user.id, title }, select: { id: true } })
+    if (!item) continue
+    const tagRecords = await Promise.all(
+      tags.map((name) =>
+        prisma.tag.upsert({
+          where: { name_userId: { name, userId: user.id } },
+          create: { name, userId: user.id },
+          update: {},
+          select: { id: true },
+        })
+      )
+    )
+    await prisma.item.update({
+      where: { id: item.id },
+      data: { tags: { set: tagRecords } },
+    })
+  }
+  console.log("  ✓ Tags assigned to seed items")
+
   console.log("\nDone.")
 }
 
