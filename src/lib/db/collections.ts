@@ -164,6 +164,50 @@ export async function getCollectionsForSelect(userId: string): Promise<Collectio
   })
 }
 
+export async function updateCollectionById(
+  userId: string,
+  collectionId: string,
+  data: { name: string; description?: string | null }
+): Promise<CollectionCreated | null> {
+  const existing = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+  })
+  if (!existing) return null
+
+  return prisma.collection.update({
+    where: { id: collectionId },
+    data: {
+      name: data.name,
+      description: data.description ?? null,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  })
+}
+
+export async function deleteCollectionById(
+  userId: string,
+  collectionId: string
+): Promise<boolean> {
+  const existing = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+  })
+  if (!existing) return false
+
+  await prisma.$transaction([
+    prisma.itemCollection.deleteMany({ where: { collectionId } }),
+    prisma.collection.delete({ where: { id: collectionId } }),
+  ])
+
+  return true
+}
+
 export async function getDemoUserId(): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { email: "demo@devstash.io" },

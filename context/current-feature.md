@@ -1,16 +1,28 @@
-# Current Feature
+# Current Feature: Collection Management Actions
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- Add Edit, Delete, and Favorite buttons to the `/collections/[id]` detail page header
+- Favorite button is icon-only (no functionality yet — placeholder)
+- Edit button opens a modal to edit collection name and description
+- Delete button shows a confirmation dialog; on confirm, removes the collection (items are NOT deleted, just disassociated from the collection via `ItemCollection`)
+- On `/collections` listing page and dashboard collection cards, replace any card click with navigation to the collection detail page
+- Add a 3-dot menu (dropdown) to each collection card with Edit, Delete, and Favorite options
+- Clicking anywhere on the card (outside the dropdown) navigates to `/collections/[id]`
 
 ## Notes
 
-<!-- Add notes here -->
+- Items must NOT be deleted when a collection is deleted — only `ItemCollection` join records should be removed, then the collection itself
+- Favorites not implemented yet — button/icon should be present but non-functional (or visually stubbed)
+- Edit modal should handle name (required) and description (optional), matching the pattern of `NewCollectionDialog`
+- Reuse `AlertDialog` (ShadCN/Base UI) for delete confirmation, consistent with item delete pattern
+- Server actions: `updateCollection` and `deleteCollection` in `src/actions/collections.ts`
+- DB helpers: `updateCollectionById` and `deleteCollectionById` in `src/lib/db/collections.ts`
+- Collection cards appear in two places: `/collections` page and dashboard — both need the 3-dot menu treatment
 
 ## History
 

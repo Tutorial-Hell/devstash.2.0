@@ -3,6 +3,7 @@ import { Star, ArrowLeft } from "lucide-react"
 import { getDemoUserId, getCollections } from "@/lib/db/collections"
 import { iconMap } from "@/lib/icon-map"
 import { NewCollectionDialog } from "@/components/new-collection-dialog"
+import { CollectionCard } from "@/components/collection-card"
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -45,18 +46,14 @@ export default async function CollectionsPage() {
           {collections.map((col) => {
             const accentColor = col.dominantType?.color ?? "#6b7280"
             return (
-              <Link
-                key={col.id}
-                href={`/collections/${col.id}`}
-                className="group rounded-lg border border-border bg-card p-4 flex flex-col gap-2 hover:border-border/80 hover:bg-card/80 transition-colors relative overflow-hidden"
-              >
+              <CollectionCard key={col.id} collection={col}>
                 {/* Left accent bar */}
                 <div
                   className="absolute left-0 top-0 bottom-0 w-0.5"
                   style={{ backgroundColor: accentColor }}
                 />
 
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-2 pr-6">
                   <span className="text-sm font-medium text-foreground leading-tight">
                     {col.name}
                   </span>
@@ -90,7 +87,7 @@ export default async function CollectionsPage() {
                     })}
                   </div>
                 )}
-              </Link>
+              </CollectionCard>
             )
           })}
         </div>
