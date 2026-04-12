@@ -1,28 +1,16 @@
-# Current Feature: Collection Management Actions
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add Edit, Delete, and Favorite buttons to the `/collections/[id]` detail page header
-- Favorite button is icon-only (no functionality yet — placeholder)
-- Edit button opens a modal to edit collection name and description
-- Delete button shows a confirmation dialog; on confirm, removes the collection (items are NOT deleted, just disassociated from the collection via `ItemCollection`)
-- On `/collections` listing page and dashboard collection cards, replace any card click with navigation to the collection detail page
-- Add a 3-dot menu (dropdown) to each collection card with Edit, Delete, and Favorite options
-- Clicking anywhere on the card (outside the dropdown) navigates to `/collections/[id]`
+<!-- Add goals here -->
 
 ## Notes
 
-- Items must NOT be deleted when a collection is deleted — only `ItemCollection` join records should be removed, then the collection itself
-- Favorites not implemented yet — button/icon should be present but non-functional (or visually stubbed)
-- Edit modal should handle name (required) and description (optional), matching the pattern of `NewCollectionDialog`
-- Reuse `AlertDialog` (ShadCN/Base UI) for delete confirmation, consistent with item delete pattern
-- Server actions: `updateCollection` and `deleteCollection` in `src/actions/collections.ts`
-- DB helpers: `updateCollectionById` and `deleteCollectionById` in `src/lib/db/collections.ts`
-- Collection cards appear in two places: `/collections` page and dashboard — both need the 3-dot menu treatment
+<!-- Add notes here -->
 
 ## History
 
@@ -69,3 +57,4 @@ In Progress
 - **2026-04-12** — Collections Page Back Button completed. Added `← Dashboard` link to the top of `/collections` page, matching the existing pattern on the collection detail page.
 - **2026-04-12** — Dashboard Item Tag Display completed. Tags were already rendered in `ItemRow` but displayed above the description; reordered so tags appear below description. Added missing `File` lucide import used as icon fallback. Seeded all 15 demo items with meaningful tags so tags are visible in pinned and recent rows out of the box.
 - **2026-04-12** — Add Item to Collections completed. `CollectionSelect` multi-select dropdown component (`src/components/collection-select.tsx`) with checkbox-per-collection and dark theme. `getCollectionsForSelect` added to `src/lib/db/collections.ts`; `fetchCollectionsForSelect` server action added to `src/actions/collections.ts` for client use. `createItemInDb` and `updateItemById` extended with `collectionIds` — create/sync `ItemCollection` records via Prisma transactions. New Item dialog fetches collections via `useEffect` on open and passes `collectionIds` to `createItem`. Item drawer edit mode pre-populates from `item.collections` and passes `collectionIds` to `updateItem`. New Item dialog capped at `max-h-[90vh]` with scrollable form body so it fits on screen.
+- **2026-04-12** — Collection Management Actions completed. `CollectionCard` client component (`src/components/collection-card.tsx`) replaces static `<Link>` cards on dashboard and `/collections` — card body navigates to detail page, 3-dot hover menu opens a dropdown with Edit, Delete, and Favorite (placeholder) options. `CollectionDetailActions` component (`src/components/collection-detail-actions.tsx`) adds Edit/Delete/Favorite buttons to the `/collections/[id]` header. Edit opens a Dialog modal; Delete opens an AlertDialog confirmation and redirects to `/collections`. `updateCollectionById` and `deleteCollectionById` added to `src/lib/db/collections.ts` (ownership-checked; delete uses a Prisma transaction to remove `ItemCollection` rows before the collection). `updateCollection` and `deleteCollection` server actions added to `src/actions/collections.ts`. 8 new unit tests (66 total).
