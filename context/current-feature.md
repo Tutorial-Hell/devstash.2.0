@@ -1,16 +1,24 @@
-# Current Feature
+# Current Feature: Collection Create
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- Add `createCollectionInDb` to `src/lib/db/collections.ts` — inserts a new collection owned by the current user (name required, description optional)
+- Add `createCollection` server action to `src/actions/collections.ts` — Zod validation, auth check, calls `createCollectionInDb`, returns `{ success, data | error }`
+- Create `NewCollectionDialog` component (`src/components/new-collection-dialog.tsx`) — modal with name (required) and description (optional textarea) fields, Save/Cancel, inline error display, matches `NewItemDialog` styling
+- Add a "New Collection" button to the collections page header (`/collections`) and dashboard shell topbar — opens `NewCollectionDialog`
+- On save: show Sonner success toast, close modal, call `router.refresh()` to sync sidebar and page; on error: show inline error inside modal
 
 ## Notes
 
-<!-- Add notes here -->
+- Follow same patterns as items: server action in `src/actions/`, DB function in `src/lib/db/`, client component dialog
+- Collections are user-scoped — server action must get userId from `auth()` session, not from client
+- `NewCollectionDialog` should be a self-contained client component with its own open/close state (no context needed, unlike ItemDrawer)
+- Check where the "New Item" button lives in the topbar and mirror that placement for "New Collection" on the collections page
+- `getCollections` uses `React.cache` — `router.refresh()` will bust Next.js server cache and re-run the query
 
 ## History
 
