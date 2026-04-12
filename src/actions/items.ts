@@ -20,6 +20,7 @@ const updateItemSchema = z.object({
     .pipe(z.string().url("Invalid URL").nullable()),
   language: z.string().trim().nullable().optional().transform((v) => v ?? null),
   tags: z.array(z.string().trim().min(1)).default([]),
+  collectionIds: z.array(z.string()).optional(),
 })
 
 export type UpdateItemInput = z.input<typeof updateItemSchema>
@@ -53,6 +54,7 @@ export async function updateItem(
     url: parsed.data.url ?? null,
     language: parsed.data.language ?? null,
     tags: parsed.data.tags,
+    collectionIds: parsed.data.collectionIds,
   })
 
   if (!updated) {
@@ -107,6 +109,7 @@ const createItemSchema = z
     fileSize: z.number().nullable().optional().transform((v) => v ?? null),
     language: z.string().trim().nullable().optional().transform((v) => v ?? null),
     tags: z.array(z.string().trim().min(1)).default([]),
+    collectionIds: z.array(z.string()).optional(),
   })
   .refine((d) => d.type !== "link" || (d.url != null && d.url.length > 0), {
     message: "URL is required for link items",
@@ -132,6 +135,7 @@ export type CreateItemInput = {
   fileSize?: number | null
   language?: string | null
   tags?: string[]
+  collectionIds?: string[]
 }
 
 export async function createItem(
@@ -159,6 +163,7 @@ export async function createItem(
     fileSize: parsed.data.fileSize ?? null,
     language: parsed.data.language ?? null,
     tags: parsed.data.tags,
+    collectionIds: parsed.data.collectionIds,
   })
 
   if (!item) {

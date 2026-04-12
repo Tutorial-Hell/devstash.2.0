@@ -156,6 +156,7 @@ export type UpdateItemData = {
   url: string | null
   language: string | null
   tags: string[]
+  collectionIds?: string[]
 }
 
 export async function updateItemById(
@@ -182,23 +183,42 @@ export async function updateItemById(
     )
   )
 
-  const updated = await prisma.item.update({
-    where: { id: itemId },
-    data: {
-      title: data.title,
-      description: data.description,
-      content: data.content,
-      url: data.url,
-      language: data.language,
-      tags: { set: tagRecords },
-    },
-    include: {
-      itemType: { select: { id: true, name: true, icon: true, color: true } },
-      tags: { select: { id: true, name: true } },
-      collections: {
-        select: { collection: { select: { id: true, name: true } } },
+  const updated = await prisma.$transaction(async (tx) => {
+    const item = await tx.item.update({
+      where: { id: itemId },
+      data: {
+        title: data.title,
+        description: data.description,
+        content: data.content,
+        url: data.url,
+        language: data.language,
+        tags: { set: tagRecords },
       },
-    },
+      include: {
+        itemType: { select: { id: true, name: true, icon: true, color: true } },
+        tags: { select: { id: true, name: true } },
+        collections: {
+          select: { collection: { select: { id: true, name: true } } },
+        },
+      },
+    })
+
+    if (data.collectionIds !== undefined) {
+      await tx.itemCollection.deleteMany({ where: { itemId } })
+      if (data.collectionIds.length > 0) {
+        await tx.itemCollection.createMany({
+          data: data.collectionIds.map((collectionId) => ({ itemId, collectionId })),
+        })
+      }
+      // Re-fetch collections after sync
+      const updatedCollections = await tx.itemCollection.findMany({
+        where: { itemId },
+        select: { collection: { select: { id: true, name: true } } },
+      })
+      return { ...item, collections: updatedCollections }
+    }
+
+    return item
   })
 
   return {
@@ -266,6 +286,7 @@ export type CreateItemData = {
   fileSize: number | null
   language: string | null
   tags: string[]
+  collectionIds?: string[]
 }
 
 export async function createItemInDb(
@@ -289,28 +310,46 @@ export async function createItemInDb(
     )
   )
 
-  const item = await prisma.item.create({
-    data: {
-      userId,
-      itemTypeId: itemType.id,
-      contentType: data.fileUrl ? "file" : "text",
-      title: data.title,
-      description: data.description,
-      content: data.content,
-      url: data.url,
-      fileUrl: data.fileUrl,
-      fileName: data.fileName,
-      fileSize: data.fileSize,
-      language: data.language,
-      tags: { connect: tagRecords },
-    },
-    include: {
-      itemType: { select: { id: true, name: true, icon: true, color: true } },
-      tags: { select: { id: true, name: true } },
-      collections: {
-        select: { collection: { select: { id: true, name: true } } },
+  const item = await prisma.$transaction(async (tx) => {
+    const created = await tx.item.create({
+      data: {
+        userId,
+        itemTypeId: itemType.id,
+        contentType: data.fileUrl ? "file" : "text",
+        title: data.title,
+        description: data.description,
+        content: data.content,
+        url: data.url,
+        fileUrl: data.fileUrl,
+        fileName: data.fileName,
+        fileSize: data.fileSize,
+        language: data.language,
+        tags: { connect: tagRecords },
       },
-    },
+      include: {
+        itemType: { select: { id: true, name: true, icon: true, color: true } },
+        tags: { select: { id: true, name: true } },
+        collections: {
+          select: { collection: { select: { id: true, name: true } } },
+        },
+      },
+    })
+
+    if (data.collectionIds && data.collectionIds.length > 0) {
+      await tx.itemCollection.createMany({
+        data: data.collectionIds.map((collectionId) => ({
+          itemId: created.id,
+          collectionId,
+        })),
+      })
+      const updatedCollections = await tx.itemCollection.findMany({
+        where: { itemId: created.id },
+        select: { collection: { select: { id: true, name: true } } },
+      })
+      return { ...created, collections: updatedCollections }
+    }
+
+    return created
   })
 
   return {

@@ -1,7 +1,13 @@
 "use server"
 
 import { z } from "zod"
-import { getDemoUserId, createCollectionInDb, type CollectionCreated } from "@/lib/db/collections"
+import {
+  getDemoUserId,
+  createCollectionInDb,
+  getCollectionsForSelect,
+  type CollectionCreated,
+  type CollectionOption,
+} from "@/lib/db/collections"
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -24,6 +30,12 @@ type ActionResult =
   | { success: false; error: string }
 
 // ─── Action ───────────────────────────────────────────────────────────────────
+
+export async function fetchCollectionsForSelect(): Promise<CollectionOption[]> {
+  const userId = await getDemoUserId()
+  if (!userId) return []
+  return getCollectionsForSelect(userId)
+}
 
 export async function createCollection(
   input: CreateCollectionInput

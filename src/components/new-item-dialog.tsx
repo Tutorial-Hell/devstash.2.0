@@ -16,7 +16,9 @@ import { iconMap } from "@/lib/icon-map"
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { createItem, type CreateItemInput } from "@/actions/items"
+import { fetchCollectionsForSelect } from "@/actions/collections"
 import { FileUpload, type UploadedFile } from "@/components/file-upload"
+import { CollectionSelect } from "@/components/collection-select"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -135,6 +137,12 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
     if (!next) resetForm()
   }
 
+  useEffect(() => {
+    if (open) {
+      fetchCollectionsForSelect().then(setCollections)
+    }
+  }, [open])
+
   // ─── Form state ────────────────────────────────────────────────────────────
 
   const [type, setType] = useState<ItemTypeName>(defaultType ?? "snippet")
@@ -148,6 +156,10 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
   const [saving, setSaving] = useState(false)
 
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
+
+  const [collections, setCollections] = useState<{ id: string; name: string }[]>([])
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([])
+  const [collectionSelectOpen, setCollectionSelectOpen] = useState(false)
 
   const showContent = CONTENT_TYPES.has(type)
   const showLanguage = LANGUAGE_TYPES.has(type)
@@ -169,6 +181,8 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
     setLanguage("")
     setTagsInput("")
     setUploadedFile(null)
+    setSelectedCollectionIds([])
+    setCollectionSelectOpen(false)
     setError(null)
     setSaving(false)
   }
@@ -197,6 +211,7 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
         fileSize: uploadedFile?.fileSize ?? null,
         language: language || null,
         tags,
+        collectionIds: selectedCollectionIds,
       }
 
       const result = await createItem(input)
@@ -228,116 +243,129 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
           : "New Item"}
       </Button>
 
-      <DialogContent className="sm:max-w-md" showCloseButton={false}>
+      <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>New Item</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
           {error && (
-            <p className="text-xs text-destructive rounded-md bg-destructive/10 px-3 py-2">
+            <p className="text-xs text-destructive rounded-md bg-destructive/10 px-3 py-2 mb-2">
               {error}
             </p>
           )}
 
-          {/* Type selector */}
-          <FormField label="Type">
-            <TypeDropdown value={type} onChange={handleTypeChange} />
-          </FormField>
+          <div className="flex flex-col gap-2 overflow-y-auto pr-1">
+            {/* Type selector */}
+            <FormField label="Type">
+              <TypeDropdown value={type} onChange={handleTypeChange} />
+            </FormField>
 
-          {/* Title */}
-          <FormField label="Title" required>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Item title"
-              className="h-8 text-sm"
-              required
-            />
-          </FormField>
-
-          {/* Description */}
-          <FormField label="Description">
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description"
-              rows={1}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-            />
-          </FormField>
-
-          {/* File upload — file, image */}
-          {showFileUpload && (
-            <FormField label={type === "image" ? "Image" : "File"} required>
-              <FileUpload
-                itemType={type as "file" | "image"}
-                uploaded={uploadedFile}
-                onUpload={setUploadedFile}
-                onClear={() => setUploadedFile(null)}
+            {/* Title */}
+            <FormField label="Title" required>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Item title"
+                className="h-8 text-sm"
+                required
               />
             </FormField>
-          )}
 
-          {/* Content — snippet, prompt, command, note */}
-          {showContent && (
-            <FormField label="Content">
-              {showLanguage ? (
-                <CodeEditor
-                  value={content}
-                  onChange={setContent}
-                  language={language || "plaintext"}
-                />
-              ) : showMarkdown ? (
-                <MarkdownEditor value={content} onChange={setContent} />
-              ) : (
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Item content"
-                  rows={3}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-                />
-              )}
+            {/* Description */}
+            <FormField label="Description">
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional description"
+                rows={1}
+                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+              />
             </FormField>
-          )}
 
-          {/* Language — snippet, command */}
-          {showLanguage && (
-            <FormField label="Language">
+            {/* File upload — file, image */}
+            {showFileUpload && (
+              <FormField label={type === "image" ? "Image" : "File"} required>
+                <FileUpload
+                  itemType={type as "file" | "image"}
+                  uploaded={uploadedFile}
+                  onUpload={setUploadedFile}
+                  onClear={() => setUploadedFile(null)}
+                />
+              </FormField>
+            )}
+
+            {/* Content — snippet, prompt, command, note */}
+            {showContent && (
+              <FormField label="Content">
+                {showLanguage ? (
+                  <CodeEditor
+                    value={content}
+                    onChange={setContent}
+                    language={language || "plaintext"}
+                  />
+                ) : showMarkdown ? (
+                  <MarkdownEditor value={content} onChange={setContent} />
+                ) : (
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Item content"
+                    rows={3}
+                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                  />
+                )}
+              </FormField>
+            )}
+
+            {/* Language — snippet, command */}
+            {showLanguage && (
+              <FormField label="Language">
+                <Input
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  placeholder="e.g. typescript"
+                  className="h-8 text-sm"
+                />
+              </FormField>
+            )}
+
+            {/* URL — link */}
+            {showUrl && (
+              <FormField label="URL" required>
+                <Input
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://…"
+                  className="h-8 text-sm"
+                  type="url"
+                />
+              </FormField>
+            )}
+
+            {/* Tags */}
+            <FormField label="Tags">
               <Input
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                placeholder="e.g. typescript"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+                placeholder="react, hooks, typescript"
                 className="h-8 text-sm"
               />
             </FormField>
-          )}
 
-          {/* URL — link */}
-          {showUrl && (
-            <FormField label="URL" required>
-              <Input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://…"
-                className="h-8 text-sm"
-                type="url"
+            {/* Collections */}
+            <FormField label="Collections">
+              <CollectionSelect
+                collections={collections}
+                selected={selectedCollectionIds}
+                onChange={setSelectedCollectionIds}
+                open={collectionSelectOpen}
+                onOpenChange={setCollectionSelectOpen}
               />
             </FormField>
-          )}
+          </div>
 
-          {/* Tags */}
-          <FormField label="Tags">
-            <Input
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="react, hooks, typescript"
-              className="h-8 text-sm"
-            />
-          </FormField>
-
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex justify-end gap-2 pt-3 border-t border-border mt-2">
             <Button
               type="button"
               variant="outline"

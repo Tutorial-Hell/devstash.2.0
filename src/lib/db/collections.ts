@@ -154,6 +154,16 @@ export async function createCollectionInDb(
   })
 }
 
+export type CollectionOption = { id: string; name: string }
+
+export async function getCollectionsForSelect(userId: string): Promise<CollectionOption[]> {
+  return prisma.collection.findMany({
+    where: { userId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  })
+}
+
 export async function getDemoUserId(): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { email: "demo@devstash.io" },
