@@ -26,7 +26,6 @@ export const getCollections = cache(async function getCollections(userId: string
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    take: 6,
     include: {
       items: {
         include: {
@@ -123,6 +122,36 @@ export async function getCollectionById(
       createdAt: item.createdAt,
     })),
   }
+}
+
+export type CollectionCreated = {
+  id: string
+  name: string
+  description: string | null
+  isFavorite: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export async function createCollectionInDb(
+  userId: string,
+  data: { name: string; description?: string | null }
+): Promise<CollectionCreated> {
+  return prisma.collection.create({
+    data: {
+      name: data.name,
+      description: data.description ?? null,
+      userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  })
 }
 
 export async function getDemoUserId(): Promise<string | null> {

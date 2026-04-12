@@ -4,6 +4,7 @@ import { Search, PanelLeft, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { NewItemDialog } from "@/components/new-item-dialog"
+import { NewCollectionDialog } from "@/components/new-collection-dialog"
 
 interface TopbarProps {
   onToggleSidebar?: () => void
@@ -55,9 +56,7 @@ export function Topbar({ onToggleSidebar, onMobileMenuOpen }: TopbarProps) {
 
       {/* Actions */}
       <div className="flex items-center gap-2 shrink-0">
-        <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-          New Collection
-        </Button>
+        <NewCollectionDialog triggerClassName="hidden sm:inline-flex" />
         <NewItemDialog />
       </div>
     </header>
