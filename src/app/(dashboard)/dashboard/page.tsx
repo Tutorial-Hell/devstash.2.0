@@ -4,6 +4,7 @@ import { getCollections, getDemoUserId } from "@/lib/db/collections"
 import { getPinnedItems, getRecentItems, getItemStats, type ItemWithMeta } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
+import { DASHBOARD_COLLECTIONS_LIMIT, DASHBOARD_RECENT_ITEMS_LIMIT } from "@/lib/constants"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { CollectionCard } from "@/components/collection-card"
 
@@ -15,12 +16,13 @@ export default async function DashboardPage() {
   const [collections, pinnedItems, recentItems, itemStats] = await Promise.all([
     userId ? getCollections(userId) : Promise.resolve([]),
     userId ? getPinnedItems(userId) : Promise.resolve([]),
-    userId ? getRecentItems(userId) : Promise.resolve([]),
+    userId ? getRecentItems(userId, DASHBOARD_RECENT_ITEMS_LIMIT) : Promise.resolve([]),
     userId ? getItemStats(userId) : Promise.resolve({ totalItems: 0, favoriteItemsCount: 0 }),
   ])
 
   const totalCollections = collections.length
   const favoriteCollectionsCount = collections.filter((c) => c.isFavorite).length
+  const dashboardCollections = collections.slice(0, DASHBOARD_COLLECTIONS_LIMIT)
 
   const stats = [
     { label: "Items", value: itemStats.totalItems, icon: Package, color: "#3b82f6", fill: false },
@@ -58,7 +60,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {collections.map((col) => {
+          {dashboardCollections.map((col) => {
             const accentColor = col.dominantType?.color ?? "#6b7280"
             return (
               <CollectionCard key={col.id} collection={col}>

@@ -3,29 +3,36 @@ import { getDemoUserId } from "@/lib/db/collections"
 import { getItemsByType } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate, slugToTypeName } from "@/lib/utils"
+import { ITEMS_PER_PAGE } from "@/lib/constants"
 import { Pin, Star, File } from "lucide-react"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { NewItemDialog } from "@/components/new-item-dialog"
 import { ImageThumbnailCard } from "@/components/image-thumbnail-card"
 import { FileListRow } from "@/components/file-list-row"
 import { CopyButton } from "@/components/copy-button"
+import { Pagination } from "@/components/pagination"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
 interface Props {
   params: Promise<{ type: string }>
+  searchParams: Promise<{ page?: string }>
 }
 
-export default async function ItemsTypePage({ params }: Props) {
+export default async function ItemsTypePage({ params, searchParams }: Props) {
   const userId = await getDemoUserId()
 
   const { type } = await params
-  const { items, itemType } = userId
-    ? await getItemsByType(userId, type)
-    : { items: [], itemType: null }
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
+
+  const { items, itemType, total } = userId
+    ? await getItemsByType(userId, type, { page, pageSize: ITEMS_PER_PAGE })
+    : { items: [], itemType: null, total: 0 }
 
   if (!itemType) notFound()
 
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE)
   const Icon = iconMap[itemType.icon] ?? File
   const color = itemType.color
   const typeName = slugToTypeName(type)
@@ -46,7 +53,7 @@ export default async function ItemsTypePage({ params }: Props) {
           <div>
             <h1 className="text-2xl font-bold text-foreground">{label}s</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {items.length} {items.length === 1 ? "item" : "items"}
+              {total} {total === 1 ? "item" : "items"}
             </p>
           </div>
         </div>
@@ -127,6 +134,8 @@ export default async function ItemsTypePage({ params }: Props) {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} basePath={`/items/${type}`} />
     </div>
   )
 }

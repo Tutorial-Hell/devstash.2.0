@@ -1,5 +1,6 @@
 import { cache } from "react"
 import { prisma } from "@/lib/prisma"
+import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
 
 export type CollectionWithMeta = {
   id: string
@@ -71,6 +72,7 @@ export type CollectionDetail = {
   name: string
   description: string | null
   isFavorite: boolean
+  total: number
   items: {
     id: string
     title: string
@@ -85,13 +87,17 @@ export type CollectionDetail = {
 
 export async function getCollectionById(
   userId: string,
-  collectionId: string
+  collectionId: string,
+  { page = 1, pageSize = COLLECTIONS_PER_PAGE }: { page?: number; pageSize?: number } = {}
 ): Promise<CollectionDetail | null> {
   const col = await prisma.collection.findFirst({
     where: { id: collectionId, userId },
     include: {
+      _count: { select: { items: true } },
       items: {
         orderBy: { addedAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
         include: {
           item: {
             include: {
@@ -111,6 +117,7 @@ export async function getCollectionById(
     name: col.name,
     description: col.description,
     isFavorite: col.isFavorite,
+    total: col._count.items,
     items: col.items.map(({ item }) => ({
       id: item.id,
       title: item.title,
@@ -152,6 +159,60 @@ export async function createCollectionInDb(
       updatedAt: true,
     },
   })
+}
+
+export async function getCollectionsPaginated(
+  userId: string,
+  { page = 1, pageSize = COLLECTIONS_PER_PAGE }: { page?: number; pageSize?: number } = {}
+): Promise<{ collections: CollectionWithMeta[]; total: number }> {
+  const [allCollections, total] = await Promise.all([
+    prisma.collection.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        items: {
+          include: {
+            item: {
+              include: { itemType: true },
+            },
+          },
+        },
+      },
+    }),
+    prisma.collection.count({ where: { userId } }),
+  ])
+
+  const collections = allCollections.map((col) => {
+    const typeCounts: Record<
+      string,
+      { count: number; type: { id: string; name: string; icon: string; color: string } }
+    > = {}
+
+    for (const ic of col.items) {
+      const t = ic.item.itemType
+      if (!typeCounts[t.id]) {
+        typeCounts[t.id] = { count: 0, type: { id: t.id, name: t.name, icon: t.icon, color: t.color } }
+      }
+      typeCounts[t.id].count++
+    }
+
+    const sorted = Object.values(typeCounts).sort((a, b) => b.count - a.count)
+
+    return {
+      id: col.id,
+      name: col.name,
+      description: col.description,
+      isFavorite: col.isFavorite,
+      itemCount: col.items.length,
+      dominantType: sorted[0]?.type ?? null,
+      allTypes: sorted.map((e) => e.type),
+      createdAt: col.createdAt,
+    }
+  })
+
+  return { collections, total }
 }
 
 export type CollectionOption = { id: string; name: string }
