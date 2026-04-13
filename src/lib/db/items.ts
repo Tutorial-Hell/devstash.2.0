@@ -1,6 +1,7 @@
 import { cache } from "react"
 import { prisma } from "@/lib/prisma"
 import { slugToTypeName } from "@/lib/utils"
+import { ITEMS_PER_PAGE } from "@/lib/constants"
 
 export type ItemDetail = {
   id: string
@@ -127,8 +128,9 @@ export type ItemTypeWithCount = {
 
 export async function getItemsByType(
   userId: string,
-  typeSlug: string
-): Promise<{ items: ItemWithMeta[]; itemType: { name: string; icon: string; color: string } | null }> {
+  typeSlug: string,
+  { page = 1, pageSize = ITEMS_PER_PAGE }: { page?: number; pageSize?: number } = {}
+): Promise<{ items: ItemWithMeta[]; itemType: { name: string; icon: string; color: string } | null; total: number }> {
   const typeName = slugToTypeName(typeSlug)
   const itemType = await prisma.itemType.findFirst({
     where: {
@@ -138,15 +140,21 @@ export async function getItemsByType(
     select: { id: true, name: true, icon: true, color: true },
   })
 
-  if (!itemType) return { items: [], itemType: null }
+  if (!itemType) return { items: [], itemType: null, total: 0 }
 
-  const items = await prisma.item.findMany({
-    where: { userId, itemTypeId: itemType.id },
-    orderBy: { createdAt: "desc" },
-    select: itemSelect,
-  })
+  const where = { userId, itemTypeId: itemType.id }
+  const [items, total] = await Promise.all([
+    prisma.item.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: itemSelect,
+    }),
+    prisma.item.count({ where }),
+  ])
 
-  return { items: items.map(mapItem), itemType }
+  return { items: items.map(mapItem), itemType, total }
 }
 
 export type UpdateItemData = {

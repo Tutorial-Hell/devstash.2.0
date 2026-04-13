@@ -1,15 +1,28 @@
 import Link from "next/link"
 import { Star, ArrowLeft } from "lucide-react"
-import { getDemoUserId, getCollections } from "@/lib/db/collections"
+import { getDemoUserId, getCollectionsPaginated } from "@/lib/db/collections"
 import { iconMap } from "@/lib/icon-map"
+import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
 import { NewCollectionDialog } from "@/components/new-collection-dialog"
 import { CollectionCard } from "@/components/collection-card"
+import { Pagination } from "@/components/pagination"
+
+interface Props {
+  searchParams: Promise<{ page?: string }>
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function CollectionsPage() {
+export default async function CollectionsPage({ searchParams }: Props) {
   const userId = await getDemoUserId()
-  const collections = userId ? await getCollections(userId) : []
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
+
+  const { collections, total } = userId
+    ? await getCollectionsPaginated(userId, { page, pageSize: COLLECTIONS_PER_PAGE })
+    : { collections: [], total: 0 }
+
+  const totalPages = Math.ceil(total / COLLECTIONS_PER_PAGE)
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -27,14 +40,14 @@ export default async function CollectionsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Collections</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {collections.length} {collections.length === 1 ? "collection" : "collections"}
+            {total} {total === 1 ? "collection" : "collections"}
           </p>
         </div>
         <NewCollectionDialog />
       </div>
 
       {/* Grid */}
-      {collections.length === 0 ? (
+      {total === 0 ? (
         <div className="rounded-lg border border-border bg-card p-12 text-center">
           <p className="text-sm text-muted-foreground">No collections yet.</p>
           <p className="text-xs text-muted-foreground/60 mt-1">
@@ -92,6 +105,8 @@ export default async function CollectionsPage() {
           })}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} basePath="/collections" />
     </div>
   )
 }

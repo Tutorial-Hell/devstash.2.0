@@ -4,19 +4,28 @@ import { Star, Pin, File, ArrowLeft } from "lucide-react"
 import { getDemoUserId, getCollectionById } from "@/lib/db/collections"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
+import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { CollectionDetailActions } from "@/components/collection-detail-actions"
+import { Pagination } from "@/components/pagination"
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ page?: string }>
 }
 
-export default async function CollectionDetailPage({ params }: Props) {
+export default async function CollectionDetailPage({ params, searchParams }: Props) {
   const userId = await getDemoUserId()
   const { id } = await params
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
 
-  const collection = userId ? await getCollectionById(userId, id) : null
+  const collection = userId
+    ? await getCollectionById(userId, id, { page, pageSize: COLLECTIONS_PER_PAGE })
+    : null
   if (!collection) notFound()
+
+  const totalPages = Math.ceil(collection.total / COLLECTIONS_PER_PAGE)
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -48,11 +57,11 @@ export default async function CollectionDetailPage({ params }: Props) {
         <p className="text-sm text-muted-foreground -mt-4">{collection.description}</p>
       )}
       <p className="text-sm text-muted-foreground -mt-4">
-        {collection.items.length} {collection.items.length === 1 ? "item" : "items"}
+        {collection.total} {collection.total === 1 ? "item" : "items"}
       </p>
 
       {/* Grid */}
-      {collection.items.length === 0 ? (
+      {collection.total === 0 ? (
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">No items in this collection yet.</p>
         </div>
@@ -117,6 +126,8 @@ export default async function CollectionDetailPage({ params }: Props) {
           })}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} basePath={`/collections/${id}`} />
     </div>
   )
 }
