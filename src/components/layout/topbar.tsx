@@ -2,16 +2,16 @@
 
 import { Search, PanelLeft, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { NewItemDialog } from "@/components/new-item-dialog"
 import { NewCollectionDialog } from "@/components/new-collection-dialog"
 
 interface TopbarProps {
   onToggleSidebar?: () => void
   onMobileMenuOpen?: () => void
+  onOpenPalette?: () => void
 }
 
-export function Topbar({ onToggleSidebar, onMobileMenuOpen }: TopbarProps) {
+export function Topbar({ onToggleSidebar, onMobileMenuOpen, onOpenPalette }: TopbarProps) {
   return (
     <header className="flex h-14 items-center border-b border-border bg-background px-4 gap-2 shrink-0">
       {/* Mobile hamburger */}
@@ -42,16 +42,19 @@ export function Topbar({ onToggleSidebar, onMobileMenuOpen }: TopbarProps) {
         <span className="text-sm font-semibold text-foreground">DevStash</span>
       </div>
 
-      {/* Search */}
+      {/* Search — opens command palette on click */}
       <div className="flex flex-1 items-center justify-center">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search items..."
-            className="pl-8 h-8 bg-muted border-0 text-sm"
-            readOnly
-          />
-        </div>
+        <button
+          type="button"
+          onClick={onOpenPalette}
+          className="relative w-full max-w-sm flex items-center h-8 rounded-md bg-muted px-3 gap-2 text-sm text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+        >
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">Search items...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-muted-foreground font-mono">
+            <span>⌘</span><span>K</span>
+          </kbd>
+        </button>
       </div>
 
       {/* Actions */}
