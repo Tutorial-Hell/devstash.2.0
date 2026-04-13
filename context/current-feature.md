@@ -1,26 +1,16 @@
-# Current Feature: Global Search / Command Palette
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Cmd+K (Mac) / Ctrl+K (Windows) opens the command palette from anywhere in the dashboard
-- Fuzzy search across all items and collections with no server round-trips
-- Results grouped into Items and Collections sections
-- Each result shows the appropriate type icon (items) or item count (collections)
-- Keyboard navigation: arrow keys move through results, Enter selects
-- Selecting an item opens the item drawer; selecting a collection navigates to its detail page
-- TopBar search input opens the palette on click
-- TopBar search placeholder shows a ⌘K hint
+<!-- Add goals here -->
 
 ## Notes
 
-- Use ShadCN `cmdk` Command component
-- Pre-fetch all searchable data on app load (items: id, title, type, content preview; collections: id, name, itemCount)
-- Reuse existing data fetching functions (`getItems`, `getCollections`, etc.)
-- Client-side only — no additional API calls per keystroke
+<!-- Add notes here -->
 
 ## History
 
@@ -68,3 +58,4 @@ In Progress
 - **2026-04-12** — Dashboard Item Tag Display completed. Tags were already rendered in `ItemRow` but displayed above the description; reordered so tags appear below description. Added missing `File` lucide import used as icon fallback. Seeded all 15 demo items with meaningful tags so tags are visible in pinned and recent rows out of the box.
 - **2026-04-12** — Add Item to Collections completed. `CollectionSelect` multi-select dropdown component (`src/components/collection-select.tsx`) with checkbox-per-collection and dark theme. `getCollectionsForSelect` added to `src/lib/db/collections.ts`; `fetchCollectionsForSelect` server action added to `src/actions/collections.ts` for client use. `createItemInDb` and `updateItemById` extended with `collectionIds` — create/sync `ItemCollection` records via Prisma transactions. New Item dialog fetches collections via `useEffect` on open and passes `collectionIds` to `createItem`. Item drawer edit mode pre-populates from `item.collections` and passes `collectionIds` to `updateItem`. New Item dialog capped at `max-h-[90vh]` with scrollable form body so it fits on screen.
 - **2026-04-12** — Collection Management Actions completed. `CollectionCard` client component (`src/components/collection-card.tsx`) replaces static `<Link>` cards on dashboard and `/collections` — card body navigates to detail page, 3-dot hover menu opens a dropdown with Edit, Delete, and Favorite (placeholder) options. `CollectionDetailActions` component (`src/components/collection-detail-actions.tsx`) adds Edit/Delete/Favorite buttons to the `/collections/[id]` header. Edit opens a Dialog modal; Delete opens an AlertDialog confirmation and redirects to `/collections`. `updateCollectionById` and `deleteCollectionById` added to `src/lib/db/collections.ts` (ownership-checked; delete uses a Prisma transaction to remove `ItemCollection` rows before the collection). `updateCollection` and `deleteCollection` server actions added to `src/actions/collections.ts`. 8 new unit tests (66 total).
+- **2026-04-13** — Global Search / Command Palette completed. Installed `cmdk`. `src/components/ui/command.tsx` (ShadCN Command built on cmdk). `src/components/command-palette.tsx` — palette dialog with Items and Collections sections, type icon per item, item count per collection, fuzzy client-side filtering, keyboard navigation (arrows + Enter). `getAllItemsForSearch` added to `src/lib/db/items.ts` (id, title, type, content preview). `DashboardShell` extended with `searchItems`/`searchCollections` props, `useEffect` Cmd/Ctrl+K listener, and palette render. `Topbar` search input replaced with a clickable button that opens the palette; ⌘K badge shown in placeholder. Dashboard layout pre-fetches search data in parallel on app load.
