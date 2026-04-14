@@ -421,6 +421,27 @@ export async function getAllItemsForSearch(userId: string): Promise<SearchableIt
   }))
 }
 
+export type FavoriteItem = {
+  id: string
+  title: string
+  updatedAt: Date
+  itemType: { name: string; icon: string; color: string }
+}
+
+export async function getFavoriteItems(userId: string): Promise<FavoriteItem[]> {
+  const items = await prisma.item.findMany({
+    where: { userId, isFavorite: true },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      updatedAt: true,
+      itemType: { select: { name: true, icon: true, color: true } },
+    },
+  })
+  return items
+}
+
 export const getItemTypes = cache(async function getItemTypes(userId: string): Promise<ItemTypeWithCount[]> {
   const types = await prisma.itemType.findMany({
     where: { OR: [{ isSystem: true }, { userId }] },

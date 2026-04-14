@@ -1,7 +1,8 @@
 "use client"
 
-import { Search, PanelLeft, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Search, PanelLeft, Menu, Star } from "lucide-react"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { NewItemDialog } from "@/components/new-item-dialog"
 import { NewCollectionDialog } from "@/components/new-collection-dialog"
 
@@ -59,6 +60,13 @@ export function Topbar({ onToggleSidebar, onMobileMenuOpen, onOpenPalette }: Top
 
       {/* Actions */}
       <div className="flex items-center gap-2 shrink-0">
+        <Link
+          href="/favorites"
+          aria-label="Favorites"
+          className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+        >
+          <Star className="h-4 w-4" />
+        </Link>
         <NewCollectionDialog triggerClassName="hidden sm:inline-flex" />
         <NewItemDialog />
       </div>

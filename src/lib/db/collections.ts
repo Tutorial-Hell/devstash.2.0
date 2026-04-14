@@ -269,6 +269,32 @@ export async function deleteCollectionById(
   return true
 }
 
+export type FavoriteCollection = {
+  id: string
+  name: string
+  updatedAt: Date
+  itemCount: number
+}
+
+export async function getFavoriteCollections(userId: string): Promise<FavoriteCollection[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId, isFavorite: true },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      updatedAt: true,
+      _count: { select: { items: true } },
+    },
+  })
+  return collections.map((c) => ({
+    id: c.id,
+    name: c.name,
+    updatedAt: c.updatedAt,
+    itemCount: c._count.items,
+  }))
+}
+
 export async function getDemoUserId(): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { email: "demo@devstash.io" },
