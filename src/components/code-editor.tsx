@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import MonacoEditor, { OnMount } from "@monaco-editor/react"
+import { registerMonacoThemes } from "@/lib/monaco-themes"
 import { Copy, Check } from "lucide-react"
 import { cn, normalizeLanguage } from "@/lib/utils"
+import { useEditorPreferences } from "@/contexts/editor-preferences-context"
 
 const MIN_HEIGHT = 80
 const MAX_HEIGHT = 400
@@ -25,6 +27,7 @@ export function CodeEditor({
 }: CodeEditorProps) {
   const [copied, setCopied] = useState(false)
   const [editorHeight, setEditorHeight] = useState(MIN_HEIGHT)
+  const { prefs } = useEditorPreferences()
 
   const normalizedLang = normalizeLanguage(language)
 
@@ -88,17 +91,18 @@ export function CodeEditor({
       <MonacoEditor
         value={value}
         language={normalizedLang}
-        theme="vs-dark"
+        theme={prefs.theme}
         height={editorHeight}
         options={{
           readOnly,
-          minimap: { enabled: false },
+          minimap: { enabled: prefs.minimap },
           scrollBeyondLastLine: false,
-          fontSize: 13,
-          lineHeight: 20,
+          fontSize: prefs.fontSize,
+          tabSize: prefs.tabSize,
+          lineHeight: Math.round(prefs.fontSize * 1.6),
           padding: { top: 12, bottom: 12 },
           fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-          wordWrap: "on",
+          wordWrap: prefs.wordWrap ? "on" : "off",
           overviewRulerLanes: 0,
           hideCursorInOverviewRuler: true,
           scrollbar: {
@@ -118,6 +122,7 @@ export function CodeEditor({
         }}
         onChange={(val) => onChange?.(val ?? "")}
         onMount={handleMount}
+        beforeMount={registerMonacoThemes}
       />
     </div>
   )

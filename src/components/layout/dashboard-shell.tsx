@@ -6,9 +6,12 @@ import { Topbar } from "@/components/layout/topbar"
 import { Sidebar } from "@/components/layout/sidebar"
 import { ItemDrawerProvider } from "@/components/item-drawer"
 import { CommandPalette } from "@/components/command-palette"
+import { EditorPreferencesProvider } from "@/contexts/editor-preferences-context"
 import type { ItemTypeWithCount, SearchableItem } from "@/lib/db/items"
 import type { CollectionWithMeta } from "@/lib/db/collections"
 import type { SearchableCollection } from "@/components/command-palette"
+import type { EditorPreferences } from "@/types/editor-preferences"
+import { DEFAULT_EDITOR_PREFERENCES } from "@/types/editor-preferences"
 
 interface SessionUser {
   id: string
@@ -24,6 +27,7 @@ interface DashboardShellProps {
   user: SessionUser | null
   searchItems: SearchableItem[]
   searchCollections: SearchableCollection[]
+  editorPreferences?: EditorPreferences
 }
 
 export function DashboardShell({
@@ -33,6 +37,7 @@ export function DashboardShell({
   user,
   searchItems,
   searchCollections,
+  editorPreferences = DEFAULT_EDITOR_PREFERENCES,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -50,6 +55,7 @@ export function DashboardShell({
   }, [])
 
   return (
+    <EditorPreferencesProvider initial={editorPreferences}>
     <ItemDrawerProvider>
       <Toaster position="bottom-right" />
       <div className="flex flex-col h-full">
@@ -79,5 +85,6 @@ export function DashboardShell({
         collections={searchCollections}
       />
     </ItemDrawerProvider>
+    </EditorPreferencesProvider>
   )
 }
