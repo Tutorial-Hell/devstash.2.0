@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Star, ChevronDown, LogOut, User } from "lucide-react"
+import { Star, ChevronDown, LogOut, User, Settings } from "lucide-react"
 import { signOutAction } from "@/lib/auth-actions"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +35,14 @@ function UserMenu({ onNavigate }: { onNavigate: () => void }) {
       >
         <User className="h-3.5 w-3.5" />
         Profile
+      </Link>
+      <Link
+        href="/settings"
+        onClick={onNavigate}
+        className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      >
+        <Settings className="h-3.5 w-3.5" />
+        Settings
       </Link>
       <form action={signOutAction}>
         <button

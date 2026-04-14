@@ -4,8 +4,6 @@ import { getProfileData } from "@/lib/db/profile"
 import { UserAvatar } from "@/components/user-avatar"
 import { iconMap } from "@/lib/icon-map"
 import { File, Package, FolderOpen, CalendarDays } from "lucide-react"
-import { ChangePasswordForm } from "./change-password-form"
-import { DeleteAccountDialog } from "./delete-account-dialog"
 
 export default async function ProfilePage() {
   const session = await auth()
@@ -87,29 +85,6 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      {/* Change password — only for credentials users */}
-      {profile.hasPassword && (
-        <section>
-          <h2 className="text-base font-semibold text-foreground mb-4">Change password</h2>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <ChangePasswordForm />
-          </div>
-        </section>
-      )}
-
-      {/* Danger zone */}
-      <section>
-        <h2 className="text-base font-semibold text-foreground mb-4">Danger zone</h2>
-        <div className="rounded-lg border border-destructive/30 bg-card p-6 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-foreground">Delete account</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Permanently remove your account and all associated data.
-            </p>
-          </div>
-          <DeleteAccountDialog />
-        </div>
-      </section>
     </div>
   )
 }

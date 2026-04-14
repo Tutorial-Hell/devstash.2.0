@@ -11,5 +11,5 @@ export const middleware = auth((req) => {
 })
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile"],
+  matcher: ["/dashboard/:path*", "/profile", "/settings"],
 }
