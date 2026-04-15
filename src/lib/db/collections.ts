@@ -295,6 +295,24 @@ export async function getFavoriteCollections(userId: string): Promise<FavoriteCo
   }))
 }
 
+export async function toggleCollectionFavoriteById(
+  userId: string,
+  collectionId: string
+): Promise<{ isFavorite: boolean } | null> {
+  const existing = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    select: { isFavorite: true },
+  })
+  if (!existing) return null
+
+  const updated = await prisma.collection.update({
+    where: { id: collectionId },
+    data: { isFavorite: !existing.isFavorite },
+    select: { isFavorite: true },
+  })
+  return updated
+}
+
 export async function getDemoUserId(): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { email: "demo@devstash.io" },

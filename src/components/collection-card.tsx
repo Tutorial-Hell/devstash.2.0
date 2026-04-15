@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { updateCollection, deleteCollection } from "@/actions/collections"
+import { updateCollection, deleteCollection, toggleCollectionFavorite } from "@/actions/collections"
 import type { CollectionWithMeta } from "@/lib/db/collections"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,6 +44,8 @@ export function CollectionCard({ collection, children }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [favorite, setFavorite] = useState(collection.isFavorite)
+  const [togglingFavorite, setTogglingFavorite] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown on outside click
@@ -57,6 +59,25 @@ export function CollectionCard({ collection, children }: Props) {
     document.addEventListener("mousedown", handleClick)
     return () => document.removeEventListener("mousedown", handleClick)
   }, [dropdownOpen])
+
+  async function handleToggleFavorite() {
+    setDropdownOpen(false)
+    setTogglingFavorite(true)
+    try {
+      const result = await toggleCollectionFavorite(collection.id)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      setFavorite(result.isFavorite)
+      router.refresh()
+      toast.success(result.isFavorite ? "Added to favorites." : "Removed from favorites.")
+    } catch {
+      toast.error("Something went wrong.")
+    } finally {
+      setTogglingFavorite(false)
+    }
+  }
 
   function openEdit() {
     setDropdownOpen(false)
@@ -155,12 +176,15 @@ export function CollectionCard({ collection, children }: Props) {
               </button>
               <button
                 type="button"
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                disabled
-                title="Coming soon"
+                onClick={handleToggleFavorite}
+                disabled={togglingFavorite}
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
               >
-                <Star className="h-3.5 w-3.5" />
-                Favorite
+                <Star
+                  className="h-3.5 w-3.5"
+                  style={favorite ? { fill: "#facc15", color: "#facc15" } : undefined}
+                />
+                {favorite ? "Unfavorite" : "Favorite"}
               </button>
               <button
                 type="button"

@@ -7,6 +7,7 @@ import {
   updateCollectionById,
   deleteCollectionById,
   getCollectionsForSelect,
+  toggleCollectionFavoriteById,
   type CollectionCreated,
   type CollectionOption,
 } from "@/lib/db/collections"
@@ -90,6 +91,22 @@ export async function updateCollection(
   }
 
   return { success: true, data: collection }
+}
+
+export async function toggleCollectionFavorite(
+  collectionId: string
+): Promise<{ success: true; isFavorite: boolean } | { success: false; error: string }> {
+  const userId = await getDemoUserId()
+  if (!userId) {
+    return { success: false, error: "Not authenticated." }
+  }
+
+  const result = await toggleCollectionFavoriteById(userId, collectionId)
+  if (!result) {
+    return { success: false, error: "Collection not found or access denied." }
+  }
+
+  return { success: true, isFavorite: result.isFavorite }
 }
 
 export async function deleteCollection(

@@ -22,7 +22,7 @@ import {
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { formatDate, formatBytes, cn } from "@/lib/utils"
-import { deleteItem } from "@/actions/items"
+import { deleteItem, toggleItemFavorite } from "@/actions/items"
 import type { ItemDetail } from "@/lib/db/items"
 
 // ─── Shared types & constants ─────────────────────────────────────────────────
@@ -39,7 +39,7 @@ export const MARKDOWN_TYPES = new Set(["note", "prompt"])
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
-export function Section({
+function Section({
   label,
   icon,
   children,
@@ -68,7 +68,7 @@ export function DetailRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function BadgeList({ items }: { items: { id: string; name: string }[] }) {
+function BadgeList({ items }: { items: { id: string; name: string }[] }) {
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       {items.map((item) => (
@@ -90,14 +90,35 @@ export function ViewBody({
   typeName,
   onEdit,
   onClose,
+  onUpdate,
 }: {
   item: ItemDetailResponse
   typeName: string
   onEdit: () => void
   onClose: () => void
+  onUpdate?: (item: ItemDetailResponse) => void
 }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
+  const [togglingFavorite, setTogglingFavorite] = useState(false)
+
+  async function handleToggleFavorite() {
+    setTogglingFavorite(true)
+    try {
+      const result = await toggleItemFavorite(item.id)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      onUpdate?.({ ...item, isFavorite: result.isFavorite })
+      router.refresh()
+      toast.success(result.isFavorite ? "Added to favorites." : "Removed from favorites.")
+    } catch {
+      toast.error("Something went wrong.")
+    } finally {
+      setTogglingFavorite(false)
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true)
@@ -128,6 +149,8 @@ export function ViewBody({
             "gap-1.5 text-xs h-8 px-2",
             item.isFavorite && "text-yellow-400 hover:text-yellow-400"
           )}
+          onClick={handleToggleFavorite}
+          disabled={togglingFavorite}
         >
           <Star className={cn("h-3.5 w-3.5", item.isFavorite ? "fill-yellow-400 text-yellow-400" : "")} />
           Favorite
