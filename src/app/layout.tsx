@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "DevStash",
-  description: "Your developer knowledge hub",
+  description: "Your Developer Knowledge Hub",
 };
 
 export default function RootLayout({
