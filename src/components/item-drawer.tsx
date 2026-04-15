@@ -6,7 +6,6 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { iconMap } from "@/lib/icon-map"
-import { cn } from "@/lib/utils"
 import { ViewBody, type ItemDetailResponse } from "@/components/item-drawer-view"
 import { EditBody } from "@/components/item-drawer-edit"
 
@@ -128,6 +127,7 @@ function DrawerBody({
           typeName={typeName}
           onEdit={() => setEditMode(true)}
           onClose={onClose}
+          onUpdate={onUpdate}
         />
       )}
     </>
@@ -169,5 +169,3 @@ function DrawerSkeleton() {
   )
 }
 
-// Re-export the unused `cn` suppressor — cn is still needed by DrawerBody callers
-export { cn }

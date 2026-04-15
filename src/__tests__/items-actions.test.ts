@@ -7,6 +7,7 @@ vi.mock("@/lib/db/collections", () => ({
 vi.mock("@/lib/db/items", () => ({
   deleteItemById: vi.fn(),
   createItemInDb: vi.fn(),
+  toggleItemFavoriteById: vi.fn(),
 }))
 
 vi.mock("@/lib/r2", () => ({
@@ -14,9 +15,9 @@ vi.mock("@/lib/r2", () => ({
 }))
 
 import { getDemoUserId } from "@/lib/db/collections"
-import { deleteItemById, createItemInDb } from "@/lib/db/items"
+import { deleteItemById, createItemInDb, toggleItemFavoriteById } from "@/lib/db/items"
 import { deleteFromR2 } from "@/lib/r2"
-import { deleteItem, createItem } from "@/actions/items"
+import { deleteItem, createItem, toggleItemFavorite } from "@/actions/items"
 
 describe("deleteItem", () => {
   beforeEach(() => {
@@ -224,5 +225,52 @@ describe("createItem", () => {
         fileSize: 102400,
       })
     )
+  })
+})
+
+// ─── toggleItemFavorite ───────────────────────────────────────────────────────
+
+describe("toggleItemFavorite", () => {
+  beforeEach(() => {
+    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(toggleItemFavoriteById).mockReset()
+  })
+
+  it("returns not-authenticated error when no userId", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue(null)
+
+    const result = await toggleItemFavorite("item-1")
+
+    expect(result).toEqual({ success: false, error: "Not authenticated." })
+    expect(toggleItemFavoriteById).not.toHaveBeenCalled()
+  })
+
+  it("returns not-found error when item does not belong to user", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleItemFavoriteById).mockResolvedValue(null)
+
+    const result = await toggleItemFavorite("item-999")
+
+    expect(result).toEqual({ success: false, error: "Item not found or access denied." })
+    expect(toggleItemFavoriteById).toHaveBeenCalledWith("user-1", "item-999")
+  })
+
+  it("returns success with isFavorite=true when favorited", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleItemFavoriteById).mockResolvedValue({ isFavorite: true })
+
+    const result = await toggleItemFavorite("item-1")
+
+    expect(result).toEqual({ success: true, isFavorite: true })
+    expect(toggleItemFavoriteById).toHaveBeenCalledWith("user-1", "item-1")
+  })
+
+  it("returns success with isFavorite=false when unfavorited", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleItemFavoriteById).mockResolvedValue({ isFavorite: false })
+
+    const result = await toggleItemFavorite("item-1")
+
+    expect(result).toEqual({ success: true, isFavorite: false })
   })
 })

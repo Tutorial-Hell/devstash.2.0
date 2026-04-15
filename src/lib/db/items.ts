@@ -442,6 +442,24 @@ export async function getFavoriteItems(userId: string): Promise<FavoriteItem[]> 
   return items
 }
 
+export async function toggleItemFavoriteById(
+  userId: string,
+  itemId: string
+): Promise<{ isFavorite: boolean } | null> {
+  const existing = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { isFavorite: true },
+  })
+  if (!existing) return null
+
+  const updated = await prisma.item.update({
+    where: { id: itemId },
+    data: { isFavorite: !existing.isFavorite },
+    select: { isFavorite: true },
+  })
+  return updated
+}
+
 export const getItemTypes = cache(async function getItemTypes(userId: string): Promise<ItemTypeWithCount[]> {
   const types = await prisma.itemType.findMany({
     where: { OR: [{ isSystem: true }, { userId }] },

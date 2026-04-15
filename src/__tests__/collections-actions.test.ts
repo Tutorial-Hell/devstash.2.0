@@ -5,6 +5,7 @@ vi.mock("@/lib/db/collections", () => ({
   createCollectionInDb: vi.fn(),
   updateCollectionById: vi.fn(),
   deleteCollectionById: vi.fn(),
+  toggleCollectionFavoriteById: vi.fn(),
 }))
 
 import {
@@ -12,11 +13,13 @@ import {
   createCollectionInDb,
   updateCollectionById,
   deleteCollectionById,
+  toggleCollectionFavoriteById,
 } from "@/lib/db/collections"
 import {
   createCollection,
   updateCollection,
   deleteCollection,
+  toggleCollectionFavorite,
 } from "@/actions/collections"
 
 const mockCollection = {
@@ -207,5 +210,52 @@ describe("deleteCollection", () => {
 
     expect(result).toEqual({ success: true })
     expect(deleteCollectionById).toHaveBeenCalledWith("user-1", "col-1")
+  })
+})
+
+// ─── toggleCollectionFavorite ─────────────────────────────────────────────────
+
+describe("toggleCollectionFavorite", () => {
+  beforeEach(() => {
+    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(toggleCollectionFavoriteById).mockReset()
+  })
+
+  it("returns not-authenticated error when no userId", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue(null)
+
+    const result = await toggleCollectionFavorite("col-1")
+
+    expect(result).toEqual({ success: false, error: "Not authenticated." })
+    expect(toggleCollectionFavoriteById).not.toHaveBeenCalled()
+  })
+
+  it("returns not-found error when collection does not belong to user", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleCollectionFavoriteById).mockResolvedValue(null)
+
+    const result = await toggleCollectionFavorite("col-999")
+
+    expect(result).toEqual({ success: false, error: "Collection not found or access denied." })
+    expect(toggleCollectionFavoriteById).toHaveBeenCalledWith("user-1", "col-999")
+  })
+
+  it("returns success with isFavorite=true when favorited", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleCollectionFavoriteById).mockResolvedValue({ isFavorite: true })
+
+    const result = await toggleCollectionFavorite("col-1")
+
+    expect(result).toEqual({ success: true, isFavorite: true })
+    expect(toggleCollectionFavoriteById).toHaveBeenCalledWith("user-1", "col-1")
+  })
+
+  it("returns success with isFavorite=false when unfavorited", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleCollectionFavoriteById).mockResolvedValue({ isFavorite: false })
+
+    const result = await toggleCollectionFavorite("col-1")
+
+    expect(result).toEqual({ success: true, isFavorite: false })
   })
 })

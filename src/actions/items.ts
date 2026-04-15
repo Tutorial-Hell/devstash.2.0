@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 import { getDemoUserId } from "@/lib/db/collections"
-import { updateItemById, deleteItemById, createItemInDb, type ItemDetail } from "@/lib/db/items"
+import { updateItemById, deleteItemById, createItemInDb, toggleItemFavoriteById, type ItemDetail } from "@/lib/db/items"
 import { deleteFromR2 } from "@/lib/r2"
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -85,6 +85,24 @@ export async function deleteItem(
   }
 
   return { success: true }
+}
+
+// ─── Toggle Favorite ──────────────────────────────────────────────────────────
+
+export async function toggleItemFavorite(
+  itemId: string
+): Promise<{ success: true; isFavorite: boolean } | { success: false; error: string }> {
+  const userId = await getDemoUserId()
+  if (!userId) {
+    return { success: false, error: "Not authenticated." }
+  }
+
+  const result = await toggleItemFavoriteById(userId, itemId)
+  if (!result) {
+    return { success: false, error: "Item not found or access denied." }
+  }
+
+  return { success: true, isFavorite: result.isFavorite }
 }
 
 // ─── Create ───────────────────────────────────────────────────────────────────
