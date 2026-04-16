@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getDemoUserId } from "@/lib/db/collections"
 import { getItemsByType } from "@/lib/db/items"
@@ -41,6 +42,10 @@ export default async function ItemsTypePage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 inline-block">
+        ← Dashboard
+      </Link>
+
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">

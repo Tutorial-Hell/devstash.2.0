@@ -8,6 +8,7 @@ vi.mock("@/lib/db/items", () => ({
   deleteItemById: vi.fn(),
   createItemInDb: vi.fn(),
   toggleItemFavoriteById: vi.fn(),
+  toggleItemPinnedById: vi.fn(),
 }))
 
 vi.mock("@/lib/r2", () => ({
@@ -15,9 +16,9 @@ vi.mock("@/lib/r2", () => ({
 }))
 
 import { getDemoUserId } from "@/lib/db/collections"
-import { deleteItemById, createItemInDb, toggleItemFavoriteById } from "@/lib/db/items"
+import { deleteItemById, createItemInDb, toggleItemFavoriteById, toggleItemPinnedById } from "@/lib/db/items"
 import { deleteFromR2 } from "@/lib/r2"
-import { deleteItem, createItem, toggleItemFavorite } from "@/actions/items"
+import { deleteItem, createItem, toggleItemFavorite, toggleItemPin } from "@/actions/items"
 
 describe("deleteItem", () => {
   beforeEach(() => {
@@ -272,5 +273,52 @@ describe("toggleItemFavorite", () => {
     const result = await toggleItemFavorite("item-1")
 
     expect(result).toEqual({ success: true, isFavorite: false })
+  })
+})
+
+// ─── toggleItemPin ────────────────────────────────────────────────────────────
+
+describe("toggleItemPin", () => {
+  beforeEach(() => {
+    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(toggleItemPinnedById).mockReset()
+  })
+
+  it("returns not-authenticated error when no userId", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue(null)
+
+    const result = await toggleItemPin("item-1")
+
+    expect(result).toEqual({ success: false, error: "Not authenticated." })
+    expect(toggleItemPinnedById).not.toHaveBeenCalled()
+  })
+
+  it("returns not-found error when item does not belong to user", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleItemPinnedById).mockResolvedValue(null)
+
+    const result = await toggleItemPin("item-999")
+
+    expect(result).toEqual({ success: false, error: "Item not found or access denied." })
+    expect(toggleItemPinnedById).toHaveBeenCalledWith("user-1", "item-999")
+  })
+
+  it("returns success with isPinned=true when pinned", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleItemPinnedById).mockResolvedValue({ isPinned: true })
+
+    const result = await toggleItemPin("item-1")
+
+    expect(result).toEqual({ success: true, isPinned: true })
+    expect(toggleItemPinnedById).toHaveBeenCalledWith("user-1", "item-1")
+  })
+
+  it("returns success with isPinned=false when unpinned", async () => {
+    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(toggleItemPinnedById).mockResolvedValue({ isPinned: false })
+
+    const result = await toggleItemPin("item-1")
+
+    expect(result).toEqual({ success: true, isPinned: false })
   })
 })
