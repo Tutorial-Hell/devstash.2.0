@@ -22,7 +22,7 @@ import {
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { formatDate, formatBytes, cn } from "@/lib/utils"
-import { deleteItem, toggleItemFavorite } from "@/actions/items"
+import { deleteItem, toggleItemFavorite, toggleItemPin } from "@/actions/items"
 import type { ItemDetail } from "@/lib/db/items"
 
 // ─── Shared types & constants ─────────────────────────────────────────────────
@@ -101,6 +101,25 @@ export function ViewBody({
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [togglingFavorite, setTogglingFavorite] = useState(false)
+  const [togglingPin, setTogglingPin] = useState(false)
+
+  async function handleTogglePin() {
+    setTogglingPin(true)
+    try {
+      const result = await toggleItemPin(item.id)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      onUpdate?.({ ...item, isPinned: result.isPinned })
+      router.refresh()
+      toast.success(result.isPinned ? "Item pinned." : "Item unpinned.")
+    } catch {
+      toast.error("Something went wrong.")
+    } finally {
+      setTogglingPin(false)
+    }
+  }
 
   async function handleToggleFavorite() {
     setTogglingFavorite(true)
@@ -155,8 +174,17 @@ export function ViewBody({
           <Star className={cn("h-3.5 w-3.5", item.isFavorite ? "fill-yellow-400 text-yellow-400" : "")} />
           Favorite
         </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2">
-          <Pin className="h-3.5 w-3.5" />
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "gap-1.5 text-xs h-8 px-2",
+            item.isPinned && "text-blue-400 hover:text-blue-400"
+          )}
+          onClick={handleTogglePin}
+          disabled={togglingPin}
+        >
+          <Pin className={cn("h-3.5 w-3.5", item.isPinned ? "fill-blue-400 text-blue-400" : "")} />
           Pin
         </Button>
         <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2">

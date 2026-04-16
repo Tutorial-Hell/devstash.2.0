@@ -146,7 +146,7 @@ export async function getItemsByType(
   const [items, total] = await Promise.all([
     prisma.item.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
       skip: (page - 1) * pageSize,
       take: pageSize,
       select: itemSelect,
@@ -440,6 +440,24 @@ export async function getFavoriteItems(userId: string): Promise<FavoriteItem[]> 
     },
   })
   return items
+}
+
+export async function toggleItemPinnedById(
+  userId: string,
+  itemId: string
+): Promise<{ isPinned: boolean } | null> {
+  const existing = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { isPinned: true },
+  })
+  if (!existing) return null
+
+  const updated = await prisma.item.update({
+    where: { id: itemId },
+    data: { isPinned: !existing.isPinned },
+    select: { isPinned: true },
+  })
+  return updated
 }
 
 export async function toggleItemFavoriteById(
