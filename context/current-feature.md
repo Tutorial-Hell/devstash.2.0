@@ -1,28 +1,16 @@
 # Current Feature
 
-Pinned Items
-
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Create `toggleItemPin` server action
-- Make Pin button in ItemDrawer clickable (exists but has no onClick)
-- Optimistic UI updates for instant feedback
-- Toast notification on success/error
-- Pinned items sort to top of listings
-- Follow Favorite Button pattern
-- Items only (not collections)
-- Pin icon on ItemCard remains a static indicator
+<!-- Add goals here -->
 
 ## Notes
 
-- Follow the same pattern used for the Favorite Toggle feature
-- `toggleItemFavoriteById` / `toggleItemFavorite` are the reference implementations
-- Dashboard pinned items section already exists and is driven by `getPinnedItems`
-- Pin button exists in ItemDrawer action bar but is wired to nothing
+<!-- Add notes here -->
 
 ## History
 
@@ -77,3 +65,4 @@ In Progress
 - **2026-04-14** — Favorites Page completed. Star icon link added to topbar (`src/components/layout/topbar.tsx`) using `buttonVariants`. `/favorites` route added to middleware matcher. `getFavoriteItems` and `getFavoriteCollections` added to `src/lib/db/items.ts` and `src/lib/db/collections.ts` respectively (sorted by `updatedAt` desc). Server component page at `src/app/(dashboard)/favorites/page.tsx` renders compact monospace rows in two sections (Items / Collections) with counts, type icon, type badge, and date. Item rows open ItemDrawer via `ClickableItemCard`; collection rows navigate to `/collections/[id]`. Empty state shown when nothing is favorited.
 - **2026-04-15** — Favorite Toggle completed.
 - **2026-04-15** — Favorites Page Sorting completed. Added `FavoritesSortable` client component (`src/components/favorites-sortable.tsx`) wrapping the server-fetched favorites data with per-section sort dropdowns. Items sort by Newest / Name (A→Z) / Type (Z→A); Collections sort by Newest / Name (A→Z). Server component stays intact; sort state is local and resets on navigation. `toggleItemFavoriteById` and `toggleCollectionFavoriteById` DB helpers added (ownership-checked, flip `isFavorite`). `toggleItemFavorite` and `toggleCollectionFavorite` server actions added. Item drawer Favorite button wired: optimistic local state update via `onUpdate` prop + `router.refresh()` + toast. `CollectionDetailActions` Favorite button enabled (was disabled placeholder) with local state tracking. `CollectionCard` dropdown Favorite option enabled with filled-star visual when active. 8 new unit tests (79 total).
+- **2026-04-16** — Pinned Items completed. `toggleItemPinnedById` DB helper added (ownership-checked, flips `isPinned`). `toggleItemPin` server action added mirroring `toggleItemFavorite` pattern. Pin button in ItemDrawer wired with optimistic UI, filled blue icon when pinned, and toast on success/error. `getItemsByType` orderBy updated to `[isPinned desc, createdAt desc]` so pinned items surface at the top of all item type listings. `← Dashboard` back link added to `/items/[type]` page. 4 new unit tests (83 total).
