@@ -1,16 +1,31 @@
 # Current Feature
 
+DevStash Homepage Mockup
+
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- Static prototype at `prototypes/homepage/` (index.html, styles.css, script.js)
+- Fixed top nav: logo, Features/Pricing links, Sign In/Get Started buttons; gets more opaque on scroll
+- Hero section: chaos container (floating bouncing icons, mouse repel) → pulsing arrow → dashboard preview mockup
+- Hero text: gradient headline, subheadline, CTA buttons
+- Features section: 6 cards (Code Snippets, AI Prompts, Instant Search, Commands, Files & Docs, Collections) with type accent colors
+- AI section: Pro badge + checklist (left), code editor mockup with AI tag demo (right)
+- Pricing section: Free vs Pro cards, yearly toggle ($72), "Most Popular" badge on Pro
+- CTA section and footer (logo, link columns, copyright with current year)
+- Scroll fade-in animations for sections
+- Mobile responsive: chaos/arrow/dashboard stack vertically, arrow rotates 90°
 
 ## Notes
 
-<!-- Add notes here -->
+- Dark theme only
+- Item type accent colors: Snippet #3b82f6, Prompt #f59e0b, Command #06b6d4, Note #22c55e, File #64748b, Image #ec4899, URL #6366f1
+- Chaos icons: Notion, GitHub, Slack, VS Code logos + Browser tabs, Terminal, Text file, Bookmark — animated with requestAnimationFrame, bounce off walls, repel from mouse
+- Dashboard mockup is a simplified visual (sidebar + colored-border item cards), not a real component
+- Pure HTML/CSS/JS — no framework, no build step
 
 ## History
 
