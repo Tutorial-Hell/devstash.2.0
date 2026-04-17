@@ -1,31 +1,16 @@
 # Current Feature
 
-DevStash Homepage Mockup
-
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Static prototype at `prototypes/homepage/` (index.html, styles.css, script.js)
-- Fixed top nav: logo, Features/Pricing links, Sign In/Get Started buttons; gets more opaque on scroll
-- Hero section: chaos container (floating bouncing icons, mouse repel) → pulsing arrow → dashboard preview mockup
-- Hero text: gradient headline, subheadline, CTA buttons
-- Features section: 6 cards (Code Snippets, AI Prompts, Instant Search, Commands, Files & Docs, Collections) with type accent colors
-- AI section: Pro badge + checklist (left), code editor mockup with AI tag demo (right)
-- Pricing section: Free vs Pro cards, yearly toggle ($72), "Most Popular" badge on Pro
-- CTA section and footer (logo, link columns, copyright with current year)
-- Scroll fade-in animations for sections
-- Mobile responsive: chaos/arrow/dashboard stack vertically, arrow rotates 90°
+<!-- Add goals here -->
 
 ## Notes
 
-- Dark theme only
-- Item type accent colors: Snippet #3b82f6, Prompt #f59e0b, Command #06b6d4, Note #22c55e, File #64748b, Image #ec4899, URL #6366f1
-- Chaos icons: Notion, GitHub, Slack, VS Code logos + Browser tabs, Terminal, Text file, Bookmark — animated with requestAnimationFrame, bounce off walls, repel from mouse
-- Dashboard mockup is a simplified visual (sidebar + colored-border item cards), not a real component
-- Pure HTML/CSS/JS — no framework, no build step
+<!-- Add notes here -->
 
 ## History
 
@@ -80,4 +65,5 @@ In Progress
 - **2026-04-14** — Favorites Page completed. Star icon link added to topbar (`src/components/layout/topbar.tsx`) using `buttonVariants`. `/favorites` route added to middleware matcher. `getFavoriteItems` and `getFavoriteCollections` added to `src/lib/db/items.ts` and `src/lib/db/collections.ts` respectively (sorted by `updatedAt` desc). Server component page at `src/app/(dashboard)/favorites/page.tsx` renders compact monospace rows in two sections (Items / Collections) with counts, type icon, type badge, and date. Item rows open ItemDrawer via `ClickableItemCard`; collection rows navigate to `/collections/[id]`. Empty state shown when nothing is favorited.
 - **2026-04-15** — Favorite Toggle completed.
 - **2026-04-15** — Favorites Page Sorting completed. Added `FavoritesSortable` client component (`src/components/favorites-sortable.tsx`) wrapping the server-fetched favorites data with per-section sort dropdowns. Items sort by Newest / Name (A→Z) / Type (Z→A); Collections sort by Newest / Name (A→Z). Server component stays intact; sort state is local and resets on navigation. `toggleItemFavoriteById` and `toggleCollectionFavoriteById` DB helpers added (ownership-checked, flip `isFavorite`). `toggleItemFavorite` and `toggleCollectionFavorite` server actions added. Item drawer Favorite button wired: optimistic local state update via `onUpdate` prop + `router.refresh()` + toast. `CollectionDetailActions` Favorite button enabled (was disabled placeholder) with local state tracking. `CollectionCard` dropdown Favorite option enabled with filled-star visual when active. 8 new unit tests (79 total).
-- **2026-04-16** — Pinned Items completed. `toggleItemPinnedById` DB helper added (ownership-checked, flips `isPinned`). `toggleItemPin` server action added mirroring `toggleItemFavorite` pattern. Pin button in ItemDrawer wired with optimistic UI, filled blue icon when pinned, and toast on success/error. `getItemsByType` orderBy updated to `[isPinned desc, createdAt desc]` so pinned items surface at the top of all item type listings. `← Dashboard` back link added to `/items/[type]` page. 4 new unit tests (83 total).
+- **2026-04-16** — Pinned Items completed.
+- **2026-04-17** — DevStash Homepage Mockup completed. Static prototype at `prototypes/homepage/` (index.html, styles.css, script.js — no build step). Fixed navbar with frosted glass on scroll and mobile hamburger with page overlay. Hero: gradient headline + CTAs, chaos canvas (bouncing emoji icons with mouse repulsion), pulsing arrow, dashboard mockup with search topbar + New button + 6 item cards with type chips and accent borders. Features (6 cards), AI section (Pro badge, checklist, code mockup with AI tags), Pricing (Free/Pro, monthly/yearly toggle), CTA, footer. Scroll fade-in via IntersectionObserver (js-ready gated for screenshot safety). Fully responsive across mobile/tablet/desktop. `toggleItemPinnedById` DB helper added (ownership-checked, flips `isPinned`). `toggleItemPin` server action added mirroring `toggleItemFavorite` pattern. Pin button in ItemDrawer wired with optimistic UI, filled blue icon when pinned, and toast on success/error. `getItemsByType` orderBy updated to `[isPinned desc, createdAt desc]` so pinned items surface at the top of all item type listings. `← Dashboard` back link added to `/items/[type]` page. 4 new unit tests (83 total).
