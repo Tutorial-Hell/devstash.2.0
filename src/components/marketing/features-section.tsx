@@ -66,7 +66,7 @@ export function FeaturesSection() {
                   {icon}
                 </div>
                 <h3 className="text-base font-semibold mb-2">{title}</h3>
-                <p className="text-sm text-[#64748b] leading-relaxed">{desc}</p>
+                <p className="text-sm text-[#94a3b8] leading-relaxed">{desc}</p>
               </div>
             </FadeIn>
           ))}

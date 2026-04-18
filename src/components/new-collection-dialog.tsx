@@ -18,18 +18,22 @@ import { createCollection } from "@/actions/collections"
 
 interface NewCollectionDialogProps {
   triggerClassName?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function NewCollectionDialog({ triggerClassName }: NewCollectionDialogProps = {}) {
+export function NewCollectionDialog({ triggerClassName, open: controlledOpen, onOpenChange: controlledOnOpenChange }: NewCollectionDialogProps = {}) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = controlledOpen ?? internalOpen
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   function handleOpenChange(next: boolean) {
-    setOpen(next)
+    if (controlledOnOpenChange) controlledOnOpenChange(next)
+    else setInternalOpen(next)
     if (!next) resetForm()
   }
 
@@ -57,7 +61,7 @@ export function NewCollectionDialog({ triggerClassName }: NewCollectionDialogPro
       }
 
       toast.success("Collection created.")
-      setOpen(false)
+      handleOpenChange(false)
       resetForm()
       router.refresh()
     } catch {
@@ -69,15 +73,17 @@ export function NewCollectionDialog({ triggerClassName }: NewCollectionDialogPro
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <Button
-        variant="outline"
-        size="sm"
-        className={triggerClassName}
-        onClick={() => setOpen(true)}
-      >
-        <FolderPlus className="h-4 w-4" />
-        New Collection
-      </Button>
+      {controlledOpen === undefined && (
+        <Button
+          variant="outline"
+          size="sm"
+          className={triggerClassName}
+          onClick={() => handleOpenChange(true)}
+        >
+          <FolderPlus className="h-4 w-4" />
+          New Collection
+        </Button>
+      )}
 
       <DialogContent className="sm:max-w-md" showCloseButton={false}>
         <DialogHeader>
@@ -123,7 +129,7 @@ export function NewCollectionDialog({ triggerClassName }: NewCollectionDialogPro
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setOpen(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={saving}
             >
               Cancel

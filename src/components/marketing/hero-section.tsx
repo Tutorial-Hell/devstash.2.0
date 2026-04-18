@@ -47,7 +47,7 @@ export function HeroSection() {
       <FadeIn className="flex items-center gap-6 w-full max-w-[960px] flex-col sm:flex-row">
         {/* Chaos box */}
         <div className="flex-1 bg-[#12121a] border border-[#1e1e2e] rounded-xl p-4 relative min-h-[280px] w-full">
-          <p className="text-[0.75rem] text-[#64748b] mb-3 font-mono">Your knowledge today...</p>
+          <p className="text-[0.85rem] text-[#94a3b8] mb-3 font-mono font-bold">Your knowledge today...</p>
           <ChaosCanvas />
         </div>
 
@@ -58,7 +58,7 @@ export function HeroSection() {
 
         {/* Dashboard mockup */}
         <div className="flex-1 bg-[#12121a] border border-[#1e1e2e] rounded-xl p-4 relative min-h-[280px] w-full">
-          <p className="text-[0.75rem] text-[#64748b] mb-3 font-mono">...with DevStash</p>
+          <p className="text-[0.85rem] text-[#94a3b8] mb-3 font-mono font-bold">...with DevStash</p>
           <div className="flex h-[220px] gap-2">
             {/* Sidebar */}
             <div className="w-[90px] flex flex-col gap-1 flex-shrink-0">

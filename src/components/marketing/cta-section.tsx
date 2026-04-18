@@ -9,7 +9,7 @@ export function CtaSection() {
           <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] font-extrabold mb-4 tracking-[-0.02em]">
             Ready to organize your knowledge?
           </h2>
-          <p className="text-[#64748b] mb-8 text-[1.05rem]">
+          <p className="text-[#94a3b8] mb-8 text-[1.05rem]">
             Join developers who stopped losing their best ideas.
           </p>
           <Link

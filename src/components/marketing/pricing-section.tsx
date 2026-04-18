@@ -76,10 +76,10 @@ export function PricingSection() {
           {/* Free */}
           <FadeIn>
             <div className="bg-[#12121a] border border-[#1e1e2e] rounded-xl p-8">
-              <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#64748b] mb-3">Free</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#94a3b8] mb-3">Free</div>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-[2.5rem] font-extrabold tracking-[-0.03em]">$0</span>
-                <span className="text-[#64748b] text-sm">/mo</span>
+                <span className="text-[#94a3b8] text-sm">/mo</span>
               </div>
               <div className="min-h-[1.1em] mb-6" />
               <ul className="flex flex-col gap-[0.65rem] mb-7">
@@ -110,14 +110,14 @@ export function PricingSection() {
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#3b82f6] text-white text-[0.7rem] font-bold uppercase tracking-[0.05em] px-3 py-[0.2rem] rounded-full whitespace-nowrap">
                 Most Popular
               </span>
-              <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#64748b] mb-3">Pro</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#94a3b8] mb-3">Pro</div>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-[2.5rem] font-extrabold tracking-[-0.03em]">
                   {isYearly ? "$6" : "$8"}
                 </span>
-                <span className="text-[#64748b] text-sm">/mo</span>
+                <span className="text-[#94a3b8] text-sm">/mo</span>
               </div>
-              <p className={cn("text-xs text-[#64748b] mb-6 min-h-[1.1em]", !isYearly && "invisible")}>
+              <p className={cn("text-xs text-[#94a3b8] mb-6 min-h-[1.1em]", !isYearly && "invisible")}>
                 billed $72/year
               </p>
               <ul className="flex flex-col gap-[0.65rem] mb-7">

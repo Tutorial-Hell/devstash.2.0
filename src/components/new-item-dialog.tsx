@@ -125,15 +125,19 @@ function FormField({
 
 interface NewItemDialogProps {
   defaultType?: ItemTypeName
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
+export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange: controlledOnOpenChange }: NewItemDialogProps = {}) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = controlledOpen ?? internalOpen
 
   function handleOpenChange(next: boolean) {
     if (next) setType(defaultType ?? "snippet")
-    setOpen(next)
+    if (controlledOnOpenChange) controlledOnOpenChange(next)
+    else setInternalOpen(next)
     if (!next) resetForm()
   }
 
@@ -222,7 +226,7 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
       }
 
       toast.success("Item created.")
-      setOpen(false)
+      handleOpenChange(false)
       resetForm()
       router.refresh()
     } catch {
@@ -236,12 +240,20 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4" />
-        {defaultType
-          ? `New ${defaultType.charAt(0).toUpperCase() + defaultType.slice(1)}`
-          : "New Item"}
-      </Button>
+      {controlledOpen === undefined && (
+        <Button
+          size="sm"
+          aria-label={defaultType ? `New ${defaultType.charAt(0).toUpperCase() + defaultType.slice(1)}` : "New Item"}
+          onClick={() => handleOpenChange(true)}
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">
+            {defaultType
+              ? `New ${defaultType.charAt(0).toUpperCase() + defaultType.slice(1)}`
+              : "New Item"}
+          </span>
+        </Button>
+      )}
 
       <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]" showCloseButton={false}>
         <DialogHeader>
@@ -370,7 +382,7 @@ export function NewItemDialog({ defaultType }: NewItemDialogProps = {}) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setOpen(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={saving}
             >
               Cancel

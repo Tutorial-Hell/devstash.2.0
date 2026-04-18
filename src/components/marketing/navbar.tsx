@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -29,6 +30,29 @@ export function Navbar() {
   }, [menuOpen])
 
   const closeMenu = () => setMenuOpen(false)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const menu = menuRef.current
+    if (!menu) return
+    const focusable = menu.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    first?.focus()
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") { closeMenu(); return }
+      if (e.key !== "Tab") return
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first?.focus() }
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [menuOpen])
 
   return (
     <>
@@ -77,6 +101,8 @@ export function Navbar() {
           <button
             className="sm:hidden ml-auto flex flex-col gap-[5px] p-1 cursor-pointer bg-transparent border-none"
             aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
             onClick={() => setMenuOpen((o) => !o)}
           >
             <span className={cn("block w-[22px] h-[2px] bg-[#94a3b8] rounded-sm transition-all duration-200", menuOpen && "rotate-45 translate-y-[7px]")} />
@@ -87,20 +113,20 @@ export function Navbar() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="sm:hidden flex flex-col gap-2 px-6 pt-3 pb-4 border-t border-[#1e1e2e]">
-            <a href="#features" onClick={closeMenu} className="py-2 text-[#94a3b8] text-[0.95rem] hover:text-[#e2e8f0] transition-colors">
+          <div id="mobile-menu" ref={menuRef} className="sm:hidden flex flex-col px-2 pt-2 pb-4 border-t border-[#1e1e2e] gap-1">
+            <a href="#features" onClick={closeMenu} className="px-4 py-3 rounded-lg text-[#e2e8f0] text-[0.95rem] bg-white/[0.04] hover:bg-white/[0.08] active:bg-[#3b82f6]/20 active:text-[#60a5fa] transition-colors">
               Features
             </a>
-            <a href="#pricing" onClick={closeMenu} className="py-2 text-[#94a3b8] text-[0.95rem] hover:text-[#e2e8f0] transition-colors">
+            <a href="#pricing" onClick={closeMenu} className="px-4 py-3 rounded-lg text-[#e2e8f0] text-[0.95rem] bg-white/[0.04] hover:bg-white/[0.08] active:bg-[#3b82f6]/20 active:text-[#60a5fa] transition-colors">
               Pricing
             </a>
-            <Link href="/sign-in" onClick={closeMenu} className="py-2 text-[#94a3b8] text-[0.95rem] hover:text-[#e2e8f0] transition-colors">
+            <Link href="/sign-in" onClick={closeMenu} className="px-4 py-3 rounded-lg text-[#e2e8f0] text-[0.95rem] bg-white/[0.04] hover:bg-white/[0.08] active:bg-[#3b82f6]/20 active:text-[#60a5fa] transition-colors">
               Sign In
             </Link>
             <Link
               href="/register"
               onClick={closeMenu}
-              className={cn(buttonVariants(), "mt-1 bg-[#3b82f6] hover:bg-[#2563eb] text-white border-0 w-full justify-center")}
+              className={cn(buttonVariants(), "mt-4 bg-[#3b82f6] hover:bg-[#2563eb] active:bg-[#1d4ed8] text-white border-0 w-full justify-center")}
             >
               Get Started
             </Link>

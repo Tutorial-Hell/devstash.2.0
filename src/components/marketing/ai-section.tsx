@@ -41,7 +41,7 @@ export function AiSection() {
                 </span>
                 <div>
                   <strong className="block text-[0.95rem] mb-[0.15rem]">{title}</strong>
-                  <p className="text-sm text-[#64748b] m-0">{desc}</p>
+                  <p className="text-sm text-[#94a3b8] m-0">{desc}</p>
                 </div>
               </li>
             ))}
