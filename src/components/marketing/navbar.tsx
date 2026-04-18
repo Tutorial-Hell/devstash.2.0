@@ -73,10 +73,10 @@ export function Navbar() {
 
           {/* Desktop nav links */}
           <div className="hidden sm:flex gap-6 ml-2">
-            <a href="#features" className="text-[#94a3b8] text-sm hover:text-[#e2e8f0] transition-colors">
+            <a href="/#features" className="text-[#94a3b8] text-sm hover:text-[#e2e8f0] transition-colors">
               Features
             </a>
-            <a href="#pricing" className="text-[#94a3b8] text-sm hover:text-[#e2e8f0] transition-colors">
+            <a href="/#pricing" className="text-[#94a3b8] text-sm hover:text-[#e2e8f0] transition-colors">
               Pricing
             </a>
           </div>
@@ -114,10 +114,10 @@ export function Navbar() {
         {/* Mobile menu */}
         {menuOpen && (
           <div id="mobile-menu" ref={menuRef} className="sm:hidden flex flex-col px-2 pt-2 pb-4 border-t border-[#1e1e2e] gap-1">
-            <a href="#features" onClick={closeMenu} className="px-4 py-3 rounded-lg text-[#e2e8f0] text-[0.95rem] bg-white/[0.04] hover:bg-white/[0.08] active:bg-[#3b82f6]/20 active:text-[#60a5fa] transition-colors">
+            <a href="/#features" onClick={closeMenu} className="px-4 py-3 rounded-lg text-[#e2e8f0] text-[0.95rem] bg-white/[0.04] hover:bg-white/[0.08] active:bg-[#3b82f6]/20 active:text-[#60a5fa] transition-colors">
               Features
             </a>
-            <a href="#pricing" onClick={closeMenu} className="px-4 py-3 rounded-lg text-[#e2e8f0] text-[0.95rem] bg-white/[0.04] hover:bg-white/[0.08] active:bg-[#3b82f6]/20 active:text-[#60a5fa] transition-colors">
+            <a href="/#pricing" onClick={closeMenu} className="px-4 py-3 rounded-lg text-[#e2e8f0] text-[0.95rem] bg-white/[0.04] hover:bg-white/[0.08] active:bg-[#3b82f6]/20 active:text-[#60a5fa] transition-colors">
               Pricing
             </a>
             <Link href="/sign-in" onClick={closeMenu} className="px-4 py-3 rounded-lg text-[#e2e8f0] text-[0.95rem] bg-white/[0.04] hover:bg-white/[0.08] active:bg-[#3b82f6]/20 active:text-[#60a5fa] transition-colors">

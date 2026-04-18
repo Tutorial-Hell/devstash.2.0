@@ -1,16 +1,22 @@
-# Current Feature
+# Current Feature: Homepage Navbar on Auth Pages
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- The sign-in page (`/sign-in`) and register page (`/register`) both display the same `<Navbar>` component used on the homepage
+- Navbar renders above the auth form content with correct z-index and no layout collision
+- All existing navbar behavior is preserved (scroll frosted glass, mobile hamburger, focus trap, overlay)
+- On auth pages the "Features" / "Pricing" anchor links can remain (they'll navigate back to `/` sections if needed) or be hidden — keep them for simplicity unless they look wrong
 
 ## Notes
 
-<!-- Add notes here -->
+- Navbar is at `src/components/marketing/navbar.tsx` (client component)
+- The `#features` / `#pricing` anchors only make sense on the homepage; on auth pages they will just scroll to top — acceptable for now
+- Auth pages currently have no top-level nav; adding the navbar should add `pt-[72px]` (navbar height) or equivalent top padding to the page container so the form isn't hidden behind the fixed navbar
+- No new component needed — just import and render `<Navbar />` at the top of each auth page layout or page file
 
 ## History
 
