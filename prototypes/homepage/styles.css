@@ -87,8 +87,9 @@ a { text-decoration: none; color: inherit; }
   transition: background .3s, border-color .3s, backdrop-filter .3s;
 }
 
-.navbar.scrolled {
-  background: rgba(10, 10, 15, .85);
+.navbar.scrolled,
+.navbar.menu-open {
+  background: rgba(10, 10, 15, .95);
   border-color: var(--border);
   backdrop-filter: blur(12px);
 }
@@ -185,7 +186,7 @@ a { text-decoration: none; color: inherit; }
 
 /* ── Gradient text ───────────────────────────────────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-indigo) 50%, var(--accent-pink) 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 60%, #93c5fd 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -423,6 +424,7 @@ a { text-decoration: none; color: inherit; }
 /* ── Features ────────────────────────────────────────────────────── */
 .features {
   padding: 6rem 0;
+  background: #0f0f1a;
 }
 
 .features-grid {

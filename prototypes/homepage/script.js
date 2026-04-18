@@ -12,12 +12,14 @@ const navOverlay = document.getElementById('nav-overlay');
 function openMenu() {
   navMobile.classList.add('open');
   navOverlay.classList.add('open');
+  navbar.classList.add('menu-open');
   requestAnimationFrame(() => navOverlay.classList.add('visible'));
   document.body.style.overflow = 'hidden';
 }
 
 function closeMenu() {
   navMobile.classList.remove('open');
+  navbar.classList.remove('menu-open');
   navOverlay.classList.remove('visible');
   navOverlay.addEventListener('transitionend', () => navOverlay.classList.remove('open'), { once: true });
   document.body.style.overflow = '';
