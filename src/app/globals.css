@@ -264,3 +264,21 @@
 
 .markdown-preview > :first-child { margin-top: 0; }
 .markdown-preview > :last-child { margin-bottom: 0; }
+
+/* ── Marketing homepage animations ──────────────────────────────── */
+@keyframes pulse-arrow {
+  0%, 100% { opacity: 0.4; transform: scale(1) translateX(0); }
+  50%       { opacity: 1;   transform: scale(1.15) translateX(4px); }
+}
+.animate-pulse-arrow {
+  animation: pulse-arrow 1.5s ease-in-out infinite;
+}
+@media (max-width: 640px) {
+  @keyframes pulse-arrow {
+    0%, 100% { opacity: 0.4; transform: rotate(90deg) scale(1); }
+    50%       { opacity: 1;   transform: rotate(90deg) scale(1.15); }
+  }
+  .animate-pulse-arrow {
+    display: block;
+  }
+}
