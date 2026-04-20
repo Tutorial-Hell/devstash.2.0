@@ -1,16 +1,27 @@
-# Current Feature
+# Current Feature: Stripe Integration - Phase 1: Core Infrastructure
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- Install `stripe` npm package and create `src/lib/stripe.ts` singleton
+- Create `src/lib/auth-utils.ts` with `getAuthenticatedUserId()` replacing `getDemoUserId()`
+- Replace all `getDemoUserId()` calls with `getAuthenticatedUserId()` across server actions and API routes
+- Sync `isPro` from DB on every JWT validation in `src/auth.ts`
+- Extend NextAuth session/JWT types with `isPro`
+- Create `src/lib/usage-limits.ts` with limit constants (`FREE_ITEM_LIMIT=50`, `FREE_COLLECTION_LIMIT=3`) and check helpers
+- Write unit tests for `usage-limits.ts` (below/at/above limit cases)
 
 ## Notes
 
-<!-- Add notes here -->
+- No Stripe CLI or live webhook events required for this phase
+- `getDemoUserId()` can stay in place for seeding but must be removed from all production server actions
+- JWT callback fires on every session check — the DB read for `isPro` adds one query per request (acceptable for now)
+- After replacing `getDemoUserId`, all actions will return auth errors for unauthenticated users — verify no unauthenticated paths depend on it
+- Files to create: `src/lib/stripe.ts`, `src/lib/auth-utils.ts`, `src/lib/usage-limits.ts`, `src/lib/usage-limits.test.ts`
+- Files to modify: `src/auth.ts`, `src/lib/db/collections.ts`, `src/actions/items.ts`, `src/actions/collections.ts`, `src/actions/settings.ts`, `src/app/api/upload/route.ts`, `src/app/api/items/[id]/route.ts`, `src/app/api/download/[id]/route.ts`, `src/types/next-auth.d.ts`, `.env.example`
 
 ## History
 

@@ -2,7 +2,6 @@
 
 import { z } from "zod"
 import {
-  getDemoUserId,
   createCollectionInDb,
   updateCollectionById,
   deleteCollectionById,
@@ -11,6 +10,7 @@ import {
   type CollectionCreated,
   type CollectionOption,
 } from "@/lib/db/collections"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -39,7 +39,7 @@ type DeleteResult =
 // ─── Action ───────────────────────────────────────────────────────────────────
 
 export async function fetchCollectionsForSelect(): Promise<CollectionOption[]> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) return []
   return getCollectionsForSelect(userId)
 }
@@ -47,7 +47,7 @@ export async function fetchCollectionsForSelect(): Promise<CollectionOption[]> {
 export async function createCollection(
   input: CreateCollectionInput
 ): Promise<ActionResult> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }
@@ -70,7 +70,7 @@ export async function updateCollection(
   collectionId: string,
   input: { name: string; description?: string }
 ): Promise<ActionResult> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }
@@ -96,7 +96,7 @@ export async function updateCollection(
 export async function toggleCollectionFavorite(
   collectionId: string
 ): Promise<{ success: true; isFavorite: boolean } | { success: false; error: string }> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }
@@ -112,7 +112,7 @@ export async function toggleCollectionFavorite(
 export async function deleteCollection(
   collectionId: string
 ): Promise<DeleteResult> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
-import { getDemoUserId } from "@/lib/db/collections"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import { getItemById } from "@/lib/db/items"
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }

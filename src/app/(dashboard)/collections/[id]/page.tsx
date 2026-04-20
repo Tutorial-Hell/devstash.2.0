@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Star, Pin, File, ArrowLeft } from "lucide-react"
-import { getDemoUserId, getCollectionById } from "@/lib/db/collections"
+import { getCollectionById } from "@/lib/db/collections"
+import { auth } from "@/auth"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
@@ -15,7 +16,8 @@ interface Props {
 }
 
 export default async function CollectionDetailPage({ params, searchParams }: Props) {
-  const userId = await getDemoUserId()
+  const session = await auth()
+  const userId = session?.user?.id ?? null
   const { id } = await params
   const { page: pageParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Star, ArrowLeft } from "lucide-react"
-import { getDemoUserId, getCollectionsPaginated } from "@/lib/db/collections"
+import { getCollectionsPaginated } from "@/lib/db/collections"
+import { auth } from "@/auth"
 import { iconMap } from "@/lib/icon-map"
 import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
 import { NewCollectionDialog } from "@/components/new-collection-dialog"
@@ -14,7 +15,8 @@ interface Props {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function CollectionsPage({ searchParams }: Props) {
-  const userId = await getDemoUserId()
+  const session = await auth()
+  const userId = session?.user?.id ?? null
   const { page: pageParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
 

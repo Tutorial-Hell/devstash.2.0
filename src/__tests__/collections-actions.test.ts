@@ -1,15 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
+vi.mock("@/lib/auth-utils", () => ({
+  getAuthenticatedUserId: vi.fn(),
+}))
+
 vi.mock("@/lib/db/collections", () => ({
-  getDemoUserId: vi.fn(),
   createCollectionInDb: vi.fn(),
   updateCollectionById: vi.fn(),
   deleteCollectionById: vi.fn(),
   toggleCollectionFavoriteById: vi.fn(),
 }))
 
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import {
-  getDemoUserId,
   createCollectionInDb,
   updateCollectionById,
   deleteCollectionById,
@@ -33,12 +36,12 @@ const mockCollection = {
 
 describe("createCollection", () => {
   beforeEach(() => {
-    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(getAuthenticatedUserId).mockReset()
     vi.mocked(createCollectionInDb).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
 
     const result = await createCollection({ name: "Test" })
 
@@ -47,7 +50,7 @@ describe("createCollection", () => {
   })
 
   it("returns validation error when name is empty", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
 
     const result = await createCollection({ name: "   " })
 
@@ -56,7 +59,7 @@ describe("createCollection", () => {
   })
 
   it("returns success with created collection", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createCollectionInDb).mockResolvedValue(mockCollection)
 
     const result = await createCollection({ name: "My Collection" })
@@ -69,7 +72,7 @@ describe("createCollection", () => {
   })
 
   it("passes description when provided", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createCollectionInDb).mockResolvedValue({
       ...mockCollection,
       description: "A helpful collection",
@@ -91,7 +94,7 @@ describe("createCollection", () => {
   })
 
   it("converts empty description to null", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createCollectionInDb).mockResolvedValue(mockCollection)
 
     await createCollection({ name: "My Collection", description: "" })
@@ -103,7 +106,7 @@ describe("createCollection", () => {
   })
 
   it("converts whitespace-only description to null", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createCollectionInDb).mockResolvedValue(mockCollection)
 
     await createCollection({ name: "My Collection", description: "   " })
@@ -117,12 +120,12 @@ describe("createCollection", () => {
 
 describe("updateCollection", () => {
   beforeEach(() => {
-    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(getAuthenticatedUserId).mockReset()
     vi.mocked(updateCollectionById).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
 
     const result = await updateCollection("col-1", { name: "New Name" })
 
@@ -131,7 +134,7 @@ describe("updateCollection", () => {
   })
 
   it("returns validation error when name is empty", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
 
     const result = await updateCollection("col-1", { name: "   " })
 
@@ -140,7 +143,7 @@ describe("updateCollection", () => {
   })
 
   it("returns not-found error when collection does not belong to user", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(updateCollectionById).mockResolvedValue(null)
 
     const result = await updateCollection("col-999", { name: "New Name" })
@@ -150,7 +153,7 @@ describe("updateCollection", () => {
 
   it("returns success with updated collection", async () => {
     const updated = { ...mockCollection, name: "Renamed", description: "New desc" }
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(updateCollectionById).mockResolvedValue(updated)
 
     const result = await updateCollection("col-1", {
@@ -166,7 +169,7 @@ describe("updateCollection", () => {
   })
 
   it("converts empty description to null", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(updateCollectionById).mockResolvedValue(mockCollection)
 
     await updateCollection("col-1", { name: "Name", description: "" })
@@ -180,12 +183,12 @@ describe("updateCollection", () => {
 
 describe("deleteCollection", () => {
   beforeEach(() => {
-    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(getAuthenticatedUserId).mockReset()
     vi.mocked(deleteCollectionById).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
 
     const result = await deleteCollection("col-1")
 
@@ -194,7 +197,7 @@ describe("deleteCollection", () => {
   })
 
   it("returns not-found error when collection does not belong to user", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(deleteCollectionById).mockResolvedValue(false)
 
     const result = await deleteCollection("col-999")
@@ -203,7 +206,7 @@ describe("deleteCollection", () => {
   })
 
   it("returns success when collection is deleted", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(deleteCollectionById).mockResolvedValue(true)
 
     const result = await deleteCollection("col-1")
@@ -217,12 +220,12 @@ describe("deleteCollection", () => {
 
 describe("toggleCollectionFavorite", () => {
   beforeEach(() => {
-    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(getAuthenticatedUserId).mockReset()
     vi.mocked(toggleCollectionFavoriteById).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
 
     const result = await toggleCollectionFavorite("col-1")
 
@@ -231,7 +234,7 @@ describe("toggleCollectionFavorite", () => {
   })
 
   it("returns not-found error when collection does not belong to user", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleCollectionFavoriteById).mockResolvedValue(null)
 
     const result = await toggleCollectionFavorite("col-999")
@@ -241,7 +244,7 @@ describe("toggleCollectionFavorite", () => {
   })
 
   it("returns success with isFavorite=true when favorited", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleCollectionFavoriteById).mockResolvedValue({ isFavorite: true })
 
     const result = await toggleCollectionFavorite("col-1")
@@ -251,7 +254,7 @@ describe("toggleCollectionFavorite", () => {
   })
 
   it("returns success with isFavorite=false when unfavorited", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleCollectionFavoriteById).mockResolvedValue({ isFavorite: false })
 
     const result = await toggleCollectionFavorite("col-1")
