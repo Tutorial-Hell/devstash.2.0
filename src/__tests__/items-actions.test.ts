@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-vi.mock("@/lib/db/collections", () => ({
-  getDemoUserId: vi.fn(),
+vi.mock("@/lib/auth-utils", () => ({
+  getAuthenticatedUserId: vi.fn(),
 }))
 
 vi.mock("@/lib/db/items", () => ({
@@ -15,20 +15,20 @@ vi.mock("@/lib/r2", () => ({
   deleteFromR2: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { getDemoUserId } from "@/lib/db/collections"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import { deleteItemById, createItemInDb, toggleItemFavoriteById, toggleItemPinnedById } from "@/lib/db/items"
 import { deleteFromR2 } from "@/lib/r2"
 import { deleteItem, createItem, toggleItemFavorite, toggleItemPin } from "@/actions/items"
 
 describe("deleteItem", () => {
   beforeEach(() => {
-    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(getAuthenticatedUserId).mockReset()
     vi.mocked(deleteItemById).mockReset()
     vi.mocked(deleteFromR2).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
 
     const result = await deleteItem("item-123")
 
@@ -37,7 +37,7 @@ describe("deleteItem", () => {
   })
 
   it("returns not-found error when item does not belong to user", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(deleteItemById).mockResolvedValue({ deleted: false, fileKey: null })
 
     const result = await deleteItem("item-999")
@@ -47,7 +47,7 @@ describe("deleteItem", () => {
   })
 
   it("returns success when item is deleted", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(deleteItemById).mockResolvedValue({ deleted: true, fileKey: null })
 
     const result = await deleteItem("item-123")
@@ -57,7 +57,7 @@ describe("deleteItem", () => {
   })
 
   it("calls deleteFromR2 when deleted item has a fileKey", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(deleteItemById).mockResolvedValue({ deleted: true, fileKey: "user-1/abc.png" })
     vi.mocked(deleteFromR2).mockResolvedValue(undefined)
 
@@ -67,7 +67,7 @@ describe("deleteItem", () => {
   })
 
   it("does not call deleteFromR2 when fileKey is null", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(deleteItemById).mockResolvedValue({ deleted: true, fileKey: null })
 
     await deleteItem("item-123")
@@ -99,12 +99,12 @@ const mockItem = {
 
 describe("createItem", () => {
   beforeEach(() => {
-    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(getAuthenticatedUserId).mockReset()
     vi.mocked(createItemInDb).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
 
     const result = await createItem({ type: "snippet", title: "Hello" })
 
@@ -113,7 +113,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when title is empty", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
 
     const result = await createItem({ type: "snippet", title: "   " })
 
@@ -122,7 +122,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when link type has no URL", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
 
     const result = await createItem({ type: "link", title: "My Link", url: null })
 
@@ -131,7 +131,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when link URL is invalid", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
 
     const result = await createItem({ type: "link", title: "My Link", url: "not-a-url" })
 
@@ -140,7 +140,7 @@ describe("createItem", () => {
   })
 
   it("does not require URL for non-link types", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createItemInDb).mockResolvedValue(mockItem)
 
     const result = await createItem({ type: "snippet", title: "My Snippet" })
@@ -149,7 +149,7 @@ describe("createItem", () => {
   })
 
   it("returns error when item type is not found in db", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createItemInDb).mockResolvedValue(null)
 
     const result = await createItem({ type: "snippet", title: "My Snippet" })
@@ -158,7 +158,7 @@ describe("createItem", () => {
   })
 
   it("returns success with created item on valid link input", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createItemInDb).mockResolvedValue(mockItem)
 
     const result = await createItem({
@@ -175,7 +175,7 @@ describe("createItem", () => {
   })
 
   it("passes tags to createItemInDb", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createItemInDb).mockResolvedValue(mockItem)
 
     await createItem({ type: "note", title: "Notes", tags: ["react", "hooks"] })
@@ -187,7 +187,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when file type has no fileUrl", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
 
     const result = await createItem({ type: "file", title: "My File" })
 
@@ -196,7 +196,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when image type has no fileUrl", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
 
     const result = await createItem({ type: "image", title: "My Image" })
 
@@ -205,7 +205,7 @@ describe("createItem", () => {
   })
 
   it("creates file item with fileUrl, fileName, fileSize", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(createItemInDb).mockResolvedValue(mockItem)
 
     const result = await createItem({
@@ -233,12 +233,12 @@ describe("createItem", () => {
 
 describe("toggleItemFavorite", () => {
   beforeEach(() => {
-    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(getAuthenticatedUserId).mockReset()
     vi.mocked(toggleItemFavoriteById).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
 
     const result = await toggleItemFavorite("item-1")
 
@@ -247,7 +247,7 @@ describe("toggleItemFavorite", () => {
   })
 
   it("returns not-found error when item does not belong to user", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleItemFavoriteById).mockResolvedValue(null)
 
     const result = await toggleItemFavorite("item-999")
@@ -257,7 +257,7 @@ describe("toggleItemFavorite", () => {
   })
 
   it("returns success with isFavorite=true when favorited", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleItemFavoriteById).mockResolvedValue({ isFavorite: true })
 
     const result = await toggleItemFavorite("item-1")
@@ -267,7 +267,7 @@ describe("toggleItemFavorite", () => {
   })
 
   it("returns success with isFavorite=false when unfavorited", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleItemFavoriteById).mockResolvedValue({ isFavorite: false })
 
     const result = await toggleItemFavorite("item-1")
@@ -280,12 +280,12 @@ describe("toggleItemFavorite", () => {
 
 describe("toggleItemPin", () => {
   beforeEach(() => {
-    vi.mocked(getDemoUserId).mockReset()
+    vi.mocked(getAuthenticatedUserId).mockReset()
     vi.mocked(toggleItemPinnedById).mockReset()
   })
 
   it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue(null)
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
 
     const result = await toggleItemPin("item-1")
 
@@ -294,7 +294,7 @@ describe("toggleItemPin", () => {
   })
 
   it("returns not-found error when item does not belong to user", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleItemPinnedById).mockResolvedValue(null)
 
     const result = await toggleItemPin("item-999")
@@ -304,7 +304,7 @@ describe("toggleItemPin", () => {
   })
 
   it("returns success with isPinned=true when pinned", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleItemPinnedById).mockResolvedValue({ isPinned: true })
 
     const result = await toggleItemPin("item-1")
@@ -314,7 +314,7 @@ describe("toggleItemPin", () => {
   })
 
   it("returns success with isPinned=false when unpinned", async () => {
-    vi.mocked(getDemoUserId).mockResolvedValue("user-1")
+    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
     vi.mocked(toggleItemPinnedById).mockResolvedValue({ isPinned: false })
 
     const result = await toggleItemPin("item-1")

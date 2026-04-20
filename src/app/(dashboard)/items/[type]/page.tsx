@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { getDemoUserId } from "@/lib/db/collections"
+import { auth } from "@/auth"
 import { getItemsByType } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate, slugToTypeName } from "@/lib/utils"
@@ -21,7 +21,8 @@ interface Props {
 }
 
 export default async function ItemsTypePage({ params, searchParams }: Props) {
-  const userId = await getDemoUserId()
+  const session = await auth()
+  const userId = session?.user?.id ?? null
 
   const { type } = await params
   const { page: pageParam } = await searchParams

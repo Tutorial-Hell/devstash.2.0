@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { Star, Pin, Package, FolderOpen, Heart, File } from "lucide-react"
-import { getCollections, getDemoUserId } from "@/lib/db/collections"
+import { getCollections } from "@/lib/db/collections"
 import { getPinnedItems, getRecentItems, getItemStats, type ItemWithMeta } from "@/lib/db/items"
+import { auth } from "@/auth"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { DASHBOARD_COLLECTIONS_LIMIT, DASHBOARD_RECENT_ITEMS_LIMIT } from "@/lib/constants"
@@ -11,7 +12,8 @@ import { CollectionCard } from "@/components/collection-card"
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  const userId = await getDemoUserId()
+  const session = await auth()
+  const userId = session?.user?.id ?? null
 
   const [collections, pinnedItems, recentItems, itemStats] = await Promise.all([
     userId ? getCollections(userId) : Promise.resolve([]),

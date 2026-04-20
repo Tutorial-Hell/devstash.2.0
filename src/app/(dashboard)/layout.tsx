@@ -1,4 +1,4 @@
-import { getDemoUserId, getCollections } from "@/lib/db/collections"
+import { getCollections } from "@/lib/db/collections"
 import { getItemTypes, getAllItemsForSearch } from "@/lib/db/items"
 import { DashboardShell } from "@/components/layout/dashboard-shell"
 import { auth } from "@/auth"
@@ -11,15 +11,16 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [session, userId] = await Promise.all([auth(), getDemoUserId()])
+  const session = await auth()
+  const userId = session?.user?.id ?? null
 
   const [itemTypes, collections, searchItems, userRow] = await Promise.all([
     userId ? getItemTypes(userId) : Promise.resolve([]),
     userId ? getCollections(userId) : Promise.resolve([]),
     userId ? getAllItemsForSearch(userId) : Promise.resolve([]),
-    session?.user?.id
+    userId
       ? prisma.user.findUnique({
-          where: { id: session.user.id },
+          where: { id: userId },
           select: { editorPreferences: true },
         })
       : Promise.resolve(null),

@@ -1,11 +1,13 @@
 import Link from "next/link"
 import { ArrowLeft, Star } from "lucide-react"
-import { getDemoUserId, getFavoriteCollections } from "@/lib/db/collections"
+import { getFavoriteCollections } from "@/lib/db/collections"
+import { auth } from "@/auth"
 import { getFavoriteItems } from "@/lib/db/items"
 import { FavoritesSortable } from "@/components/favorites-sortable"
 
 export default async function FavoritesPage() {
-  const userId = await getDemoUserId()
+  const session = await auth()
+  const userId = session?.user?.id ?? null
 
   const [items, collections] = await Promise.all([
     userId ? getFavoriteItems(userId) : Promise.resolve([]),

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getDemoUserId } from "@/lib/db/collections"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import { uploadToR2 } from "@/lib/r2"
 
 // ─── Allowed types ────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ const FILE_MAX_BYTES  = 10 * 1024 * 1024 // 10 MB
 // ─── Route ────────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }

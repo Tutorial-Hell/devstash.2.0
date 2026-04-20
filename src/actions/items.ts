@@ -1,7 +1,7 @@
 "use server"
 
 import { z } from "zod"
-import { getDemoUserId } from "@/lib/db/collections"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import { updateItemById, deleteItemById, createItemInDb, toggleItemFavoriteById, toggleItemPinnedById, type ItemDetail } from "@/lib/db/items"
 import { deleteFromR2 } from "@/lib/r2"
 
@@ -35,7 +35,7 @@ export async function updateItem(
   itemId: string,
   input: UpdateItemInput
 ): Promise<ActionResult> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
 
   if (!userId) {
     return { success: false, error: "Not authenticated." }
@@ -69,7 +69,7 @@ export async function updateItem(
 export async function deleteItem(
   itemId: string
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
 
   if (!userId) {
     return { success: false, error: "Not authenticated." }
@@ -92,7 +92,7 @@ export async function deleteItem(
 export async function toggleItemFavorite(
   itemId: string
 ): Promise<{ success: true; isFavorite: boolean } | { success: false; error: string }> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }
@@ -110,7 +110,7 @@ export async function toggleItemFavorite(
 export async function toggleItemPin(
   itemId: string
 ): Promise<{ success: true; isPinned: boolean } | { success: false; error: string }> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }
@@ -177,7 +177,7 @@ export type CreateItemInput = {
 export async function createItem(
   input: CreateItemInput
 ): Promise<{ success: true; data: ItemDetail } | { success: false; error: string }> {
-  const userId = await getDemoUserId()
+  const userId = await getAuthenticatedUserId()
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }
