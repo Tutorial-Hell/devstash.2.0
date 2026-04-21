@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 vi.mock("@/lib/auth-utils", () => ({
   getAuthenticatedUserId: vi.fn(),
+  getSession: vi.fn(),
 }))
 
 vi.mock("@/lib/db/collections", () => ({
@@ -11,7 +12,12 @@ vi.mock("@/lib/db/collections", () => ({
   toggleCollectionFavoriteById: vi.fn(),
 }))
 
-import { getAuthenticatedUserId } from "@/lib/auth-utils"
+vi.mock("@/lib/usage-limits", () => ({
+  isAtCollectionLimit: vi.fn().mockResolvedValue(false),
+}))
+
+import { getAuthenticatedUserId, getSession } from "@/lib/auth-utils"
+import { isAtCollectionLimit } from "@/lib/usage-limits"
 import {
   createCollectionInDb,
   updateCollectionById,
@@ -34,14 +40,19 @@ const mockCollection = {
   updatedAt: new Date(),
 }
 
+const freeSession = { user: { id: "user-1", isPro: false } }
+const proSession = { user: { id: "user-1", isPro: true } }
+
 describe("createCollection", () => {
   beforeEach(() => {
-    vi.mocked(getAuthenticatedUserId).mockReset()
+    vi.mocked(getSession).mockReset()
     vi.mocked(createCollectionInDb).mockReset()
+    vi.mocked(isAtCollectionLimit).mockReset()
+    vi.mocked(isAtCollectionLimit).mockResolvedValue(false)
   })
 
-  it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
+  it("returns not-authenticated error when no session", async () => {
+    vi.mocked(getSession).mockResolvedValue(null as any)
 
     const result = await createCollection({ name: "Test" })
 
@@ -49,8 +60,27 @@ describe("createCollection", () => {
     expect(createCollectionInDb).not.toHaveBeenCalled()
   })
 
+  it("returns limit error when free user is at collection limit", async () => {
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
+    vi.mocked(isAtCollectionLimit).mockResolvedValue(true)
+
+    const result = await createCollection({ name: "Test" })
+
+    expect(result).toEqual({ success: false, error: expect.stringContaining("3 collections") })
+    expect(createCollectionInDb).not.toHaveBeenCalled()
+  })
+
+  it("skips limit check for pro users", async () => {
+    vi.mocked(getSession).mockResolvedValue(proSession as any)
+    vi.mocked(createCollectionInDb).mockResolvedValue(mockCollection)
+
+    await createCollection({ name: "My Collection" })
+
+    expect(isAtCollectionLimit).not.toHaveBeenCalled()
+  })
+
   it("returns validation error when name is empty", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
 
     const result = await createCollection({ name: "   " })
 
@@ -59,7 +89,7 @@ describe("createCollection", () => {
   })
 
   it("returns success with created collection", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createCollectionInDb).mockResolvedValue(mockCollection)
 
     const result = await createCollection({ name: "My Collection" })
@@ -72,7 +102,7 @@ describe("createCollection", () => {
   })
 
   it("passes description when provided", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createCollectionInDb).mockResolvedValue({
       ...mockCollection,
       description: "A helpful collection",
@@ -94,7 +124,7 @@ describe("createCollection", () => {
   })
 
   it("converts empty description to null", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createCollectionInDb).mockResolvedValue(mockCollection)
 
     await createCollection({ name: "My Collection", description: "" })
@@ -106,7 +136,7 @@ describe("createCollection", () => {
   })
 
   it("converts whitespace-only description to null", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createCollectionInDb).mockResolvedValue(mockCollection)
 
     await createCollection({ name: "My Collection", description: "   " })

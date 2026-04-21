@@ -10,7 +10,8 @@ import {
   type CollectionCreated,
   type CollectionOption,
 } from "@/lib/db/collections"
-import { getAuthenticatedUserId } from "@/lib/auth-utils"
+import { getAuthenticatedUserId, getSession } from "@/lib/auth-utils"
+import { isAtCollectionLimit } from "@/lib/usage-limits"
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -47,9 +48,17 @@ export async function fetchCollectionsForSelect(): Promise<CollectionOption[]> {
 export async function createCollection(
   input: CreateCollectionInput
 ): Promise<ActionResult> {
-  const userId = await getAuthenticatedUserId()
+  const session = await getSession()
+  const userId = session?.user?.id ?? null
   if (!userId) {
     return { success: false, error: "Not authenticated." }
+  }
+
+  if (!session?.user?.isPro) {
+    const atLimit = await isAtCollectionLimit(userId)
+    if (atLimit) {
+      return { success: false, error: "Free plan limit reached (3 collections). Upgrade to Pro for unlimited collections." }
+    }
   }
 
   const parsed = collectionSchema.safeParse(input)

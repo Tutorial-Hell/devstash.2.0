@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 vi.mock("@/lib/auth-utils", () => ({
   getAuthenticatedUserId: vi.fn(),
+  getSession: vi.fn(),
 }))
 
 vi.mock("@/lib/db/items", () => ({
@@ -15,7 +16,12 @@ vi.mock("@/lib/r2", () => ({
   deleteFromR2: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { getAuthenticatedUserId } from "@/lib/auth-utils"
+vi.mock("@/lib/usage-limits", () => ({
+  isAtItemLimit: vi.fn().mockResolvedValue(false),
+}))
+
+import { getAuthenticatedUserId, getSession } from "@/lib/auth-utils"
+import { isAtItemLimit } from "@/lib/usage-limits"
 import { deleteItemById, createItemInDb, toggleItemFavoriteById, toggleItemPinnedById } from "@/lib/db/items"
 import { deleteFromR2 } from "@/lib/r2"
 import { deleteItem, createItem, toggleItemFavorite, toggleItemPin } from "@/actions/items"
@@ -97,14 +103,19 @@ const mockItem = {
   updatedAt: new Date(),
 }
 
+const proSession = { user: { id: "user-1", isPro: true } }
+const freeSession = { user: { id: "user-1", isPro: false } }
+
 describe("createItem", () => {
   beforeEach(() => {
-    vi.mocked(getAuthenticatedUserId).mockReset()
+    vi.mocked(getSession).mockReset()
     vi.mocked(createItemInDb).mockReset()
+    vi.mocked(isAtItemLimit).mockReset()
+    vi.mocked(isAtItemLimit).mockResolvedValue(false)
   })
 
-  it("returns not-authenticated error when no userId", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
+  it("returns not-authenticated error when no session", async () => {
+    vi.mocked(getSession).mockResolvedValue(null as any)
 
     const result = await createItem({ type: "snippet", title: "Hello" })
 
@@ -112,8 +123,28 @@ describe("createItem", () => {
     expect(createItemInDb).not.toHaveBeenCalled()
   })
 
+  it("returns limit error when free user is at item limit", async () => {
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
+    vi.mocked(isAtItemLimit).mockResolvedValue(true)
+
+    const result = await createItem({ type: "snippet", title: "Hello" })
+
+    expect(result).toEqual({ success: false, error: expect.stringContaining("50 items") })
+    expect(createItemInDb).not.toHaveBeenCalled()
+  })
+
+  it("skips limit check for pro users", async () => {
+    vi.mocked(getSession).mockResolvedValue(proSession as any)
+    vi.mocked(createItemInDb).mockResolvedValue(mockItem)
+
+    const result = await createItem({ type: "snippet", title: "My Snippet" })
+
+    expect(isAtItemLimit).not.toHaveBeenCalled()
+    expect(result).toEqual({ success: true, data: mockItem })
+  })
+
   it("returns validation error when title is empty", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
 
     const result = await createItem({ type: "snippet", title: "   " })
 
@@ -122,7 +153,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when link type has no URL", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
 
     const result = await createItem({ type: "link", title: "My Link", url: null })
 
@@ -131,7 +162,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when link URL is invalid", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
 
     const result = await createItem({ type: "link", title: "My Link", url: "not-a-url" })
 
@@ -140,7 +171,7 @@ describe("createItem", () => {
   })
 
   it("does not require URL for non-link types", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createItemInDb).mockResolvedValue(mockItem)
 
     const result = await createItem({ type: "snippet", title: "My Snippet" })
@@ -149,7 +180,7 @@ describe("createItem", () => {
   })
 
   it("returns error when item type is not found in db", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createItemInDb).mockResolvedValue(null)
 
     const result = await createItem({ type: "snippet", title: "My Snippet" })
@@ -158,7 +189,7 @@ describe("createItem", () => {
   })
 
   it("returns success with created item on valid link input", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createItemInDb).mockResolvedValue(mockItem)
 
     const result = await createItem({
@@ -175,7 +206,7 @@ describe("createItem", () => {
   })
 
   it("passes tags to createItemInDb", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createItemInDb).mockResolvedValue(mockItem)
 
     await createItem({ type: "note", title: "Notes", tags: ["react", "hooks"] })
@@ -187,7 +218,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when file type has no fileUrl", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
 
     const result = await createItem({ type: "file", title: "My File" })
 
@@ -196,7 +227,7 @@ describe("createItem", () => {
   })
 
   it("returns validation error when image type has no fileUrl", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
 
     const result = await createItem({ type: "image", title: "My Image" })
 
@@ -205,7 +236,7 @@ describe("createItem", () => {
   })
 
   it("creates file item with fileUrl, fileName, fileSize", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(freeSession as any)
     vi.mocked(createItemInDb).mockResolvedValue(mockItem)
 
     const result = await createItem({

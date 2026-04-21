@@ -1,9 +1,10 @@
 "use server"
 
 import { z } from "zod"
-import { getAuthenticatedUserId } from "@/lib/auth-utils"
+import { getAuthenticatedUserId, getSession } from "@/lib/auth-utils"
 import { updateItemById, deleteItemById, createItemInDb, toggleItemFavoriteById, toggleItemPinnedById, type ItemDetail } from "@/lib/db/items"
 import { deleteFromR2 } from "@/lib/r2"
+import { isAtItemLimit } from "@/lib/usage-limits"
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -177,9 +178,17 @@ export type CreateItemInput = {
 export async function createItem(
   input: CreateItemInput
 ): Promise<{ success: true; data: ItemDetail } | { success: false; error: string }> {
-  const userId = await getAuthenticatedUserId()
+  const session = await getSession()
+  const userId = session?.user?.id ?? null
   if (!userId) {
     return { success: false, error: "Not authenticated." }
+  }
+
+  if (!session?.user?.isPro) {
+    const atLimit = await isAtItemLimit(userId)
+    if (atLimit) {
+      return { success: false, error: "Free plan limit reached (50 items). Upgrade to Pro for unlimited items." }
+    }
   }
 
   const parsed = createItemSchema.safeParse(input)

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getAuthenticatedUserId } from "@/lib/auth-utils"
+import { getSession } from "@/lib/auth-utils"
 import { uploadToR2 } from "@/lib/r2"
 
 // ─── Allowed types ────────────────────────────────────────────────────────────
@@ -31,9 +31,14 @@ const FILE_MAX_BYTES  = 10 * 1024 * 1024 // 10 MB
 // ─── Route ────────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
-  const userId = await getAuthenticatedUserId()
+  const session = await getSession()
+  const userId = session?.user?.id ?? null
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  if (!session?.user?.isPro) {
+    return NextResponse.json({ error: "File uploads require a Pro plan." }, { status: 403 })
   }
 
   let formData: FormData

@@ -1,6 +1,7 @@
 import { getCollections } from "@/lib/db/collections"
 import { getItemTypes, getAllItemsForSearch } from "@/lib/db/items"
 import { DashboardShell } from "@/components/layout/dashboard-shell"
+import { Providers } from "@/components/providers"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { DEFAULT_EDITOR_PREFERENCES } from "@/types/editor-preferences"
@@ -38,15 +39,17 @@ export default async function DashboardLayout({
   }))
 
   return (
-    <DashboardShell
-      itemTypes={itemTypes}
-      collections={collections}
-      user={session?.user ?? null}
-      searchItems={searchItems}
-      searchCollections={searchCollections}
-      editorPreferences={editorPreferences}
-    >
-      {children}
-    </DashboardShell>
+    <Providers>
+      <DashboardShell
+        itemTypes={itemTypes}
+        collections={collections}
+        user={session?.user ?? null}
+        searchItems={searchItems}
+        searchCollections={searchCollections}
+        editorPreferences={editorPreferences}
+      >
+        {children}
+      </DashboardShell>
+    </Providers>
   )
 }

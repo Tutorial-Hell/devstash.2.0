@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
+import { FREE_ITEM_LIMIT, FREE_COLLECTION_LIMIT } from "@/lib/constants"
 
-export const FREE_ITEM_LIMIT = 50
-export const FREE_COLLECTION_LIMIT = 3
+export { FREE_ITEM_LIMIT, FREE_COLLECTION_LIMIT }
 
 export async function isAtItemLimit(userId: string): Promise<boolean> {
   const count = await prisma.item.count({ where: { userId } })

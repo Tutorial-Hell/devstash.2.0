@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 vi.mock("@/lib/auth-utils", () => ({
-  getAuthenticatedUserId: vi.fn(),
+  getSession: vi.fn(),
 }))
 
 vi.mock("@/lib/r2", () => ({
   uploadToR2: vi.fn(),
 }))
 
-import { getAuthenticatedUserId } from "@/lib/auth-utils"
+import { getSession } from "@/lib/auth-utils"
 import { uploadToR2 } from "@/lib/r2"
 import { POST } from "@/app/api/upload/route"
 
@@ -26,16 +26,21 @@ function makeRequest(file: File, itemType: string): Request {
   return new Request("http://localhost/api/upload", { method: "POST", body: formData })
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const proSession = { user: { id: "user-1", isPro: true } } as any
+const freeSession = { user: { id: "user-1", isPro: false } } as any
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe("POST /api/upload", () => {
   beforeEach(() => {
-    vi.mocked(getAuthenticatedUserId).mockReset()
+    vi.mocked(getSession).mockReset()
     vi.mocked(uploadToR2).mockReset()
   })
 
   it("returns 401 when not authenticated", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue(null)
+    vi.mocked(getSession).mockResolvedValue(null)
 
     const file = makeFile("photo.png", "image/png", 100)
     const res = await POST(makeRequest(file, "image"))
@@ -43,8 +48,19 @@ describe("POST /api/upload", () => {
     expect(res.status).toBe(401)
   })
 
+  it("returns 403 when user is on free plan", async () => {
+    vi.mocked(getSession).mockResolvedValue(freeSession)
+
+    const file = makeFile("photo.png", "image/png", 100)
+    const res = await POST(makeRequest(file, "image"))
+
+    expect(res.status).toBe(403)
+    const body = await res.json()
+    expect(body.error).toMatch(/Pro plan/i)
+  })
+
   it("returns 400 when no file is provided", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
 
     const formData = new FormData()
     formData.append("itemType", "image")
@@ -58,7 +74,7 @@ describe("POST /api/upload", () => {
   })
 
   it("returns 400 for invalid itemType", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
 
     const file = makeFile("photo.png", "image/png", 100)
     const res = await POST(makeRequest(file, "snippet"))
@@ -69,7 +85,7 @@ describe("POST /api/upload", () => {
   })
 
   it("returns 400 for unsupported image MIME type", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
 
     const file = makeFile("doc.pdf", "application/pdf", 100)
     const res = await POST(makeRequest(file, "image"))
@@ -80,7 +96,7 @@ describe("POST /api/upload", () => {
   })
 
   it("returns 400 for unsupported file MIME type", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
 
     const file = makeFile("photo.png", "image/png", 100)
     const res = await POST(makeRequest(file, "file"))
@@ -91,7 +107,7 @@ describe("POST /api/upload", () => {
   })
 
   it("returns 400 when image exceeds 5 MB", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
 
     const file = makeFile("big.jpg", "image/jpeg", 5 * 1024 * 1024 + 1)
     const res = await POST(makeRequest(file, "image"))
@@ -103,7 +119,7 @@ describe("POST /api/upload", () => {
   })
 
   it("returns 400 when file exceeds 10 MB", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
 
     const file = makeFile("big.pdf", "application/pdf", 10 * 1024 * 1024 + 1)
     const res = await POST(makeRequest(file, "file"))
@@ -115,7 +131,7 @@ describe("POST /api/upload", () => {
   })
 
   it("returns 500 when R2 upload throws", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
     vi.mocked(uploadToR2).mockRejectedValue(new Error("R2 error"))
 
     const file = makeFile("photo.png", "image/png", 100)
@@ -127,7 +143,7 @@ describe("POST /api/upload", () => {
   })
 
   it("returns key, fileName, fileSize, mimeType on successful image upload", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
     vi.mocked(uploadToR2).mockResolvedValue(undefined)
 
     const file = makeFile("photo.png", "image/png", 1024)
@@ -144,7 +160,7 @@ describe("POST /api/upload", () => {
   })
 
   it("returns key without extension for extensionless file", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
     vi.mocked(uploadToR2).mockResolvedValue(undefined)
 
     const file = makeFile("Makefile", "text/plain", 100)
@@ -157,7 +173,7 @@ describe("POST /api/upload", () => {
   })
 
   it("passes correct args to uploadToR2", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
     vi.mocked(uploadToR2).mockResolvedValue(undefined)
 
     const file = makeFile("data.json", "application/json", 256)
@@ -171,7 +187,7 @@ describe("POST /api/upload", () => {
   })
 
   it("accepts all valid image MIME types", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
     vi.mocked(uploadToR2).mockResolvedValue(undefined)
 
     const types = [
@@ -190,7 +206,7 @@ describe("POST /api/upload", () => {
   })
 
   it("accepts all valid file MIME types", async () => {
-    vi.mocked(getAuthenticatedUserId).mockResolvedValue("user-1")
+    vi.mocked(getSession).mockResolvedValue(proSession)
     vi.mocked(uploadToR2).mockResolvedValue(undefined)
 
     const types = [
