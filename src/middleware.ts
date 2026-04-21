@@ -11,5 +11,12 @@ export const middleware = auth((req) => {
 })
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile", "/settings", "/favorites"],
+  matcher: [
+    "/dashboard/:path*",
+    "/profile",
+    "/settings",
+    "/favorites",
+    "/collections/:path*",
+    "/items/:path*",
+  ],
 }
