@@ -411,144 +411,11 @@ volumes:
   })
   console.log(`  ✓ ${devops.name}`)
 
-  // ── Terminal Commands ────────────────────────────────────────────────────────
-
-  const existingTerminalCommands = await prisma.collection.findFirst({
-    where: { name: "Terminal Commands", userId: user.id },
-  })
-  const terminalCommands = existingTerminalCommands ?? await prisma.collection.create({
-    data: {
-      name: "Terminal Commands",
-      description: "Useful shell commands for everyday development",
-      userId: user.id,
-      items: {
-        create: [
-          {
-            item: {
-              create: {
-                title: "Git — Undo Last Commit (keep changes)",
-                description: "Soft-reset HEAD by one commit, leaving files staged",
-                contentType: "text",
-                isPinned: true,
-                content: "git reset --soft HEAD~1",
-                userId: user.id,
-                itemTypeId: types.command,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "Docker — Remove All Stopped Containers & Unused Images",
-                description: "Free up disk space by pruning dangling Docker resources",
-                contentType: "text",
-                content: "docker system prune -af",
-                userId: user.id,
-                itemTypeId: types.command,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "Kill Process on Port",
-                description: "Find and kill whatever is listening on a given port",
-                contentType: "text",
-                content: "lsof -ti tcp:3000 | xargs kill -9",
-                userId: user.id,
-                itemTypeId: types.command,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "npm — Clean Install & Rebuild",
-                description: "Delete node_modules and lock file, then reinstall from scratch",
-                contentType: "text",
-                content: "rm -rf node_modules package-lock.json && npm install",
-                userId: user.id,
-                itemTypeId: types.command,
-              },
-            },
-          },
-        ],
-      },
-    },
-  })
-  console.log(`  ✓ ${terminalCommands.name}`)
-
-  // ── Design Resources ─────────────────────────────────────────────────────────
-
-  const existingDesignResources = await prisma.collection.findFirst({
-    where: { name: "Design Resources", userId: user.id },
-  })
-  const designResources = existingDesignResources ?? await prisma.collection.create({
-    data: {
-      name: "Design Resources",
-      description: "UI/UX resources and references",
-      userId: user.id,
-      items: {
-        create: [
-          {
-            item: {
-              create: {
-                title: "Tailwind CSS Docs",
-                description: "Utility-first CSS framework reference",
-                contentType: "url",
-                url: "https://tailwindcss.com/docs",
-                userId: user.id,
-                itemTypeId: types.link,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "shadcn/ui",
-                description: "Accessible component library built on Radix + Tailwind",
-                contentType: "url",
-                url: "https://ui.shadcn.com",
-                userId: user.id,
-                itemTypeId: types.link,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "Radix UI Primitives",
-                description: "Unstyled, accessible component primitives for React",
-                contentType: "url",
-                url: "https://www.radix-ui.com/primitives",
-                userId: user.id,
-                itemTypeId: types.link,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "Lucide Icons",
-                description: "Open-source icon library used throughout the app",
-                contentType: "url",
-                url: "https://lucide.dev/icons",
-                userId: user.id,
-                itemTypeId: types.link,
-              },
-            },
-          },
-        ],
-      },
-    },
-  })
-  console.log(`  ✓ ${designResources.name}`)
-
   // ── Pin/favorite items (idempotent) ─────────────────────────────────────────
   await prisma.item.updateMany({
     where: {
       userId: user.id,
-      title: { in: ["useDebounce Hook", "Code Review Prompt", "Git — Undo Last Commit (keep changes)"] },
+      title: { in: ["useDebounce Hook", "Code Review Prompt"] },
     },
     data: { isPinned: true },
   })
@@ -570,21 +437,15 @@ volumes:
 
   // ── Tags (idempotent) ────────────────────────────────────────────────────────
   const tagAssignments: { title: string; tags: string[] }[] = [
-    { title: "useDebounce Hook",                       tags: ["react", "hooks", "typescript"] },
-    { title: "Context Provider Pattern",               tags: ["react", "context", "typescript"] },
-    { title: "useFetch Hook",                          tags: ["react", "hooks", "async"] },
-    { title: "Code Review Prompt",                     tags: ["ai", "code-review"] },
-    { title: "Explain Code Prompt",                    tags: ["ai", "debugging"] },
-    { title: "Write Tests Prompt",                     tags: ["ai", "testing"] },
-    { title: "Docker Compose — Dev Stack",             tags: ["docker", "devops"] },
-    { title: "Nginx Config — Reverse Proxy",           tags: ["nginx", "devops"] },
-    { title: "Git — Undo Last Commit (keep changes)",  tags: ["git", "cli"] },
-    { title: "Git — Interactive Rebase",               tags: ["git", "cli"] },
-    { title: "List Ports in Use",                      tags: ["cli", "networking"] },
-    { title: "Kill Process on Port",                   tags: ["cli", "networking"] },
-    { title: "Tailwind CSS Docs",                      tags: ["css", "tailwind"] },
-    { title: "Radix UI Primitives",                    tags: ["react", "ui"] },
-    { title: "Lucide Icons",                           tags: ["ui", "icons"] },
+    { title: "useDebounce Hook",                         tags: ["react", "hooks", "typescript"] },
+    { title: "Context Provider Pattern",                 tags: ["react", "context", "typescript"] },
+    { title: "Utility Functions",                        tags: ["typescript", "utilities"] },
+    { title: "Code Review Prompt",                       tags: ["ai", "code-review"] },
+    { title: "Documentation Generator",                  tags: ["ai", "documentation"] },
+    { title: "Refactoring Assistant",                    tags: ["ai", "refactoring"] },
+    { title: "Docker Compose — Next.js + Postgres",      tags: ["docker", "devops"] },
+    { title: "Deploy to Production",                     tags: ["devops", "cli"] },
+    { title: "GitHub Actions Docs",                      tags: ["devops", "ci-cd"] },
   ]
 
   for (const { title, tags } of tagAssignments) {

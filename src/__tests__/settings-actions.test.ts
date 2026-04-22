@@ -24,7 +24,7 @@ describe("updateEditorPreferences", () => {
   })
 
   it("returns error when not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as never)
 
     const result = await updateEditorPreferences({ fontSize: 14 })
 

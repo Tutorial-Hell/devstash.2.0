@@ -12,6 +12,7 @@ import { ImageThumbnailCard } from "@/components/image-thumbnail-card"
 import { FileListRow } from "@/components/file-list-row"
 import { CopyButton } from "@/components/copy-button"
 import { Pagination } from "@/components/pagination"
+import { ProUpgradeGate } from "@/components/pro-upgrade-gate"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
@@ -26,6 +27,12 @@ export default async function ItemsTypePage({ params, searchParams }: Props) {
 
   const { type } = await params
   const { page: pageParam } = await searchParams
+
+  const isPro = session?.user?.isPro ?? false
+  if ((type === "files" || type === "images") && !isPro) {
+    return <ProUpgradeGate feature={type} />
+  }
+
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
 
   const { items, itemType, total } = userId
