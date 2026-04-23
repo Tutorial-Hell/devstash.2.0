@@ -37,6 +37,24 @@ export async function POST(req: Request) {
   }
 
   switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session
+      if (session.mode !== "subscription") break
+      const customerId =
+        typeof session.customer === "string" ? session.customer : session.customer?.id
+      const subscriptionId =
+        typeof session.subscription === "string" ? session.subscription : session.subscription?.id
+      if (customerId) {
+        await prisma.user.updateMany({
+          where: { stripeCustomerId: customerId },
+          data: {
+            isPro: true,
+            ...(subscriptionId ? { stripeSubscriptionId: subscriptionId } : {}),
+          },
+        })
+      }
+      break
+    }
     case "customer.subscription.created": {
       const sub = event.data.object as Stripe.Subscription
       await handleSubscription(sub, true)
