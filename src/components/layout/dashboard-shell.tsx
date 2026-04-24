@@ -25,6 +25,7 @@ interface DashboardShellProps {
   itemTypes: ItemTypeWithCount[]
   collections: CollectionWithMeta[]
   user: SessionUser | null
+  isPro: boolean
   searchItems: SearchableItem[]
   searchCollections: SearchableCollection[]
   editorPreferences?: EditorPreferences
@@ -35,6 +36,7 @@ export function DashboardShell({
   itemTypes,
   collections,
   user,
+  isPro,
   searchItems,
   searchCollections,
   editorPreferences = DEFAULT_EDITOR_PREFERENCES,
@@ -63,6 +65,7 @@ export function DashboardShell({
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           onMobileMenuOpen={() => setMobileOpen(true)}
           onOpenPalette={() => setPaletteOpen(true)}
+          isPro={isPro}
         />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar

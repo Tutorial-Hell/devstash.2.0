@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
-import { Search, PanelLeft, Menu, Star, Plus, FolderPlus, FileText } from "lucide-react"
+import { Search, PanelLeft, Menu, Star, Plus, FolderPlus, FileText, Sparkles } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { NewItemDialog } from "@/components/new-item-dialog"
 import { NewCollectionDialog } from "@/components/new-collection-dialog"
@@ -11,6 +11,7 @@ interface TopbarProps {
   onToggleSidebar?: () => void
   onMobileMenuOpen?: () => void
   onOpenPalette?: () => void
+  isPro?: boolean
 }
 
 function CreateMenu() {
@@ -65,7 +66,7 @@ function CreateMenu() {
   )
 }
 
-export function Topbar({ onToggleSidebar, onMobileMenuOpen, onOpenPalette }: TopbarProps) {
+export function Topbar({ onToggleSidebar, onMobileMenuOpen, onOpenPalette, isPro }: TopbarProps) {
   return (
     <header className="flex h-14 items-center border-b border-border bg-background px-4 gap-2 shrink-0">
       {/* Mobile hamburger */}
@@ -120,6 +121,15 @@ export function Topbar({ onToggleSidebar, onMobileMenuOpen, onOpenPalette }: Top
 
       {/* Actions */}
       <div className="flex items-center gap-2 shrink-0">
+        {!isPro && (
+          <Link
+            href="/settings?tab=billing"
+            className={buttonVariants({ variant: "default", size: "sm" })}
+          >
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            Upgrade
+          </Link>
+        )}
         <Link
           href="/favorites"
           aria-label="Favorites"

@@ -44,6 +44,7 @@ export default async function DashboardLayout({
         itemTypes={itemTypes}
         collections={collections}
         user={session?.user ?? null}
+        isPro={session?.user?.isPro ?? false}
         searchItems={searchItems}
         searchCollections={searchCollections}
         editorPreferences={editorPreferences}
