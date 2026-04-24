@@ -13,15 +13,17 @@ interface ProUpgradeGateProps {
 export function ProUpgradeGate({ feature }: ProUpgradeGateProps) {
   const [loadingMonthly, setLoadingMonthly] = useState(false)
   const [loadingYearly, setLoadingYearly] = useState(false)
+  const [upgradeError, setUpgradeError] = useState<string | null>(null)
 
-  async function handleUpgrade(priceId: string, setLoading: (v: boolean) => void) {
+  async function handleUpgrade(planKey: "monthly" | "yearly", setLoading: (v: boolean) => void) {
+    setUpgradeError(null)
     setLoading(true)
-    const { url, error } = await createCheckoutSession(priceId)
+    const { url, error } = await createCheckoutSession(planKey)
     setLoading(false)
     if (url) {
       window.location.href = url
     } else {
-      console.error(error)
+      setUpgradeError(error ?? "Something went wrong. Please try again.")
     }
   }
 
@@ -50,29 +52,22 @@ export function ProUpgradeGate({ feature }: ProUpgradeGateProps) {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
-          onClick={() =>
-            handleUpgrade(
-              process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY!,
-              setLoadingMonthly
-            )
-          }
+          onClick={() => handleUpgrade("monthly", setLoadingMonthly)}
           disabled={loadingMonthly || loadingYearly}
         >
           {loadingMonthly ? "Redirecting..." : "Upgrade Monthly — $8/mo"}
         </Button>
         <Button
           variant="outline"
-          onClick={() =>
-            handleUpgrade(
-              process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_YEARLY!,
-              setLoadingYearly
-            )
-          }
+          onClick={() => handleUpgrade("yearly", setLoadingYearly)}
           disabled={loadingMonthly || loadingYearly}
         >
           {loadingYearly ? "Redirecting..." : "Upgrade Yearly — $72/yr"}
         </Button>
       </div>
+      {upgradeError && (
+        <p className="text-sm text-destructive">{upgradeError}</p>
+      )}
 
       <Link
         href="/dashboard"

@@ -5,7 +5,7 @@ import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 
 export async function createCheckoutSession(
-  priceId: string
+  planKey: "monthly" | "yearly"
 ): Promise<{ url: string | null; error?: string }> {
   const session = await auth()
   if (!session?.user?.id) return { url: null, error: "Not authenticated." }
@@ -17,6 +17,11 @@ export async function createCheckoutSession(
     select: { email: true, name: true, stripeCustomerId: true },
   })
   if (!user) return { url: null, error: "User not found." }
+
+  const priceId =
+    planKey === "monthly"
+      ? process.env.STRIPE_PRICE_ID_MONTHLY
+      : process.env.STRIPE_PRICE_ID_YEARLY
 
   if (!priceId) return { url: null, error: "Price ID is not configured." }
 

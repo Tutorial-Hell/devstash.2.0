@@ -18,26 +18,29 @@ export function BillingSection({ totalItems, totalCollections }: BillingSectionP
   const [loadingPortal, setLoadingPortal] = useState(false)
 
   const isPro = session?.user?.isPro ?? false
+  const [upgradeError, setUpgradeError] = useState<string | null>(null)
 
-  async function handleUpgrade(priceId: string, setLoading: (v: boolean) => void) {
+  async function handleUpgrade(planKey: "monthly" | "yearly", setLoading: (v: boolean) => void) {
+    setUpgradeError(null)
     setLoading(true)
-    const { url, error } = await createCheckoutSession(priceId)
+    const { url, error } = await createCheckoutSession(planKey)
     setLoading(false)
     if (url) {
       window.location.href = url
     } else {
-      console.error(error)
+      setUpgradeError(error ?? "Something went wrong. Please try again.")
     }
   }
 
   async function handleManageBilling() {
+    setUpgradeError(null)
     setLoadingPortal(true)
     const { url, error } = await createBillingPortalSession()
     setLoadingPortal(false)
     if (url) {
       window.location.href = url
     } else {
-      console.error(error)
+      setUpgradeError(error ?? "Something went wrong. Please try again.")
     }
   }
 
@@ -61,6 +64,9 @@ export function BillingSection({ totalItems, totalCollections }: BillingSectionP
         >
           {loadingPortal ? "Opening portal..." : "Manage Billing"}
         </Button>
+        {upgradeError && (
+          <p className="text-sm text-destructive">{upgradeError}</p>
+        )}
       </div>
     )
   }
@@ -104,12 +110,7 @@ export function BillingSection({ totalItems, totalCollections }: BillingSectionP
       <div className="flex flex-wrap gap-3">
         <Button
           size="sm"
-          onClick={() =>
-            handleUpgrade(
-              process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY!,
-              setLoadingMonthly
-            )
-          }
+          onClick={() => handleUpgrade("monthly", setLoadingMonthly)}
           disabled={loadingMonthly || loadingYearly}
         >
           {loadingMonthly ? "Redirecting..." : "Upgrade Monthly — $8/mo"}
@@ -117,17 +118,15 @@ export function BillingSection({ totalItems, totalCollections }: BillingSectionP
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            handleUpgrade(
-              process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_YEARLY!,
-              setLoadingYearly
-            )
-          }
+          onClick={() => handleUpgrade("yearly", setLoadingYearly)}
           disabled={loadingMonthly || loadingYearly}
         >
           {loadingYearly ? "Redirecting..." : "Upgrade Yearly — $72/yr"}
         </Button>
       </div>
+      {upgradeError && (
+        <p className="text-sm text-destructive">{upgradeError}</p>
+      )}
     </div>
   )
 }
