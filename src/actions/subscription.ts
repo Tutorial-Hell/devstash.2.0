@@ -52,7 +52,7 @@ export async function createCheckoutSession(
       })
     }
 
-    const appUrl = getAppUrl()
+    const appUrl = await getAppUrl()
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
@@ -84,7 +84,7 @@ export async function createBillingPortalSession(): Promise<{ url: string | null
   }
 
   try {
-    const appUrl = getAppUrl()
+    const appUrl = await getAppUrl()
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: `${appUrl}/settings?tab=billing`,
