@@ -6,13 +6,17 @@ import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 
 async function getAppUrl(): Promise<string> {
-  if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("your-production-domain")) {
-    return process.env.NEXT_PUBLIC_APP_URL
-  }
-  // Derive from request headers when env var is missing or placeholder
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (envUrl?.startsWith("http")) return envUrl.replace(/\/$/, "")
+
   const headersList = await headers()
-  const host = headersList.get("host") ?? "localhost:3000"
-  const proto = host.startsWith("localhost") ? "http" : "https"
+  const host =
+    headersList.get("x-forwarded-host") ??
+    headersList.get("host") ??
+    "localhost:3000"
+  const proto =
+    headersList.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") ? "http" : "https")
   return `${proto}://${host}`
 }
 
