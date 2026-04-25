@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { getItemsByType } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
@@ -12,7 +12,6 @@ import { ImageThumbnailCard } from "@/components/image-thumbnail-card"
 import { FileListRow } from "@/components/file-list-row"
 import { CopyButton } from "@/components/copy-button"
 import { Pagination } from "@/components/pagination"
-import { ProUpgradeGate } from "@/components/pro-upgrade-gate"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
@@ -30,7 +29,7 @@ export default async function ItemsTypePage({ params, searchParams }: Props) {
 
   const isPro = session?.user?.isPro ?? false
   if ((type === "files" || type === "images") && !isPro) {
-    return <ProUpgradeGate feature={type} />
+    redirect("/upgrade")
   }
 
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)

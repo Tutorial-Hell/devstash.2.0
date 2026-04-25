@@ -123,7 +123,7 @@ export function Topbar({ onToggleSidebar, onMobileMenuOpen, onOpenPalette, isPro
       <div className="flex items-center gap-2 shrink-0">
         {!isPro && (
           <Link
-            href="/settings?tab=billing"
+            href="/upgrade"
             className="flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors px-2 py-1"
           >
             <Sparkles className="h-3.5 w-3.5" />
