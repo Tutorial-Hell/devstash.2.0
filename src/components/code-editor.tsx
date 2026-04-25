@@ -3,9 +3,10 @@
 import { useState } from "react"
 import MonacoEditor, { OnMount } from "@monaco-editor/react"
 import { registerMonacoThemes } from "@/lib/monaco-themes"
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, ChevronDown } from "lucide-react"
 import { cn, normalizeLanguage } from "@/lib/utils"
 import { useEditorPreferences } from "@/contexts/editor-preferences-context"
+import { LANGUAGE_OPTIONS } from "@/lib/languages"
 
 const MIN_HEIGHT = 80
 const MAX_HEIGHT = 400
@@ -14,6 +15,7 @@ interface CodeEditorProps {
   value: string
   onChange?: (value: string) => void
   language?: string
+  onLanguageChange?: (lang: string) => void
   readOnly?: boolean
   className?: string
 }
@@ -22,6 +24,7 @@ export function CodeEditor({
   value,
   onChange,
   language = "plaintext",
+  onLanguageChange,
   readOnly = false,
   className,
 }: CodeEditorProps) {
@@ -68,10 +71,27 @@ export function CodeEditor({
 
         {/* Language + copy */}
         <div className="flex items-center gap-2">
-          {language && (
-            <span className="text-[11px] text-white/40 font-mono select-none">
-              {language}
-            </span>
+          {onLanguageChange ? (
+            <div className="relative flex items-center">
+              <select
+                value={LANGUAGE_OPTIONS.some((o) => o.value === normalizedLang) ? normalizedLang : "plaintext"}
+                onChange={(e) => onLanguageChange(e.target.value)}
+                className="appearance-none bg-transparent text-[11px] text-white/50 hover:text-white/80 font-mono pr-4 cursor-pointer focus:outline-none transition-colors"
+              >
+                {LANGUAGE_OPTIONS.map(({ label, value }) => (
+                  <option key={value} value={value} className="bg-[#1e1e1e] text-white text-xs">
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 h-2.5 w-2.5 text-white/30 pointer-events-none" />
+            </div>
+          ) : (
+            language && (
+              <span className="text-[11px] text-white/40 font-mono select-none">
+                {language}
+              </span>
+            )
           )}
           <button
             onClick={handleCopy}

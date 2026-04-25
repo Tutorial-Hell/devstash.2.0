@@ -1,16 +1,23 @@
-# Current Feature
+# Current Feature: Language Selector for Code Editor
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- Move the language field above the CodeEditor content area in both the New Item dialog and the Item Drawer edit mode
+- Replace the current plain text input with a styled dropdown that lists common programming languages
+- Selecting a language immediately updates Monaco's syntax highlighting for that language
+- The selected language persists as the `language` field value on save
 
 ## Notes
 
-<!-- Add notes here -->
+- Applies only to snippet and command item types (the ones that render CodeEditor)
+- The dropdown should be visually integrated with the editor — sitting directly above it, styled to match the dark editor theme
+- Should include a reasonable set of common languages (JavaScript, TypeScript, Python, Rust, Go, SQL, Shell, etc.)
+- `normalizeLanguage` utility already exists in `src/lib/utils.ts` — use it to map display names to Monaco language IDs
+- Current language field is a free-text input in both `new-item-dialog.tsx` and `item-drawer-edit.tsx`
 
 ## History
 

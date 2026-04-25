@@ -315,6 +315,7 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
                     value={content}
                     onChange={setContent}
                     language={language || "plaintext"}
+                    onLanguageChange={setLanguage}
                   />
                 ) : showMarkdown ? (
                   <MarkdownEditor value={content} onChange={setContent} />
@@ -327,18 +328,6 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
                     className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                   />
                 )}
-              </FormField>
-            )}
-
-            {/* Language — snippet, command */}
-            {showLanguage && (
-              <FormField label="Language">
-                <Input
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  placeholder="e.g. typescript"
-                  className="h-8 text-sm"
-                />
               </FormField>
             )}
 
