@@ -1,23 +1,16 @@
-# Current Feature: Language Selector for Code Editor
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Move the language field above the CodeEditor content area in both the New Item dialog and the Item Drawer edit mode
-- Replace the current plain text input with a styled dropdown that lists common programming languages
-- Selecting a language immediately updates Monaco's syntax highlighting for that language
-- The selected language persists as the `language` field value on save
+<!-- Add goals here -->
 
 ## Notes
 
-- Applies only to snippet and command item types (the ones that render CodeEditor)
-- The dropdown should be visually integrated with the editor — sitting directly above it, styled to match the dark editor theme
-- Should include a reasonable set of common languages (JavaScript, TypeScript, Python, Rust, Go, SQL, Shell, etc.)
-- `normalizeLanguage` utility already exists in `src/lib/utils.ts` — use it to map display names to Monaco language IDs
-- Current language field is a free-text input in both `new-item-dialog.tsx` and `item-drawer-edit.tsx`
+<!-- Add notes here -->
 
 ## History
 
@@ -80,3 +73,4 @@ In Progress
 - **2026-04-20** — Stripe Integration Phase 1 completed. Installed `stripe` package. Created `src/lib/stripe.ts` singleton, `src/lib/auth-utils.ts` with `getAuthenticatedUserId()`, and `src/lib/usage-limits.ts` with `FREE_ITEM_LIMIT=50`/`FREE_COLLECTION_LIMIT=3` and `isAtItemLimit`/`isAtCollectionLimit` helpers. Replaced all `getDemoUserId()` call sites in server actions, API routes, and dashboard pages with real session auth. JWT callback in `src/auth.ts` now syncs `isPro` from DB on every validation; `session.user.isPro` typed in `next-auth.d.ts`. 8 unit tests added for usage-limits (91 total).
 - **2026-04-21** — Stripe Integration Phase 2 completed. POST /api/stripe/checkout (create/reuse Stripe customer, return checkout URL), POST /api/stripe/portal (billing portal for Pro users), POST /api/stripe/webhook (signature verification, subscription created/updated/deleted, invoice.payment_failed). Feature gates in createItem (50 item limit) and createCollection (3 collection limit) for free users. Pro-only gate on POST /api/upload. createCheckoutSession and createBillingPortalSession server actions call Stripe directly (no internal HTTP round-trip). BillingSection client component with usage bars + upgrade buttons (free) and manage billing (pro). SessionProvider added to dashboard layout. FREE_ITEM_LIMIT/FREE_COLLECTION_LIMIT moved to constants.ts to prevent client bundle pulling in Prisma. getSession() added to auth-utils.ts. 16 new unit tests (91 → 107 total) covering feature gates, upload gate, and all webhook branches. Back-to-dashboard links added to profile and settings pages.
 - **2026-04-25** — Upgrade Page completed. New `/upgrade` page (`src/app/upgrade/page.tsx`) styled like the homepage pricing section with monthly/yearly billing toggle ($8/mo or $72/yr). Clicking a plan calls `createCheckoutSession` and redirects to Stripe. Topbar "Upgrade" button now links to `/upgrade` instead of `/settings?tab=billing`. Free users visiting `/items/files` or `/items/images` are redirected to `/upgrade` via `redirect()` (replaces the old inline `ProUpgradeGate` component).
+- **2026-04-25** — Language Selector for Code Editor completed. Added `src/lib/languages.ts` with 25 language options. `CodeEditor` gains `onLanguageChange` prop — when provided, the static language label in the macOS-style header becomes a native `<select>` dropdown; selecting a language instantly updates Monaco syntax highlighting. Separate Language text input removed from `NewItemDialog` and `ItemDrawer` edit mode; selection lives in the editor header itself.
