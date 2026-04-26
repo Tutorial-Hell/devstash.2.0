@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Plus, ChevronDown, Sparkles } from "lucide-react"
+import { Plus, ChevronDown, Sparkles, Wand2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -17,7 +17,7 @@ import { iconMap } from "@/lib/icon-map"
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { createItem, type CreateItemInput } from "@/actions/items"
-import { generateAutoTags } from "@/actions/ai"
+import { generateAutoTags, generateDescription } from "@/actions/ai"
 import { fetchCollectionsForSelect } from "@/actions/collections"
 import { FileUpload, type UploadedFile } from "@/components/file-upload"
 import { CollectionSelect } from "@/components/collection-select"
@@ -171,6 +171,7 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
   const [collectionSelectOpen, setCollectionSelectOpen] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [loadingDescription, setLoadingDescription] = useState(false)
 
   const showContent = CONTENT_TYPES.has(type)
   const showLanguage = LANGUAGE_TYPES.has(type)
@@ -197,6 +198,24 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
     setSuggestions([])
     setError(null)
     setSaving(false)
+  }
+
+  // ─── Description generation ────────────────────────────────────────────────
+
+  async function handleGenerateDescription() {
+    setLoadingDescription(true)
+    const result = await generateDescription({
+      title,
+      type,
+      content: content || null,
+      url: url || null,
+    })
+    setLoadingDescription(false)
+    if (!result.success) {
+      toast.error(result.error)
+      return
+    }
+    setDescription(result.description)
   }
 
   // ─── Tag suggestions ───────────────────────────────────────────────────────
@@ -320,7 +339,26 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
             </FormField>
 
             {/* Description */}
-            <FormField label="Description">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground">Description</label>
+                {isPro && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs gap-1"
+                    onClick={handleGenerateDescription}
+                    disabled={loadingDescription || !title.trim()}
+                  >
+                    {loadingDescription
+                      ? <Loader2 className="h-3 w-3 animate-spin" />
+                      : <Wand2 className="h-3 w-3" />
+                    }
+                    {loadingDescription ? "Generating…" : "Generate"}
+                  </Button>
+                )}
+              </div>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -328,7 +366,7 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
                 rows={1}
                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
               />
-            </FormField>
+            </div>
 
             {/* File upload — file, image */}
             {showFileUpload && (
