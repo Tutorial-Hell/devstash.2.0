@@ -4,14 +4,14 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
-import { Sparkles } from "lucide-react"
+import { Sparkles, Wand2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { formatDate } from "@/lib/utils"
 import { updateItem } from "@/actions/items"
-import { generateAutoTags } from "@/actions/ai"
+import { generateAutoTags, generateDescription } from "@/actions/ai"
 import { fetchCollectionsForSelect } from "@/actions/collections"
 import { CollectionSelect } from "@/components/collection-select"
 import { TagSuggestions } from "@/components/tag-suggestions"
@@ -50,6 +50,7 @@ export function EditBody({
   const [tagsInput, setTagsInput] = useState(item.tags.map((t) => t.name).join(", "))
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [loadingDescription, setLoadingDescription] = useState(false)
 
   const [allCollections, setAllCollections] = useState<{ id: string; name: string }[]>([])
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>(
@@ -65,6 +66,22 @@ export function EditBody({
   const showLanguage = LANGUAGE_TYPES.has(typeName)
   const showMarkdown = MARKDOWN_TYPES.has(typeName)
   const showUrl = typeName === "link"
+
+  async function handleGenerateDescription() {
+    setLoadingDescription(true)
+    const result = await generateDescription({
+      title,
+      type: typeName,
+      content: content || null,
+      url: url || null,
+    })
+    setLoadingDescription(false)
+    if (!result.success) {
+      toast.error(result.error)
+      return
+    }
+    setDescription(result.description)
+  }
 
   async function handleSuggestTags() {
     setLoadingSuggestions(true)
@@ -164,7 +181,25 @@ export function EditBody({
 
         {/* Description */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Description</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">Description</label>
+            {isPro && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs gap-1"
+                onClick={handleGenerateDescription}
+                disabled={loadingDescription || !title.trim()}
+              >
+                {loadingDescription
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : <Wand2 className="h-3 w-3" />
+                }
+                {loadingDescription ? "Generating…" : "Generate"}
+              </Button>
+            )}
+          </div>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
