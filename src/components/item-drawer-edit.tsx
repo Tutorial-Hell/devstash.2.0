@@ -2,15 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
+import { Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { formatDate } from "@/lib/utils"
 import { updateItem } from "@/actions/items"
+import { generateAutoTags } from "@/actions/ai"
 import { fetchCollectionsForSelect } from "@/actions/collections"
 import { CollectionSelect } from "@/components/collection-select"
+import { TagSuggestions } from "@/components/tag-suggestions"
 import {
   type ItemDetailResponse,
   CONTENT_TYPES,
@@ -33,6 +37,8 @@ export function EditBody({
   onSaved: (updated: ItemDetailResponse) => void
 }) {
   const router = useRouter()
+  const { data: session } = useSession()
+  const isPro = session?.user?.isPro ?? false
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,6 +48,8 @@ export function EditBody({
   const [url, setUrl] = useState(item.url ?? "")
   const [language, setLanguage] = useState(item.language ?? "")
   const [tagsInput, setTagsInput] = useState(item.tags.map((t) => t.name).join(", "))
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
   const [allCollections, setAllCollections] = useState<{ id: string; name: string }[]>([])
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>(
@@ -57,6 +65,31 @@ export function EditBody({
   const showLanguage = LANGUAGE_TYPES.has(typeName)
   const showMarkdown = MARKDOWN_TYPES.has(typeName)
   const showUrl = typeName === "link"
+
+  async function handleSuggestTags() {
+    setLoadingSuggestions(true)
+    const result = await generateAutoTags({ title, content: content || null, type: typeName })
+    setLoadingSuggestions(false)
+    if (!result.success) {
+      toast.error(result.error)
+      return
+    }
+    const existing = tagsInput.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
+    setSuggestions(result.tags.filter((t) => !existing.includes(t)))
+  }
+
+  function acceptTag(tag: string) {
+    setSuggestions((prev) => prev.filter((t) => t !== tag))
+    setTagsInput((prev) => {
+      const existing = prev.split(",").map((t) => t.trim()).filter(Boolean)
+      if (existing.map((t) => t.toLowerCase()).includes(tag.toLowerCase())) return prev
+      return [...existing, tag].join(", ")
+    })
+  }
+
+  function rejectTag(tag: string) {
+    setSuggestions((prev) => prev.filter((t) => t !== tag))
+  }
 
   async function handleSave() {
     setError(null)
@@ -182,7 +215,22 @@ export function EditBody({
 
         {/* Tags */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Tags</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">Tags</label>
+            {isPro && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs gap-1"
+                onClick={handleSuggestTags}
+                disabled={loadingSuggestions || !title.trim()}
+              >
+                <Sparkles className="h-3 w-3" />
+                {loadingSuggestions ? "Suggesting…" : "Suggest Tags"}
+              </Button>
+            )}
+          </div>
           <Input
             value={tagsInput}
             onChange={(e) => setTagsInput(e.target.value)}
@@ -190,6 +238,7 @@ export function EditBody({
             className="h-8 text-sm"
           />
           <p className="text-[11px] text-muted-foreground">Comma-separated</p>
+          <TagSuggestions suggestions={suggestions} onAccept={acceptTag} onReject={rejectTag} />
         </div>
 
         {/* Collections */}
