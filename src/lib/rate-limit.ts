@@ -13,6 +13,7 @@ const LIMITS: Record<string, LimitConfig> = {
   "forgot-password": { requests: 3, window: "1 h" },
   "reset-password": { requests: 5, window: "15 m" },
   "resend-verification": { requests: 3, window: "15 m" },
+  "ai-suggest-tags": { requests: 20, window: "1 h" },
 }
 
 let redis: Redis | null = null

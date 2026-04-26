@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, ChevronDown } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { Plus, ChevronDown, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -16,9 +17,11 @@ import { iconMap } from "@/lib/icon-map"
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { createItem, type CreateItemInput } from "@/actions/items"
+import { generateAutoTags } from "@/actions/ai"
 import { fetchCollectionsForSelect } from "@/actions/collections"
 import { FileUpload, type UploadedFile } from "@/components/file-upload"
 import { CollectionSelect } from "@/components/collection-select"
+import { TagSuggestions } from "@/components/tag-suggestions"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -131,6 +134,8 @@ interface NewItemDialogProps {
 
 export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange: controlledOnOpenChange }: NewItemDialogProps = {}) {
   const router = useRouter()
+  const { data: session } = useSession()
+  const isPro = session?.user?.isPro ?? false
   const [internalOpen, setInternalOpen] = useState(false)
   const open = controlledOpen ?? internalOpen
 
@@ -164,6 +169,8 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
   const [collections, setCollections] = useState<{ id: string; name: string }[]>([])
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([])
   const [collectionSelectOpen, setCollectionSelectOpen] = useState(false)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
   const showContent = CONTENT_TYPES.has(type)
   const showLanguage = LANGUAGE_TYPES.has(type)
@@ -187,8 +194,36 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
     setUploadedFile(null)
     setSelectedCollectionIds([])
     setCollectionSelectOpen(false)
+    setSuggestions([])
     setError(null)
     setSaving(false)
+  }
+
+  // ─── Tag suggestions ───────────────────────────────────────────────────────
+
+  async function handleSuggestTags() {
+    setLoadingSuggestions(true)
+    const result = await generateAutoTags({ title, content: content || null, type })
+    setLoadingSuggestions(false)
+    if (!result.success) {
+      toast.error(result.error)
+      return
+    }
+    const existing = tagsInput.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
+    setSuggestions(result.tags.filter((t) => !existing.includes(t)))
+  }
+
+  function acceptTag(tag: string) {
+    setSuggestions((prev) => prev.filter((t) => t !== tag))
+    setTagsInput((prev) => {
+      const existing = prev.split(",").map((t) => t.trim()).filter(Boolean)
+      if (existing.map((t) => t.toLowerCase()).includes(tag.toLowerCase())) return prev
+      return [...existing, tag].join(", ")
+    })
+  }
+
+  function rejectTag(tag: string) {
+    setSuggestions((prev) => prev.filter((t) => t !== tag))
   }
 
   // ─── Submit ────────────────────────────────────────────────────────────────
@@ -345,14 +380,31 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
             )}
 
             {/* Tags */}
-            <FormField label="Tags">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground">Tags</label>
+                {isPro && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs gap-1"
+                    onClick={handleSuggestTags}
+                    disabled={loadingSuggestions || !title.trim()}
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    {loadingSuggestions ? "Suggesting…" : "Suggest Tags"}
+                  </Button>
+                )}
+              </div>
               <Input
                 value={tagsInput}
                 onChange={(e) => setTagsInput(e.target.value)}
                 placeholder="react, hooks, typescript"
                 className="h-8 text-sm"
               />
-            </FormField>
+              <TagSuggestions suggestions={suggestions} onAccept={acceptTag} onReject={rejectTag} />
+            </div>
 
             {/* Collections */}
             <FormField label="Collections">
