@@ -25,7 +25,13 @@ export function useItemDrawer() {
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
-export function ItemDrawerProvider({ children }: { children: React.ReactNode }) {
+export function ItemDrawerProvider({
+  children,
+  isPro = false,
+}: {
+  children: React.ReactNode
+  isPro?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const [item, setItem] = useState<ItemDetailResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -58,6 +64,7 @@ export function ItemDrawerProvider({ children }: { children: React.ReactNode }) 
           ) : item ? (
             <DrawerBody
               item={item}
+              isPro={isPro}
               onClose={() => setOpen(false)}
               onUpdate={(updated) => setItem(updated)}
             />
@@ -72,10 +79,12 @@ export function ItemDrawerProvider({ children }: { children: React.ReactNode }) 
 
 function DrawerBody({
   item,
+  isPro,
   onClose,
   onUpdate,
 }: {
   item: ItemDetailResponse
+  isPro: boolean
   onClose: () => void
   onUpdate: (item: ItemDetailResponse) => void
 }) {
@@ -128,6 +137,7 @@ function DrawerBody({
           onEdit={() => setEditMode(true)}
           onClose={onClose}
           onUpdate={onUpdate}
+          isPro={isPro}
         />
       )}
     </>

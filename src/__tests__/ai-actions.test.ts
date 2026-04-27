@@ -17,7 +17,7 @@ vi.mock("@/lib/rate-limit", () => ({
 import { getSession } from "@/lib/auth-utils"
 import { getOpenAIClient } from "@/lib/openai"
 import { rateLimit } from "@/lib/rate-limit"
-import { generateAutoTags, generateDescription } from "@/actions/ai"
+import { generateAutoTags, generateDescription, explainCode } from "@/actions/ai"
 
 const mockClient = {
   responses: {
@@ -248,5 +248,111 @@ describe("generateDescription", () => {
     const result = await generateDescription({ title: "Test", type: "note" })
 
     expect(result).toEqual({ success: false, error: "AI returned an empty response." })
+  })
+})
+
+describe("explainCode", () => {
+  beforeEach(() => {
+    vi.mocked(getSession).mockReset()
+    vi.mocked(getOpenAIClient).mockReturnValue(mockClient as never)
+    vi.mocked(rateLimit).mockResolvedValue({ success: true })
+    mockClient.responses.create.mockReset()
+  })
+
+  it("returns not-authenticated error when no session", async () => {
+    vi.mocked(getSession).mockResolvedValue(null)
+
+    const result = await explainCode({ content: "console.log('hi')", type: "snippet" })
+
+    expect(result).toEqual({ success: false, error: "Not authenticated." })
+  })
+
+  it("returns Pro gate error for free users", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: false },
+    } as never)
+
+    const result = await explainCode({ content: "console.log('hi')", type: "snippet" })
+
+    expect(result).toEqual({
+      success: false,
+      error: "AI code explanation is a Pro feature. Upgrade to use it.",
+    })
+  })
+
+  it("returns rate limit error when limit exceeded", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    vi.mocked(rateLimit).mockResolvedValue({ success: false, retryAfterMinutes: 20 })
+
+    const result = await explainCode({ content: "console.log('hi')", type: "snippet" })
+
+    expect(result.success).toBe(false)
+    expect((result as { success: false; error: string }).error).toContain("20 minutes")
+  })
+
+  it("returns explanation on success", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockResolvedValue({
+      output_text: "This snippet logs 'hi' to the console using `console.log`.",
+    })
+
+    const result = await explainCode({ content: "console.log('hi')", type: "snippet" })
+
+    expect(result).toEqual({
+      success: true,
+      explanation: "This snippet logs 'hi' to the console using `console.log`.",
+    })
+  })
+
+  it("includes language in the prompt when provided", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockResolvedValue({ output_text: "An explanation." })
+
+    await explainCode({ content: "echo hello", type: "command", language: "shell" })
+
+    const callArg = mockClient.responses.create.mock.calls[0][0]
+    expect(callArg.input).toContain("Language: shell")
+  })
+
+  it("truncates content to 2000 chars before API call", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockResolvedValue({ output_text: "An explanation." })
+
+    const longContent = "z".repeat(5000)
+    await explainCode({ content: longContent, type: "snippet" })
+
+    const callArg = mockClient.responses.create.mock.calls[0][0]
+    expect(callArg.input).toContain("z".repeat(2000))
+    expect(callArg.input).not.toContain("z".repeat(2001))
+  })
+
+  it("returns error when output_text is empty", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockResolvedValue({ output_text: "   " })
+
+    const result = await explainCode({ content: "some code", type: "snippet" })
+
+    expect(result).toEqual({ success: false, error: "AI returned an empty response." })
+  })
+
+  it("returns error when OpenAI client throws", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockRejectedValue(new Error("timeout"))
+
+    const result = await explainCode({ content: "some code", type: "snippet" })
+
+    expect(result).toEqual({ success: false, error: "AI service error. Please try again." })
   })
 })

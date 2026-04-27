@@ -150,3 +150,63 @@ export async function generateDescription(
     return { success: false, error: classifyOpenAIError(err) }
   }
 }
+
+// ─── Explain Code ─────────────────────────────────────────────────────────────
+
+const explainCodeSchema = z.object({
+  content: z.string().trim().min(1, "Content is required"),
+  language: z.string().nullable().optional(),
+  type: z.string().trim().min(1),
+})
+
+export type ExplainCodeInput = z.input<typeof explainCodeSchema>
+
+export type ExplainCodeResult =
+  | { success: true; explanation: string }
+  | { success: false; error: string }
+
+export async function explainCode(
+  input: ExplainCodeInput
+): Promise<ExplainCodeResult> {
+  const session = await getSession()
+  const userId = session?.user?.id ?? null
+  if (!userId) return { success: false, error: "Not authenticated." }
+
+  if (!session?.user?.isPro) {
+    return { success: false, error: "AI code explanation is a Pro feature. Upgrade to use it." }
+  }
+
+  const parsed = explainCodeSchema.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." }
+  }
+
+  const rl = await rateLimit("ai-suggest-tags", userId)
+  if (!rl.success) {
+    return { success: false, error: rateLimitErrorMessage(rl.retryAfterMinutes ?? 60) }
+  }
+
+  const { content, language, type } = parsed.data
+  const truncatedContent = content.slice(0, 2000)
+
+  const contextLines: string[] = [`Type: ${type}`]
+  if (language) contextLines.push(`Language: ${language}`)
+  contextLines.push(`Code:\n${truncatedContent}`)
+
+  try {
+    const client = getOpenAIClient()
+    const response = await client.responses.create({
+      model: AI_MODEL,
+      instructions:
+        "You are a developer tool assistant. Explain the provided code or command concisely in 200-300 words. Cover what it does and any key concepts or patterns used. Use markdown for formatting (code snippets, bold terms). Return only the explanation — no preamble, no labels.",
+      input: `Explain this ${type}:\n\n${contextLines.join("\n")}`,
+    })
+
+    const explanation = response.output_text.trim()
+    if (!explanation) return { success: false, error: "AI returned an empty response." }
+
+    return { success: true, explanation }
+  } catch (err) {
+    return { success: false, error: classifyOpenAIError(err) }
+  }
+}

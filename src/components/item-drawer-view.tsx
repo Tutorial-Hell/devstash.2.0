@@ -7,6 +7,7 @@ import {
   Star, Pin, Copy, Pencil, Trash2, File,
   FolderOpen, Tag as TagIcon, Calendar, Download,
 } from "lucide-react"
+import { explainCode } from "@/actions/ai"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -91,17 +92,43 @@ export function ViewBody({
   onEdit,
   onClose,
   onUpdate,
+  isPro = false,
 }: {
   item: ItemDetailResponse
   typeName: string
   onEdit: () => void
   onClose: () => void
   onUpdate?: (item: ItemDetailResponse) => void
+  isPro?: boolean
 }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [togglingFavorite, setTogglingFavorite] = useState(false)
   const [togglingPin, setTogglingPin] = useState(false)
+  const [explanation, setExplanation] = useState<string | null>(null)
+  const [isExplaining, setIsExplaining] = useState(false)
+
+  async function handleExplain() {
+    if (!item.content) return
+    setExplanation(null)
+    setIsExplaining(true)
+    try {
+      const result = await explainCode({
+        content: item.content,
+        language: item.language ?? undefined,
+        type: typeName,
+      })
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      setExplanation(result.explanation)
+    } catch {
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setIsExplaining(false)
+    }
+  }
 
   async function handleTogglePin() {
     setTogglingPin(true)
@@ -282,6 +309,10 @@ export function ViewBody({
                 value={item.content}
                 language={item.language ?? "plaintext"}
                 readOnly
+                onExplain={handleExplain}
+                explanation={explanation}
+                isExplaining={isExplaining}
+                isPro={isPro}
               />
             ) : MARKDOWN_TYPES.has(typeName) ? (
               <MarkdownEditor value={item.content} readOnly />
