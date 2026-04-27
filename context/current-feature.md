@@ -1,30 +1,16 @@
-# Current Feature: AI Explain Code
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Create `explainCode` server action with auth, Pro gating, Zod validation, and rate limiting
-- Add "Explain" button (Sparkles icon) to the CodeEditor window controls header (next to Copy)
-- Show the button only in item drawer read view for snippet and command types (not in create/edit forms)
-- After generating, display Code/Explain tabs in the editor header to toggle between views
-- Render explanation as markdown in the same container space as the code editor
-- Explanation is ~200-300 words: what the code does and key concepts
-- Loading state: Loader2 spinner while generating
-- Pro gate in UI: Crown icon + tooltip for free users (no Explain button action)
-- Error handling via toast (Pro gate, rate limit, AI service errors)
-- Unit tests for the server action
+<!-- Add goals here -->
 
 ## Notes
 
-- Explanations are not persisted — regenerated on each click
-- Only available in item drawer read view (not create or edit forms)
-- `isPro` must be threaded as a prop to the item drawer and then to CodeEditor
-- Uses `gpt-5-nano` model (same as other AI features in this project)
-- Follow existing AI action patterns (`generateAutoTags`, `generateDescription` in `src/actions/ai.ts`)
-- See `docs/ai-integration-plan.md` for architectural context
+<!-- Add notes here -->
 
 ## History
 
@@ -90,3 +76,4 @@ In Progress
 - **2026-04-25** — Language Selector for Code Editor completed. Added `src/lib/languages.ts` with 25 language options. `CodeEditor` gains `onLanguageChange` prop — when provided, the static language label in the macOS-style header becomes a native `<select>` dropdown; selecting a language instantly updates Monaco syntax highlighting. Separate Language text input removed from `NewItemDialog` and `ItemDrawer` edit mode; selection lives in the editor header itself.
 - **2026-04-26** — AI Auto-Tagging completed.
 - **2026-04-26** — AI Description Generator completed. Added `generateDescription` server action to `src/actions/ai.ts` — auth, Pro gate, Zod validation, shared `ai-suggest-tags` rate limit bucket, plain-text Responses API (no json_object format). Extracted `classifyOpenAIError` shared by both AI actions. Added `Wand2 + "Generate"` button (matching Suggest Tags style) inline with Description label in both `NewItemDialog` and `ItemDrawer` edit mode — hidden for free users via `useSession`. Clicking fills the description textarea with a 1-2 sentence summary using live form state (title, type, content, url). 8 new unit tests (124 total). Installed `openai` v6. Created `src/lib/openai.ts` (singleton client, `AI_MODEL = "gpt-5-nano"`). `generateAutoTags` server action in `src/actions/ai.ts` — auth, Pro gate, Zod validation, 20 req/hr rate limit per user, OpenAI Responses API with `json_object` format (prompt must include "json" for this to work). `TagSuggestions` component (`src/components/tag-suggestions.tsx`) renders suggestions as badges with per-tag accept (✓) and reject (✗) controls. "Suggest Tags" button (Sparkles, ghost) wired into `NewItemDialog` and `ItemDrawer` edit mode; hidden for free users via `useSession`. Accepted tags merge into existing tag input deduplicated. 9 unit tests added (116 total).
+- **2026-04-27** — AI Explain Code completed. Added `explainCode` server action to `src/actions/ai.ts` — auth, Pro gate, Zod validation, shared rate limit bucket, plain-text Responses API with 200-300 word markdown explanation. `CodeEditor` extended with `onExplain`/`explanation`/`isExplaining`/`isPro` props: Explain button (Sparkles) in header for Pro users; Crown + tooltip for free users; Code/Explain tab strip replaces window dots once explanation is present; explanation rendered via `react-markdown` in same container. `isPro` threaded from `DashboardShell` → `ItemDrawerProvider` → `DrawerBody` → `ViewBody`. Explain only shown in item drawer read view for snippet/command types. 7 new unit tests (132 total).
