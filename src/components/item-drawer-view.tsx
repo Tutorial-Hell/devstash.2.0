@@ -7,7 +7,7 @@ import {
   Star, Pin, Copy, Pencil, Trash2, File,
   FolderOpen, Tag as TagIcon, Calendar, Download,
 } from "lucide-react"
-import { explainCode } from "@/actions/ai"
+import { explainCode, optimizePrompt } from "@/actions/ai"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -23,7 +23,7 @@ import {
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { formatDate, formatBytes, cn } from "@/lib/utils"
-import { deleteItem, toggleItemFavorite, toggleItemPin } from "@/actions/items"
+import { deleteItem, toggleItemFavorite, toggleItemPin, updateItem } from "@/actions/items"
 import type { ItemDetail } from "@/lib/db/items"
 
 // ─── Shared types & constants ─────────────────────────────────────────────────
@@ -107,6 +107,9 @@ export function ViewBody({
   const [togglingPin, setTogglingPin] = useState(false)
   const [explanation, setExplanation] = useState<string | null>(null)
   const [isExplaining, setIsExplaining] = useState(false)
+  const [optimizedContent, setOptimizedContent] = useState<string | null>(null)
+  const [isOptimizing, setIsOptimizing] = useState(false)
+  const [isSavingOptimized, setIsSavingOptimized] = useState(false)
 
   async function handleExplain() {
     if (!item.content) return
@@ -128,6 +131,55 @@ export function ViewBody({
     } finally {
       setIsExplaining(false)
     }
+  }
+
+  async function handleOptimize() {
+    if (!item.content) return
+    setOptimizedContent(null)
+    setIsOptimizing(true)
+    try {
+      const result = await optimizePrompt({ content: item.content })
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      setOptimizedContent(result.optimizedContent)
+    } catch {
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setIsOptimizing(false)
+    }
+  }
+
+  async function handleAcceptOptimized(content: string) {
+    setIsSavingOptimized(true)
+    try {
+      const result = await updateItem(item.id, {
+        title: item.title,
+        description: item.description,
+        content,
+        url: item.url,
+        language: item.language,
+        tags: item.tags.map((t) => t.name),
+        collectionIds: item.collections.map((c) => c.id),
+      })
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      onUpdate?.({ ...item, content })
+      setOptimizedContent(null)
+      router.refresh()
+      toast.success("Prompt updated.")
+    } catch {
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setIsSavingOptimized(false)
+    }
+  }
+
+  function handleDiscardOptimized() {
+    setOptimizedContent(null)
   }
 
   async function handleTogglePin() {
@@ -315,7 +367,18 @@ export function ViewBody({
                 isPro={isPro}
               />
             ) : MARKDOWN_TYPES.has(typeName) ? (
-              <MarkdownEditor value={item.content} readOnly />
+              <MarkdownEditor
+                value={item.content}
+                readOnly
+                {...(typeName === "prompt" && {
+                  onOptimize: handleOptimize,
+                  optimizedContent,
+                  isOptimizing: isOptimizing || isSavingOptimized,
+                  isPro,
+                  onAccept: handleAcceptOptimized,
+                  onDiscard: handleDiscardOptimized,
+                })}
+              />
             ) : (
               <pre className="text-xs text-foreground bg-muted rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-words font-mono">
                 {item.content}

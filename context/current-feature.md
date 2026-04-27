@@ -1,16 +1,33 @@
-# Current Feature
+# Current Feature: AI Prompt Optimizer
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+- Create `optimizePrompt` server action with auth, Pro gating, Zod validation, and rate limiting
+- Add "Optimize" button to `MarkdownEditor` header (next to Copy), mirroring the "Explain" pattern in `CodeEditor`
+- Show the button only in the item drawer read view for prompt types (not notes, not edit forms)
+- After generating, show Content/Optimized tabs in the `MarkdownEditor` header to toggle between views
+- Optimized tab renders the AI-refined prompt with Accept and Discard buttons at the bottom
+- Accepting calls `updateItem` server action to persist the optimized prompt, closes the tab, and shows a success toast
+- Discarding clears the optimized content and returns to the Content tab
+- Loading state: Loader2 spinner while generating
+- Pro gate in UI: Crown icon + tooltip for free users (no action on click)
+- Error handling via toast (Pro gate, rate limit, AI service errors)
+- Unit tests for the server action
 
 ## Notes
 
-<!-- Add notes here -->
+- `optimizePrompt` should analyze the existing prompt text and return an improved version (~same length or shorter) that is clearer, better structured, and more effective for LLM use
+- Only for prompt item type in read view — not notes (also uses MarkdownEditor), not edit mode
+- Pattern mirrors `explainCode` + CodeEditor tabs; `MarkdownEditor` gets `onOptimize`, `optimizedContent`, `isOptimizing`, `isPro` props
+- `isPro` is already threaded into `ViewBody` via `ItemDrawerProvider` — pass it through to `MarkdownEditor` for prompt type only
+- Accept action calls `updateItem` server action from within `MarkdownEditor` or passes an `onAccept(content)` callback to `ViewBody` which handles the save
+- Prefer `onAccept` callback pattern (keeps MarkdownEditor a pure presentational component, ViewBody owns save logic)
+- Uses `gpt-5-nano` model and shared `ai-suggest-tags` rate limit bucket (same as all other AI features)
+- Follow existing AI action patterns in `src/actions/ai.ts`
 
 ## History
 
