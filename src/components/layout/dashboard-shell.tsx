@@ -58,7 +58,7 @@ export function DashboardShell({
 
   return (
     <EditorPreferencesProvider initial={editorPreferences}>
-    <ItemDrawerProvider>
+    <ItemDrawerProvider isPro={isPro}>
       <Toaster position="bottom-right" />
       <div className="flex flex-col h-full">
         <Topbar
