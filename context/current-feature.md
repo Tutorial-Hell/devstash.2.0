@@ -1,33 +1,16 @@
-# Current Feature: AI Prompt Optimizer
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Create `optimizePrompt` server action with auth, Pro gating, Zod validation, and rate limiting
-- Add "Optimize" button to `MarkdownEditor` header (next to Copy), mirroring the "Explain" pattern in `CodeEditor`
-- Show the button only in the item drawer read view for prompt types (not notes, not edit forms)
-- After generating, show Content/Optimized tabs in the `MarkdownEditor` header to toggle between views
-- Optimized tab renders the AI-refined prompt with Accept and Discard buttons at the bottom
-- Accepting calls `updateItem` server action to persist the optimized prompt, closes the tab, and shows a success toast
-- Discarding clears the optimized content and returns to the Content tab
-- Loading state: Loader2 spinner while generating
-- Pro gate in UI: Crown icon + tooltip for free users (no action on click)
-- Error handling via toast (Pro gate, rate limit, AI service errors)
-- Unit tests for the server action
+<!-- Add goals here -->
 
 ## Notes
 
-- `optimizePrompt` should analyze the existing prompt text and return an improved version (~same length or shorter) that is clearer, better structured, and more effective for LLM use
-- Only for prompt item type in read view — not notes (also uses MarkdownEditor), not edit mode
-- Pattern mirrors `explainCode` + CodeEditor tabs; `MarkdownEditor` gets `onOptimize`, `optimizedContent`, `isOptimizing`, `isPro` props
-- `isPro` is already threaded into `ViewBody` via `ItemDrawerProvider` — pass it through to `MarkdownEditor` for prompt type only
-- Accept action calls `updateItem` server action from within `MarkdownEditor` or passes an `onAccept(content)` callback to `ViewBody` which handles the save
-- Prefer `onAccept` callback pattern (keeps MarkdownEditor a pure presentational component, ViewBody owns save logic)
-- Uses `gpt-5-nano` model and shared `ai-suggest-tags` rate limit bucket (same as all other AI features)
-- Follow existing AI action patterns in `src/actions/ai.ts`
+<!-- Add notes here -->
 
 ## History
 
@@ -94,3 +77,4 @@ In Progress
 - **2026-04-26** — AI Auto-Tagging completed.
 - **2026-04-26** — AI Description Generator completed. Added `generateDescription` server action to `src/actions/ai.ts` — auth, Pro gate, Zod validation, shared `ai-suggest-tags` rate limit bucket, plain-text Responses API (no json_object format). Extracted `classifyOpenAIError` shared by both AI actions. Added `Wand2 + "Generate"` button (matching Suggest Tags style) inline with Description label in both `NewItemDialog` and `ItemDrawer` edit mode — hidden for free users via `useSession`. Clicking fills the description textarea with a 1-2 sentence summary using live form state (title, type, content, url). 8 new unit tests (124 total). Installed `openai` v6. Created `src/lib/openai.ts` (singleton client, `AI_MODEL = "gpt-5-nano"`). `generateAutoTags` server action in `src/actions/ai.ts` — auth, Pro gate, Zod validation, 20 req/hr rate limit per user, OpenAI Responses API with `json_object` format (prompt must include "json" for this to work). `TagSuggestions` component (`src/components/tag-suggestions.tsx`) renders suggestions as badges with per-tag accept (✓) and reject (✗) controls. "Suggest Tags" button (Sparkles, ghost) wired into `NewItemDialog` and `ItemDrawer` edit mode; hidden for free users via `useSession`. Accepted tags merge into existing tag input deduplicated. 9 unit tests added (116 total).
 - **2026-04-27** — AI Explain Code completed. Added `explainCode` server action to `src/actions/ai.ts` — auth, Pro gate, Zod validation, shared rate limit bucket, plain-text Responses API with 200-300 word markdown explanation. `CodeEditor` extended with `onExplain`/`explanation`/`isExplaining`/`isPro` props: Explain button (Sparkles) in header for Pro users; Crown + tooltip for free users; Code/Explain tab strip replaces window dots once explanation is present; explanation rendered via `react-markdown` in same container. `isPro` threaded from `DashboardShell` → `ItemDrawerProvider` → `DrawerBody` → `ViewBody`. Explain only shown in item drawer read view for snippet/command types. 7 new unit tests (132 total).
+- **2026-04-27** — AI Prompt Optimizer completed. Added `optimizePrompt` server action to `src/actions/ai.ts` — auth, Pro gate, Zod validation, shared rate limit bucket, prompt-engineering system instruction for clarity/specificity, content truncated to 3000 chars. `MarkdownEditor` extended with `onOptimize`/`optimizedContent`/`isOptimizing`/`isPro`/`onAccept`/`onDiscard` props: Optimize button (Sparkles) in header for Pro users; Crown + tooltip for free users; Content/Optimized tab strip replaces Write/Preview tabs once optimization is active; Optimized tab shows AI result as markdown preview with Accept/Discard footer. Accepting calls `updateItem`, updates drawer state via `onUpdate`, clears optimized content, and toasts. Only wired for prompt types in `ViewBody` read view (not notes, not edit mode). 8 new unit tests (140 total).
