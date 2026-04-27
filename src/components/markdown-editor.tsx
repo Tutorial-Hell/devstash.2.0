@@ -1,10 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, Sparkles, Crown, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 const MAX_HEIGHT = 400
 
@@ -13,6 +19,12 @@ interface MarkdownEditorProps {
   onChange?: (value: string) => void
   readOnly?: boolean
   className?: string
+  onOptimize?: () => void
+  optimizedContent?: string | null
+  isOptimizing?: boolean
+  isPro?: boolean
+  onAccept?: (content: string) => void
+  onDiscard?: () => void
 }
 
 export function MarkdownEditor({
@@ -20,9 +32,23 @@ export function MarkdownEditor({
   onChange,
   readOnly = false,
   className,
+  onOptimize,
+  optimizedContent,
+  isOptimizing,
+  isPro,
+  onAccept,
+  onDiscard,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<"write" | "preview">(readOnly ? "preview" : "write")
   const [copied, setCopied] = useState(false)
+  const [activeViewTab, setActiveViewTab] = useState<"content" | "optimized">("content")
+
+  const showOptimizeTabs = readOnly && (optimizedContent != null || isOptimizing === true)
+
+  // Auto-switch to optimized tab when optimization starts
+  useEffect(() => {
+    if (isOptimizing) setActiveViewTab("optimized")
+  }, [isOptimizing])
 
   async function handleCopy() {
     await navigator.clipboard.writeText(value)
@@ -30,60 +56,146 @@ export function MarkdownEditor({
     setTimeout(() => setCopied(false), 1500)
   }
 
+  function handleOptimizeClick() {
+    setActiveViewTab("optimized")
+    onOptimize?.()
+  }
+
   return (
     <div className={cn("rounded-lg overflow-hidden border border-border", className)}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 bg-[#2d2d2d] border-b border-white/[0.06]">
-        {/* Tabs */}
+        {/* Left: Write/Preview tabs or Content/Optimized tabs */}
         <div className="flex items-center gap-0.5">
-          {!readOnly && (
-            <TabButton active={tab === "write"} onClick={() => setTab("write")}>
-              Write
-            </TabButton>
+          {showOptimizeTabs ? (
+            <>
+              <TabButton active={activeViewTab === "content"} onClick={() => setActiveViewTab("content")}>
+                Content
+              </TabButton>
+              <TabButton active={activeViewTab === "optimized"} onClick={() => setActiveViewTab("optimized")}>
+                Optimized
+              </TabButton>
+            </>
+          ) : (
+            <>
+              {!readOnly && (
+                <TabButton active={tab === "write"} onClick={() => setTab("write")}>
+                  Write
+                </TabButton>
+              )}
+              <TabButton active={tab === "preview"} onClick={() => setTab("preview")}>
+                Preview
+              </TabButton>
+            </>
           )}
-          <TabButton active={tab === "preview"} onClick={() => setTab("preview")}>
-            Preview
-          </TabButton>
         </div>
 
-        {/* Copy button */}
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 transition-colors cursor-pointer"
-          aria-label="Copy content"
-        >
-          {copied ? (
-            <Check className="h-3.5 w-3.5 text-green-400" />
-          ) : (
-            <Copy className="h-3.5 w-3.5" />
+        {/* Right: copy + optimize */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 transition-colors cursor-pointer"
+            aria-label="Copy content"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-green-400" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </button>
+          {onOptimize && (
+            isPro ? (
+              <button
+                onClick={isOptimizing ? undefined : handleOptimizeClick}
+                disabled={isOptimizing}
+                className="flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                aria-label="Optimize prompt"
+              >
+                {isOptimizing ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                Optimize
+              </button>
+            ) : (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger
+                    className="flex items-center gap-1 text-[11px] text-white/20 cursor-default select-none bg-transparent border-0 p-0"
+                    aria-label="AI features require Pro subscription"
+                  >
+                    <Crown className="h-3.5 w-3.5" />
+                    Optimize
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    AI features require Pro subscription
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )
           )}
-        </button>
+        </div>
       </div>
 
       {/* Body */}
-      <div className="bg-[#1e1e1e] editor-scrollbar" style={{ maxHeight: MAX_HEIGHT, overflowY: "auto" }}>
-        {tab === "write" ? (
-          <textarea
-            value={value}
-            onChange={(e) => onChange?.(e.target.value)}
-            placeholder="Write markdown..."
-            className="w-full min-h-[200px] bg-transparent px-4 py-3 text-[13px] text-[#d4d4d4] font-mono placeholder:text-white/20 focus:outline-none resize-none"
-            style={{ lineHeight: "1.7" }}
-          />
-        ) : (
-          <div className="px-4 py-3 min-h-[200px]">
-            {value.trim() ? (
-              <div className="markdown-preview">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {value}
-                </ReactMarkdown>
+      {showOptimizeTabs && activeViewTab === "optimized" ? (
+        <div className="bg-[#1e1e1e] editor-scrollbar" style={{ maxHeight: MAX_HEIGHT, overflowY: "auto" }}>
+          {isOptimizing && !optimizedContent ? (
+            <div className="flex items-center justify-center" style={{ minHeight: 200 }}>
+              <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+            </div>
+          ) : (
+            <>
+              <div className="px-4 py-3 min-h-[200px]">
+                <div className="markdown-preview">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {optimizedContent ?? ""}
+                  </ReactMarkdown>
+                </div>
               </div>
-            ) : (
-              <p className="text-[13px] text-white/20 italic">Nothing to preview.</p>
-            )}
-          </div>
-        )}
-      </div>
+              <div className="flex items-center justify-end gap-2 px-4 py-2 border-t border-white/[0.06]">
+                <button
+                  onClick={onDiscard}
+                  className="px-3 py-1 text-[11px] font-medium rounded text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={() => optimizedContent && onAccept?.(optimizedContent)}
+                  className="px-3 py-1 text-[11px] font-medium rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
+                >
+                  Accept
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="bg-[#1e1e1e] editor-scrollbar" style={{ maxHeight: MAX_HEIGHT, overflowY: "auto" }}>
+          {showOptimizeTabs || tab === "preview" ? (
+            <div className="px-4 py-3 min-h-[200px]">
+              {value.trim() ? (
+                <div className="markdown-preview">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {value}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-[13px] text-white/20 italic">Nothing to preview.</p>
+              )}
+            </div>
+          ) : (
+            <textarea
+              value={value}
+              onChange={(e) => onChange?.(e.target.value)}
+              placeholder="Write markdown..."
+              className="w-full min-h-[200px] bg-transparent px-4 py-3 text-[13px] text-[#d4d4d4] font-mono placeholder:text-white/20 focus:outline-none resize-none"
+              style={{ lineHeight: "1.7" }}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }

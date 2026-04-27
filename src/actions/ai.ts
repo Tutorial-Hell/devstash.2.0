@@ -210,3 +210,56 @@ export async function explainCode(
     return { success: false, error: classifyOpenAIError(err) }
   }
 }
+
+// ─── Optimize Prompt ──────────────────────────────────────────────────────────
+
+const optimizePromptSchema = z.object({
+  content: z.string().trim().min(1, "Content is required"),
+})
+
+export type OptimizePromptInput = z.input<typeof optimizePromptSchema>
+
+export type OptimizePromptResult =
+  | { success: true; optimizedContent: string }
+  | { success: false; error: string }
+
+export async function optimizePrompt(
+  input: OptimizePromptInput
+): Promise<OptimizePromptResult> {
+  const session = await getSession()
+  const userId = session?.user?.id ?? null
+  if (!userId) return { success: false, error: "Not authenticated." }
+
+  if (!session?.user?.isPro) {
+    return { success: false, error: "AI prompt optimization is a Pro feature. Upgrade to use it." }
+  }
+
+  const parsed = optimizePromptSchema.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." }
+  }
+
+  const rl = await rateLimit("ai-suggest-tags", userId)
+  if (!rl.success) {
+    return { success: false, error: rateLimitErrorMessage(rl.retryAfterMinutes ?? 60) }
+  }
+
+  const truncatedContent = parsed.data.content.slice(0, 3000)
+
+  try {
+    const client = getOpenAIClient()
+    const response = await client.responses.create({
+      model: AI_MODEL,
+      instructions:
+        "You are an expert prompt engineer. Rewrite the given prompt to make it clearer, more specific, and more effective for use with AI language models. Preserve the original intent and approximate length. Use better structure, precise language, and explicit instructions where helpful. Return only the improved prompt text — no preamble, no explanation, no labels.",
+      input: `Optimize this prompt:\n\n${truncatedContent}`,
+    })
+
+    const optimizedContent = response.output_text.trim()
+    if (!optimizedContent) return { success: false, error: "AI returned an empty response." }
+
+    return { success: true, optimizedContent }
+  } catch (err) {
+    return { success: false, error: classifyOpenAIError(err) }
+  }
+}

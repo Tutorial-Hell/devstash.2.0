@@ -17,7 +17,7 @@ vi.mock("@/lib/rate-limit", () => ({
 import { getSession } from "@/lib/auth-utils"
 import { getOpenAIClient } from "@/lib/openai"
 import { rateLimit } from "@/lib/rate-limit"
-import { generateAutoTags, generateDescription, explainCode } from "@/actions/ai"
+import { generateAutoTags, generateDescription, explainCode, optimizePrompt } from "@/actions/ai"
 
 const mockClient = {
   responses: {
@@ -354,5 +354,109 @@ describe("explainCode", () => {
     const result = await explainCode({ content: "some code", type: "snippet" })
 
     expect(result).toEqual({ success: false, error: "AI service error. Please try again." })
+  })
+})
+
+describe("optimizePrompt", () => {
+  beforeEach(() => {
+    vi.mocked(getSession).mockReset()
+    vi.mocked(getOpenAIClient).mockReturnValue(mockClient as never)
+    vi.mocked(rateLimit).mockResolvedValue({ success: true })
+    mockClient.responses.create.mockReset()
+  })
+
+  it("returns not-authenticated error when no session", async () => {
+    vi.mocked(getSession).mockResolvedValue(null)
+
+    const result = await optimizePrompt({ content: "Write a summary of this article." })
+
+    expect(result).toEqual({ success: false, error: "Not authenticated." })
+  })
+
+  it("returns Pro gate error for free users", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: false },
+    } as never)
+
+    const result = await optimizePrompt({ content: "Write a summary of this article." })
+
+    expect(result).toEqual({
+      success: false,
+      error: "AI prompt optimization is a Pro feature. Upgrade to use it.",
+    })
+  })
+
+  it("returns rate limit error when limit exceeded", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    vi.mocked(rateLimit).mockResolvedValue({ success: false, retryAfterMinutes: 15 })
+
+    const result = await optimizePrompt({ content: "Write a summary." })
+
+    expect(result.success).toBe(false)
+    expect((result as { success: false; error: string }).error).toContain("15 minutes")
+  })
+
+  it("returns optimized content on success", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockResolvedValue({
+      output_text: "Please provide a concise, structured summary of the following article, highlighting the main argument and key supporting points.",
+    })
+
+    const result = await optimizePrompt({ content: "Write a summary of this article." })
+
+    expect(result).toEqual({
+      success: true,
+      optimizedContent: "Please provide a concise, structured summary of the following article, highlighting the main argument and key supporting points.",
+    })
+  })
+
+  it("truncates content to 3000 chars before API call", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockResolvedValue({ output_text: "Optimized prompt." })
+
+    const longContent = "x".repeat(5000)
+    await optimizePrompt({ content: longContent })
+
+    const callArg = mockClient.responses.create.mock.calls[0][0]
+    expect(callArg.input).toContain("x".repeat(3000))
+    expect(callArg.input).not.toContain("x".repeat(3001))
+  })
+
+  it("returns error when output_text is empty", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockResolvedValue({ output_text: "   " })
+
+    const result = await optimizePrompt({ content: "Some prompt." })
+
+    expect(result).toEqual({ success: false, error: "AI returned an empty response." })
+  })
+
+  it("returns error when OpenAI client throws", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+    mockClient.responses.create.mockRejectedValue(new Error("network error"))
+
+    const result = await optimizePrompt({ content: "Some prompt." })
+
+    expect(result).toEqual({ success: false, error: "AI service error. Please try again." })
+  })
+
+  it("returns validation error when content is empty", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1", isPro: true },
+    } as never)
+
+    const result = await optimizePrompt({ content: "   " })
+
+    expect(result).toEqual({ success: false, error: "Content is required" })
   })
 })
