@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Star, ChevronDown, LogOut, User, Settings } from "lucide-react"
+import { Star, ChevronDown, LogOut, User, Settings, LayoutDashboard } from "lucide-react"
 import { signOutAction } from "@/lib/auth-actions"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -135,6 +135,79 @@ function SidebarContent({ isOpen, itemTypes, collections, user }: SidebarContent
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto py-2">
+        {/* Primary nav: Dashboard + Favorites */}
+        <nav className="space-y-0.5 px-2 pb-2">
+          {isOpen ? (
+            <>
+              <Link
+                href="/dashboard"
+                className={cn(
+                  "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
+                  pathname === "/dashboard"
+                    ? "bg-white/[0.1] text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+              >
+                <LayoutDashboard className="h-4 w-4 shrink-0" />
+                <span>Dashboard</span>
+              </Link>
+              <Link
+                href="/favorites"
+                className={cn(
+                  "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
+                  pathname === "/favorites"
+                    ? "bg-white/[0.1] text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+              >
+                <Star className="h-4 w-4 shrink-0" />
+                <span>Favorites</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Link
+                      href="/dashboard"
+                      className={cn(
+                        "flex items-center justify-center rounded-md p-1.5 transition-colors",
+                        pathname === "/dashboard"
+                          ? "bg-white/[0.1] text-foreground"
+                          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                      )}
+                    />
+                  }
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent side="right">Dashboard</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Link
+                      href="/favorites"
+                      className={cn(
+                        "flex items-center justify-center rounded-md p-1.5 transition-colors",
+                        pathname === "/favorites"
+                          ? "bg-white/[0.1] text-foreground"
+                          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                      )}
+                    />
+                  }
+                >
+                  <Star className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent side="right">Favorites</TooltipContent>
+              </Tooltip>
+            </>
+          )}
+        </nav>
+
+        <div className="px-2 pb-2 border-t border-border/50" />
+
         {/* Types section header */}
         <div className="px-3 pb-1">
           {isOpen ? (
@@ -170,7 +243,7 @@ function SidebarContent({ isOpen, itemTypes, collections, user }: SidebarContent
                   className={cn(
                     "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
                     isActive
-                      ? "bg-accent text-accent-foreground"
+                      ? "bg-white/[0.1] text-foreground font-medium"
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                     !isOpen && "justify-center"
                   )}
