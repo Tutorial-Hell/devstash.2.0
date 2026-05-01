@@ -3,18 +3,14 @@
 import { useState, useEffect } from "react"
 import MonacoEditor, { OnMount } from "@monaco-editor/react"
 import { registerMonacoThemes } from "@/lib/monaco-themes"
-import { Copy, Check, ChevronDown, Sparkles, Crown, Loader2 } from "lucide-react"
+import { Copy, Check, ChevronDown, Loader2 } from "lucide-react"
 import { cn, normalizeLanguage } from "@/lib/utils"
 import { useEditorPreferences } from "@/contexts/editor-preferences-context"
 import { LANGUAGE_OPTIONS } from "@/lib/languages"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { useCopy } from "@/hooks/use-copy"
+import { AiFeatureButton } from "@/components/ai-feature-button"
 
 const MIN_HEIGHT = 80
 const MAX_HEIGHT = 400
@@ -44,7 +40,7 @@ export function CodeEditor({
   isExplaining,
   isPro,
 }: CodeEditorProps) {
-  const [copied, setCopied] = useState(false)
+  const { copied, copy: handleCopy } = useCopy(value)
   const [editorHeight, setEditorHeight] = useState(MIN_HEIGHT)
   const [activeTab, setActiveTab] = useState<"code" | "explain">("code")
   const { prefs } = useEditorPreferences()
@@ -56,12 +52,6 @@ export function CodeEditor({
   useEffect(() => {
     if (isExplaining) setActiveTab("explain")
   }, [isExplaining])
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(value)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
 
   function handleExplainClick() {
     setActiveTab("explain")
@@ -160,36 +150,13 @@ export function CodeEditor({
             )}
           </button>
           {onExplain && (
-            isPro ? (
-              <button
-                onClick={isExplaining ? undefined : handleExplainClick}
-                disabled={isExplaining}
-                className="flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                aria-label="Explain code"
-              >
-                {isExplaining ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="h-3.5 w-3.5" />
-                )}
-                Explain
-              </button>
-            ) : (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger
-                    className="flex items-center gap-1 text-[11px] text-white/20 cursor-default select-none bg-transparent border-0 p-0"
-                    aria-label="AI features require Pro subscription"
-                  >
-                    <Crown className="h-3.5 w-3.5" />
-                    Explain
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    AI features require Pro subscription
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )
+            <AiFeatureButton
+              label="Explain"
+              isPro={isPro ?? false}
+              isLoading={isExplaining ?? false}
+              onClick={handleExplainClick}
+              ariaLabel="Explain code"
+            />
           )}
         </div>
       </div>

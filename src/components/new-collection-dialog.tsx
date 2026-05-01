@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { createCollection } from "@/actions/collections"
+import { FormField } from "@/components/form-field"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -97,11 +98,7 @@ export function NewCollectionDialog({ triggerClassName, open: controlledOpen, on
             </p>
           )}
 
-          {/* Name */}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">
-              Name <span className="text-destructive">*</span>
-            </label>
+          <FormField label="Name" required>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -110,11 +107,9 @@ export function NewCollectionDialog({ triggerClassName, open: controlledOpen, on
               required
               autoFocus
             />
-          </div>
+          </FormField>
 
-          {/* Description */}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Description</label>
+          <FormField label="Description">
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -122,7 +117,7 @@ export function NewCollectionDialog({ triggerClassName, open: controlledOpen, on
               rows={2}
               className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
             />
-          </div>
+          </FormField>
 
           <div className="flex justify-end gap-2 pt-1">
             <Button

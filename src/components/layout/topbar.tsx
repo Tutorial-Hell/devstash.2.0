@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
+import { useOutsideClick } from "@/hooks/use-outside-click"
 import Link from "next/link"
 import { Search, PanelLeft, Menu, Star, Plus, FolderPlus, FileText, Sparkles } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -18,17 +19,7 @@ function CreateMenu() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [itemOpen, setItemOpen] = useState(false)
   const [collectionOpen, setCollectionOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [])
+  const ref = useOutsideClick<HTMLDivElement>(() => setMenuOpen(false))
 
   return (
     <div ref={ref} className="relative">

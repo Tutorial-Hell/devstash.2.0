@@ -3,14 +3,10 @@
 import { useState, useEffect } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { Copy, Check, Sparkles, Crown, Loader2 } from "lucide-react"
+import { Copy, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { useCopy } from "@/hooks/use-copy"
+import { AiFeatureButton } from "@/components/ai-feature-button"
 
 const MAX_HEIGHT = 400
 
@@ -40,7 +36,7 @@ export function MarkdownEditor({
   onDiscard,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<"write" | "preview">(readOnly ? "preview" : "write")
-  const [copied, setCopied] = useState(false)
+  const { copied, copy: handleCopy } = useCopy(value)
   const [activeViewTab, setActiveViewTab] = useState<"content" | "optimized">("content")
 
   const showOptimizeTabs = readOnly && (optimizedContent != null || isOptimizing === true)
@@ -49,12 +45,6 @@ export function MarkdownEditor({
   useEffect(() => {
     if (isOptimizing) setActiveViewTab("optimized")
   }, [isOptimizing])
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(value)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
 
   function handleOptimizeClick() {
     setActiveViewTab("optimized")
@@ -104,36 +94,13 @@ export function MarkdownEditor({
             )}
           </button>
           {onOptimize && (
-            isPro ? (
-              <button
-                onClick={isOptimizing ? undefined : handleOptimizeClick}
-                disabled={isOptimizing}
-                className="flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                aria-label="Optimize prompt"
-              >
-                {isOptimizing ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="h-3.5 w-3.5" />
-                )}
-                Optimize
-              </button>
-            ) : (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger
-                    className="flex items-center gap-1 text-[11px] text-white/20 cursor-default select-none bg-transparent border-0 p-0"
-                    aria-label="AI features require Pro subscription"
-                  >
-                    <Crown className="h-3.5 w-3.5" />
-                    Optimize
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    AI features require Pro subscription
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )
+            <AiFeatureButton
+              label="Optimize"
+              isPro={isPro ?? false}
+              isLoading={isOptimizing ?? false}
+              onClick={handleOptimizeClick}
+              ariaLabel="Optimize prompt"
+            />
           )}
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
-import Link from "next/link"
-import { Star, Pin, File, ArrowLeft } from "lucide-react"
+import { Star, Pin, File } from "lucide-react"
 import { getCollectionById } from "@/lib/db/collections"
 import { auth } from "@/auth"
 import { iconMap } from "@/lib/icon-map"
@@ -9,6 +8,8 @@ import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { CollectionDetailActions } from "@/components/collection-detail-actions"
 import { Pagination } from "@/components/pagination"
+import { BackToDashboard } from "@/components/back-to-dashboard"
+import { BadgeList } from "@/components/item-drawer-view"
 
 interface Props {
   params: Promise<{ id: string }>
@@ -31,14 +32,7 @@ export default async function CollectionDetailPage({ params, searchParams }: Pro
 
   return (
     <div className="space-y-6 max-w-5xl">
-      {/* Back button */}
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Dashboard
-      </Link>
+      <BackToDashboard />
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
@@ -111,18 +105,7 @@ export default async function CollectionDetailPage({ params, searchParams }: Pro
                 )}
 
                 {/* Tags */}
-                {item.tags.length > 0 && (
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {item.tags.map((tag) => (
-                      <span
-                        key={tag.id}
-                        className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground"
-                      >
-                        {tag.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {item.tags.length > 0 && <BadgeList items={item.tags} size="sm" />}
               </ClickableItemCard>
             )
           })}

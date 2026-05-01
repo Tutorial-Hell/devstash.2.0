@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/utils"
 import { DASHBOARD_COLLECTIONS_LIMIT, DASHBOARD_RECENT_ITEMS_LIMIT } from "@/lib/constants"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { CollectionCard } from "@/components/collection-card"
+import { BadgeList } from "@/components/item-drawer-view"
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -205,15 +206,8 @@ function ItemRow({ item }: { item: ItemWithMeta }) {
           </p>
         )}
         {item.tags.length > 0 && (
-          <div className="flex items-center gap-1 mt-1 flex-wrap">
-            {item.tags.map((tag) => (
-              <span
-                key={tag.id}
-                className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground"
-              >
-                {tag.name}
-              </span>
-            ))}
+          <div className="mt-1">
+            <BadgeList items={item.tags} size="sm" />
           </div>
         )}
       </div>

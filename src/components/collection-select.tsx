@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useRef } from "react"
 import { Check, ChevronDown, FolderOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useOutsideClick } from "@/hooks/use-outside-click"
 
 interface CollectionSelectProps {
   collections: { id: string; name: string }[]
@@ -19,17 +19,7 @@ export function CollectionSelect({
   open,
   onOpenChange,
 }: CollectionSelectProps) {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onOpenChange(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [onOpenChange])
+  const ref = useOutsideClick<HTMLDivElement>(() => onOpenChange(false))
 
   function toggle(id: string) {
     if (selected.includes(id)) {

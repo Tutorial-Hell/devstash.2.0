@@ -1,5 +1,4 @@
-import Link from "next/link"
-import { Star, ArrowLeft } from "lucide-react"
+import { Star } from "lucide-react"
 import { getCollectionsPaginated } from "@/lib/db/collections"
 import { auth } from "@/auth"
 import { iconMap } from "@/lib/icon-map"
@@ -7,6 +6,7 @@ import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
 import { NewCollectionDialog } from "@/components/new-collection-dialog"
 import { CollectionCard } from "@/components/collection-card"
 import { Pagination } from "@/components/pagination"
+import { BackToDashboard } from "@/components/back-to-dashboard"
 
 interface Props {
   searchParams: Promise<{ page?: string }>
@@ -28,14 +28,7 @@ export default async function CollectionsPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6 max-w-5xl">
-      {/* Back link */}
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Dashboard
-      </Link>
+      <BackToDashboard />
 
       {/* Header */}
       <div className="flex items-center justify-between">

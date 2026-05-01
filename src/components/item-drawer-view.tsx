@@ -69,13 +69,19 @@ export function DetailRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function BadgeList({ items }: { items: { id: string; name: string }[] }) {
+export function BadgeList({
+  items,
+  size = "md",
+}: {
+  items: { id: string; name: string }[]
+  size?: "sm" | "md"
+}) {
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className={`flex items-center flex-wrap ${size === "sm" ? "gap-1" : "gap-1.5"}`}>
       {items.map((item) => (
         <span
           key={item.id}
-          className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground"
+          className={`inline-flex items-center rounded font-medium bg-muted text-muted-foreground ${size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs"}`}
         >
           {item.name}
         </span>

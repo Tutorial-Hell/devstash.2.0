@@ -12,6 +12,7 @@ import { ImageThumbnailCard } from "@/components/image-thumbnail-card"
 import { FileListRow } from "@/components/file-list-row"
 import { CopyButton } from "@/components/copy-button"
 import { Pagination } from "@/components/pagination"
+import { BadgeList } from "@/components/item-drawer-view"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
@@ -124,18 +125,7 @@ export default async function ItemsTypePage({ params, searchParams }: Props) {
               )}
 
               {/* Tags */}
-              {item.tags.length > 0 && (
-                <div className="flex items-center gap-1 flex-wrap">
-                  {item.tags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {item.tags.length > 0 && <BadgeList items={item.tags} size="sm" />}
               {/* Copy button */}
               {(item.content ?? item.url) && (
                 <div className="flex justify-end">

@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Plus, ChevronDown, Sparkles, Wand2, Loader2 } from "lucide-react"
+import { Plus, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -12,16 +12,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { iconMap } from "@/lib/icon-map"
-import { CodeEditor } from "@/components/code-editor"
-import { MarkdownEditor } from "@/components/markdown-editor"
 import { createItem, type CreateItemInput } from "@/actions/items"
 import { generateAutoTags, generateDescription } from "@/actions/ai"
 import { fetchCollectionsForSelect } from "@/actions/collections"
 import { FileUpload, type UploadedFile } from "@/components/file-upload"
-import { CollectionSelect } from "@/components/collection-select"
-import { TagSuggestions } from "@/components/tag-suggestions"
+import { useOutsideClick } from "@/hooks/use-outside-click"
+import { ItemFormFields } from "@/components/item-form-fields"
+import { FormField } from "@/components/form-field"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -53,17 +51,7 @@ function TypeDropdown({
   onChange: (t: ItemTypeName) => void
 }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [])
+  const ref = useOutsideClick<HTMLDivElement>(() => setOpen(false))
 
   const selected = TYPE_META[value]
   const SelectedIcon = iconMap[selected.icon]
@@ -99,27 +87,6 @@ function TypeDropdown({
           })}
         </div>
       )}
-    </div>
-  )
-}
-
-// ─── FormField ────────────────────────────────────────────────────────────────
-
-function FormField({
-  label,
-  required,
-  children,
-}: {
-  label: string
-  required?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium text-muted-foreground">
-        {label}{required && <span className="text-destructive"> *</span>}
-      </label>
-      {children}
     </div>
   )
 }
@@ -327,133 +294,53 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
               <TypeDropdown value={type} onChange={handleTypeChange} />
             </FormField>
 
-            {/* Title */}
-            <FormField label="Title" required>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Item title"
-                className="h-8 text-sm"
-                required
-              />
-            </FormField>
-
-            {/* Description */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">Description</label>
-                {isPro && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs gap-1"
-                    onClick={handleGenerateDescription}
-                    disabled={loadingDescription || !title.trim()}
-                  >
-                    {loadingDescription
-                      ? <Loader2 className="h-3 w-3 animate-spin" />
-                      : <Wand2 className="h-3 w-3" />
-                    }
-                    {loadingDescription ? "Generating…" : "Generate"}
-                  </Button>
-                )}
-              </div>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional description"
-                rows={1}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-              />
-            </div>
-
-            {/* File upload — file, image */}
-            {showFileUpload && (
-              <FormField label={type === "image" ? "Image" : "File"} required>
-                <FileUpload
-                  itemType={type as "file" | "image"}
-                  uploaded={uploadedFile}
-                  onUpload={setUploadedFile}
-                  onClear={() => setUploadedFile(null)}
-                />
-              </FormField>
-            )}
-
-            {/* Content — snippet, prompt, command, note */}
-            {showContent && (
-              <FormField label="Content">
-                {showLanguage ? (
-                  <CodeEditor
-                    value={content}
-                    onChange={setContent}
-                    language={language || "plaintext"}
-                    onLanguageChange={setLanguage}
-                  />
-                ) : showMarkdown ? (
-                  <MarkdownEditor value={content} onChange={setContent} />
-                ) : (
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Item content"
-                    rows={3}
-                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-                  />
-                )}
-              </FormField>
-            )}
-
-            {/* URL — link */}
-            {showUrl && (
-              <FormField label="URL" required>
-                <Input
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://…"
-                  className="h-8 text-sm"
-                  type="url"
-                />
-              </FormField>
-            )}
-
-            {/* Tags */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground">Tags</label>
-                {isPro && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs gap-1"
-                    onClick={handleSuggestTags}
-                    disabled={loadingSuggestions || !title.trim()}
-                  >
-                    <Sparkles className="h-3 w-3" />
-                    {loadingSuggestions ? "Suggesting…" : "Suggest Tags"}
-                  </Button>
-                )}
-              </div>
-              <Input
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-                placeholder="react, hooks, typescript"
-                className="h-8 text-sm"
-              />
-              <TagSuggestions suggestions={suggestions} onAccept={acceptTag} onReject={rejectTag} />
-            </div>
-
-            {/* Collections */}
-            <FormField label="Collections">
-              <CollectionSelect
-                collections={collections}
-                selected={selectedCollectionIds}
-                onChange={setSelectedCollectionIds}
-                open={collectionSelectOpen}
-                onOpenChange={setCollectionSelectOpen}
-              />
-            </FormField>
+            <ItemFormFields
+              title={title}
+              description={description}
+              content={content}
+              url={url}
+              language={language}
+              tagsInput={tagsInput}
+              selectedCollectionIds={selectedCollectionIds}
+              collectionSelectOpen={collectionSelectOpen}
+              collections={collections}
+              suggestions={suggestions}
+              onTitleChange={setTitle}
+              onDescriptionChange={setDescription}
+              onContentChange={setContent}
+              onUrlChange={setUrl}
+              onLanguageChange={setLanguage}
+              onTagsInputChange={setTagsInput}
+              onCollectionIdsChange={setSelectedCollectionIds}
+              onCollectionSelectOpenChange={setCollectionSelectOpen}
+              onAcceptTag={acceptTag}
+              onRejectTag={rejectTag}
+              showContent={showContent}
+              showLanguage={showLanguage}
+              showMarkdown={showMarkdown}
+              showUrl={showUrl}
+              isPro={isPro}
+              onGenerateDescription={handleGenerateDescription}
+              loadingDescription={loadingDescription}
+              onSuggestTags={handleSuggestTags}
+              loadingSuggestions={loadingSuggestions}
+              titleRequired
+              urlLabelRequired
+              descriptionRows={1}
+              contentRows={3}
+              afterDescriptionSlot={
+                showFileUpload ? (
+                  <FormField label={type === "image" ? "Image" : "File"} required>
+                    <FileUpload
+                      itemType={type as "file" | "image"}
+                      uploaded={uploadedFile}
+                      onUpload={setUploadedFile}
+                      onClear={() => setUploadedFile(null)}
+                    />
+                  </FormField>
+                ) : undefined
+              }
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-border mt-2">

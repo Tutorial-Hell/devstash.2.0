@@ -1,9 +1,9 @@
-import Link from "next/link"
-import { ArrowLeft, Star } from "lucide-react"
+import { Star } from "lucide-react"
 import { getFavoriteCollections } from "@/lib/db/collections"
 import { auth } from "@/auth"
 import { getFavoriteItems } from "@/lib/db/items"
 import { FavoritesSortable } from "@/components/favorites-sortable"
+import { BackToDashboard } from "@/components/back-to-dashboard"
 
 export default async function FavoritesPage() {
   const session = await auth()
@@ -18,14 +18,7 @@ export default async function FavoritesPage() {
 
   return (
     <div className="max-w-3xl space-y-8">
-      {/* Back link */}
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Dashboard
-      </Link>
+      <BackToDashboard />
 
       {/* Header */}
       <div className="flex items-center gap-2">
