@@ -12,6 +12,8 @@ import {
 } from "@/lib/db/collections"
 import { getAuthenticatedUserId, getSession } from "@/lib/auth-utils"
 import { isAtCollectionLimit } from "@/lib/usage-limits"
+import { safeParse } from "@/lib/validation"
+import type { ActionResult } from "@/types/actions"
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -29,10 +31,6 @@ export type CreateCollectionInput = {
   description?: string
 }
 
-type ActionResult =
-  | { success: true; data: CollectionCreated }
-  | { success: false; error: string }
-
 type DeleteResult =
   | { success: true }
   | { success: false; error: string }
@@ -47,7 +45,7 @@ export async function fetchCollectionsForSelect(): Promise<CollectionOption[]> {
 
 export async function createCollection(
   input: CreateCollectionInput
-): Promise<ActionResult> {
+): Promise<ActionResult<CollectionCreated>> {
   const session = await getSession()
   const userId = session?.user?.id ?? null
   if (!userId) {
@@ -61,11 +59,8 @@ export async function createCollection(
     }
   }
 
-  const parsed = collectionSchema.safeParse(input)
-  if (!parsed.success) {
-    const first = parsed.error.issues[0]
-    return { success: false, error: first?.message ?? "Invalid input." }
-  }
+  const parsed = safeParse(collectionSchema, input)
+  if (!parsed.ok) return { success: false, error: parsed.error }
 
   const collection = await createCollectionInDb(userId, {
     name: parsed.data.name,
@@ -78,17 +73,14 @@ export async function createCollection(
 export async function updateCollection(
   collectionId: string,
   input: { name: string; description?: string }
-): Promise<ActionResult> {
+): Promise<ActionResult<CollectionCreated>> {
   const userId = await getAuthenticatedUserId()
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }
 
-  const parsed = collectionSchema.safeParse(input)
-  if (!parsed.success) {
-    const first = parsed.error.issues[0]
-    return { success: false, error: first?.message ?? "Invalid input." }
-  }
+  const parsed = safeParse(collectionSchema, input)
+  if (!parsed.ok) return { success: false, error: parsed.error }
 
   const collection = await updateCollectionById(userId, collectionId, {
     name: parsed.data.name,

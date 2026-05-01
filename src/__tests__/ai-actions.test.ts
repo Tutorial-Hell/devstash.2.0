@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 vi.mock("@/lib/auth-utils", () => ({
-  getSession: vi.fn(),
+  requireProUser: vi.fn(),
 }))
 
 vi.mock("@/lib/openai", () => ({
@@ -14,7 +14,7 @@ vi.mock("@/lib/rate-limit", () => ({
   rateLimitErrorMessage: vi.fn((mins: number) => `Too many attempts. Please try again in ${mins} minutes.`),
 }))
 
-import { getSession } from "@/lib/auth-utils"
+import { requireProUser } from "@/lib/auth-utils"
 import { getOpenAIClient } from "@/lib/openai"
 import { rateLimit } from "@/lib/rate-limit"
 import { generateAutoTags, generateDescription, explainCode, optimizePrompt } from "@/actions/ai"
@@ -25,16 +25,18 @@ const mockClient = {
   },
 }
 
+const proAuth = { ok: true as const, userId: "user-1", session: { user: { id: "user-1", isPro: true } } }
+
 describe("generateAutoTags", () => {
   beforeEach(() => {
-    vi.mocked(getSession).mockReset()
+    vi.mocked(requireProUser).mockReset()
     vi.mocked(getOpenAIClient).mockReturnValue(mockClient as never)
     vi.mocked(rateLimit).mockResolvedValue({ success: true })
     mockClient.responses.create.mockReset()
   })
 
   it("returns not-authenticated error when no session", async () => {
-    vi.mocked(getSession).mockResolvedValue(null)
+    vi.mocked(requireProUser).mockResolvedValue({ ok: false, error: "Not authenticated." })
 
     const result = await generateAutoTags({ title: "Test", type: "snippet" })
 
@@ -42,9 +44,10 @@ describe("generateAutoTags", () => {
   })
 
   it("returns Pro gate error for free users", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: false },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue({
+      ok: false,
+      error: "AI tag suggestions are a Pro feature. Upgrade to use them.",
+    })
 
     const result = await generateAutoTags({ title: "Test", type: "snippet" })
 
@@ -55,9 +58,7 @@ describe("generateAutoTags", () => {
   })
 
   it("returns rate limit error when limit exceeded", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     vi.mocked(rateLimit).mockResolvedValue({ success: false, retryAfterMinutes: 30 })
 
     const result = await generateAutoTags({ title: "Test", type: "snippet" })
@@ -67,9 +68,7 @@ describe("generateAutoTags", () => {
   })
 
   it("returns tags from AI when response contains {tags: [...]} shape", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({
       output_text: JSON.stringify({ tags: ["React", "Hooks", "TypeScript"] }),
     })
@@ -80,9 +79,7 @@ describe("generateAutoTags", () => {
   })
 
   it("returns tags when AI response is a bare array", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({
       output_text: JSON.stringify(["Docker", "DevOps", "CLI"]),
     })
@@ -93,9 +90,7 @@ describe("generateAutoTags", () => {
   })
 
   it("returns error when AI response is invalid JSON", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "not-json" })
 
     const result = await generateAutoTags({ title: "Test", type: "note" })
@@ -104,9 +99,7 @@ describe("generateAutoTags", () => {
   })
 
   it("returns error when OpenAI client throws", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockRejectedValue(new Error("network error"))
 
     const result = await generateAutoTags({ title: "Test", type: "note" })
@@ -115,9 +108,7 @@ describe("generateAutoTags", () => {
   })
 
   it("truncates content to 2000 chars before API call", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({
       output_text: JSON.stringify({ tags: ["tag"] }),
     })
@@ -131,9 +122,7 @@ describe("generateAutoTags", () => {
   })
 
   it("caps results at 5 tags", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({
       output_text: JSON.stringify({ tags: ["a", "b", "c", "d", "e", "f", "g"] }),
     })
@@ -147,14 +136,14 @@ describe("generateAutoTags", () => {
 
 describe("generateDescription", () => {
   beforeEach(() => {
-    vi.mocked(getSession).mockReset()
+    vi.mocked(requireProUser).mockReset()
     vi.mocked(getOpenAIClient).mockReturnValue(mockClient as never)
     vi.mocked(rateLimit).mockResolvedValue({ success: true })
     mockClient.responses.create.mockReset()
   })
 
   it("returns not-authenticated error when no session", async () => {
-    vi.mocked(getSession).mockResolvedValue(null)
+    vi.mocked(requireProUser).mockResolvedValue({ ok: false, error: "Not authenticated." })
 
     const result = await generateDescription({ title: "Test", type: "snippet" })
 
@@ -162,9 +151,10 @@ describe("generateDescription", () => {
   })
 
   it("returns Pro gate error for free users", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: false },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue({
+      ok: false,
+      error: "AI description generation is a Pro feature. Upgrade to use it.",
+    })
 
     const result = await generateDescription({ title: "Test", type: "snippet" })
 
@@ -175,9 +165,7 @@ describe("generateDescription", () => {
   })
 
   it("returns rate limit error when limit exceeded", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     vi.mocked(rateLimit).mockResolvedValue({ success: false, retryAfterMinutes: 45 })
 
     const result = await generateDescription({ title: "Test", type: "snippet" })
@@ -187,9 +175,7 @@ describe("generateDescription", () => {
   })
 
   it("returns generated description on success", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({
       output_text: "A custom React hook that delays state updates by a configurable amount.",
     })
@@ -203,9 +189,7 @@ describe("generateDescription", () => {
   })
 
   it("sends url in context for link type", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "A useful resource." })
 
     await generateDescription({ title: "MDN Docs", type: "link", url: "https://developer.mozilla.org" })
@@ -215,9 +199,7 @@ describe("generateDescription", () => {
   })
 
   it("truncates content to 2000 chars before API call", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "Some description." })
 
     const longContent = "x".repeat(5000)
@@ -229,9 +211,7 @@ describe("generateDescription", () => {
   })
 
   it("returns error when OpenAI client throws", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockRejectedValue(new Error("timeout"))
 
     const result = await generateDescription({ title: "Test", type: "note" })
@@ -240,9 +220,7 @@ describe("generateDescription", () => {
   })
 
   it("returns error when output_text is empty", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "   " })
 
     const result = await generateDescription({ title: "Test", type: "note" })
@@ -253,14 +231,14 @@ describe("generateDescription", () => {
 
 describe("explainCode", () => {
   beforeEach(() => {
-    vi.mocked(getSession).mockReset()
+    vi.mocked(requireProUser).mockReset()
     vi.mocked(getOpenAIClient).mockReturnValue(mockClient as never)
     vi.mocked(rateLimit).mockResolvedValue({ success: true })
     mockClient.responses.create.mockReset()
   })
 
   it("returns not-authenticated error when no session", async () => {
-    vi.mocked(getSession).mockResolvedValue(null)
+    vi.mocked(requireProUser).mockResolvedValue({ ok: false, error: "Not authenticated." })
 
     const result = await explainCode({ content: "console.log('hi')", type: "snippet" })
 
@@ -268,9 +246,10 @@ describe("explainCode", () => {
   })
 
   it("returns Pro gate error for free users", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: false },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue({
+      ok: false,
+      error: "AI code explanation is a Pro feature. Upgrade to use it.",
+    })
 
     const result = await explainCode({ content: "console.log('hi')", type: "snippet" })
 
@@ -281,9 +260,7 @@ describe("explainCode", () => {
   })
 
   it("returns rate limit error when limit exceeded", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     vi.mocked(rateLimit).mockResolvedValue({ success: false, retryAfterMinutes: 20 })
 
     const result = await explainCode({ content: "console.log('hi')", type: "snippet" })
@@ -293,9 +270,7 @@ describe("explainCode", () => {
   })
 
   it("returns explanation on success", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({
       output_text: "This snippet logs 'hi' to the console using `console.log`.",
     })
@@ -309,9 +284,7 @@ describe("explainCode", () => {
   })
 
   it("includes language in the prompt when provided", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "An explanation." })
 
     await explainCode({ content: "echo hello", type: "command", language: "shell" })
@@ -321,9 +294,7 @@ describe("explainCode", () => {
   })
 
   it("truncates content to 2000 chars before API call", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "An explanation." })
 
     const longContent = "z".repeat(5000)
@@ -335,9 +306,7 @@ describe("explainCode", () => {
   })
 
   it("returns error when output_text is empty", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "   " })
 
     const result = await explainCode({ content: "some code", type: "snippet" })
@@ -346,9 +315,7 @@ describe("explainCode", () => {
   })
 
   it("returns error when OpenAI client throws", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockRejectedValue(new Error("timeout"))
 
     const result = await explainCode({ content: "some code", type: "snippet" })
@@ -359,14 +326,14 @@ describe("explainCode", () => {
 
 describe("optimizePrompt", () => {
   beforeEach(() => {
-    vi.mocked(getSession).mockReset()
+    vi.mocked(requireProUser).mockReset()
     vi.mocked(getOpenAIClient).mockReturnValue(mockClient as never)
     vi.mocked(rateLimit).mockResolvedValue({ success: true })
     mockClient.responses.create.mockReset()
   })
 
   it("returns not-authenticated error when no session", async () => {
-    vi.mocked(getSession).mockResolvedValue(null)
+    vi.mocked(requireProUser).mockResolvedValue({ ok: false, error: "Not authenticated." })
 
     const result = await optimizePrompt({ content: "Write a summary of this article." })
 
@@ -374,9 +341,10 @@ describe("optimizePrompt", () => {
   })
 
   it("returns Pro gate error for free users", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: false },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue({
+      ok: false,
+      error: "AI prompt optimization is a Pro feature. Upgrade to use it.",
+    })
 
     const result = await optimizePrompt({ content: "Write a summary of this article." })
 
@@ -387,9 +355,7 @@ describe("optimizePrompt", () => {
   })
 
   it("returns rate limit error when limit exceeded", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     vi.mocked(rateLimit).mockResolvedValue({ success: false, retryAfterMinutes: 15 })
 
     const result = await optimizePrompt({ content: "Write a summary." })
@@ -399,9 +365,7 @@ describe("optimizePrompt", () => {
   })
 
   it("returns optimized content on success", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({
       output_text: "Please provide a concise, structured summary of the following article, highlighting the main argument and key supporting points.",
     })
@@ -415,9 +379,7 @@ describe("optimizePrompt", () => {
   })
 
   it("truncates content to 3000 chars before API call", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "Optimized prompt." })
 
     const longContent = "x".repeat(5000)
@@ -429,9 +391,7 @@ describe("optimizePrompt", () => {
   })
 
   it("returns error when output_text is empty", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockResolvedValue({ output_text: "   " })
 
     const result = await optimizePrompt({ content: "Some prompt." })
@@ -440,9 +400,7 @@ describe("optimizePrompt", () => {
   })
 
   it("returns error when OpenAI client throws", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
     mockClient.responses.create.mockRejectedValue(new Error("network error"))
 
     const result = await optimizePrompt({ content: "Some prompt." })
@@ -451,9 +409,7 @@ describe("optimizePrompt", () => {
   })
 
   it("returns validation error when content is empty", async () => {
-    vi.mocked(getSession).mockResolvedValue({
-      user: { id: "user-1", isPro: true },
-    } as never)
+    vi.mocked(requireProUser).mockResolvedValue(proAuth as never)
 
     const result = await optimizePrompt({ content: "   " })
 

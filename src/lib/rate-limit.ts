@@ -14,6 +14,9 @@ const LIMITS: Record<string, LimitConfig> = {
   "reset-password": { requests: 5, window: "15 m" },
   "resend-verification": { requests: 3, window: "15 m" },
   "ai-suggest-tags": { requests: 20, window: "1 h" },
+  "ai-describe": { requests: 20, window: "1 h" },
+  "ai-explain": { requests: 20, window: "1 h" },
+  "ai-optimize": { requests: 10, window: "1 h" },
 }
 
 let redis: Redis | null = null

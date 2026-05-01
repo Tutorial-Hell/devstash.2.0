@@ -5,6 +5,8 @@ import { getAuthenticatedUserId, getSession } from "@/lib/auth-utils"
 import { updateItemById, deleteItemById, createItemInDb, toggleItemFavoriteById, toggleItemPinnedById, type ItemDetail } from "@/lib/db/items"
 import { deleteFromR2 } from "@/lib/r2"
 import { isAtItemLimit } from "@/lib/usage-limits"
+import { safeParse } from "@/lib/validation"
+import type { ActionResult } from "@/types/actions"
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -26,27 +28,20 @@ const updateItemSchema = z.object({
 
 export type UpdateItemInput = z.input<typeof updateItemSchema>
 
-type ActionResult =
-  | { success: true; data: ItemDetail }
-  | { success: false; error: string }
-
 // ─── Action ───────────────────────────────────────────────────────────────────
 
 export async function updateItem(
   itemId: string,
   input: UpdateItemInput
-): Promise<ActionResult> {
+): Promise<ActionResult<ItemDetail>> {
   const userId = await getAuthenticatedUserId()
 
   if (!userId) {
     return { success: false, error: "Not authenticated." }
   }
 
-  const parsed = updateItemSchema.safeParse(input)
-  if (!parsed.success) {
-    const first = parsed.error.issues[0]
-    return { success: false, error: first?.message ?? "Invalid input." }
-  }
+  const parsed = safeParse(updateItemSchema, input)
+  if (!parsed.ok) return { success: false, error: parsed.error }
 
   const updated = await updateItemById(userId, itemId, {
     title: parsed.data.title,
@@ -177,7 +172,7 @@ export type CreateItemInput = {
 
 export async function createItem(
   input: CreateItemInput
-): Promise<{ success: true; data: ItemDetail } | { success: false; error: string }> {
+): Promise<ActionResult<ItemDetail>> {
   const session = await getSession()
   const userId = session?.user?.id ?? null
   if (!userId) {
@@ -191,11 +186,8 @@ export async function createItem(
     }
   }
 
-  const parsed = createItemSchema.safeParse(input)
-  if (!parsed.success) {
-    const first = parsed.error.issues[0]
-    return { success: false, error: first?.message ?? "Invalid input." }
-  }
+  const parsed = safeParse(createItemSchema, input)
+  if (!parsed.ok) return { success: false, error: parsed.error }
 
   const item = await createItemInDb(userId, {
     typeName: parsed.data.type,

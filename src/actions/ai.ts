@@ -1,9 +1,10 @@
 "use server"
 
 import { z } from "zod"
-import { getSession } from "@/lib/auth-utils"
+import { requireProUser } from "@/lib/auth-utils"
 import { getOpenAIClient, AI_MODEL } from "@/lib/openai"
 import { rateLimit, rateLimitErrorMessage } from "@/lib/rate-limit"
+import { safeParse } from "@/lib/validation"
 
 // ─── Shared error handler ─────────────────────────────────────────────────────
 
@@ -31,18 +32,12 @@ export type GenerateAutoTagsResult =
 export async function generateAutoTags(
   input: GenerateAutoTagsInput
 ): Promise<GenerateAutoTagsResult> {
-  const session = await getSession()
-  const userId = session?.user?.id ?? null
-  if (!userId) return { success: false, error: "Not authenticated." }
+  const auth = await requireProUser("AI tag suggestions are a Pro feature. Upgrade to use them.")
+  if (!auth.ok) return { success: false, error: auth.error }
+  const { userId } = auth
 
-  if (!session?.user?.isPro) {
-    return { success: false, error: "AI tag suggestions are a Pro feature. Upgrade to use them." }
-  }
-
-  const parsed = generateAutoTagsSchema.safeParse(input)
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." }
-  }
+  const parsed = safeParse(generateAutoTagsSchema, input)
+  if (!parsed.ok) return { success: false, error: parsed.error }
 
   const rl = await rateLimit("ai-suggest-tags", userId)
   if (!rl.success) {
@@ -108,20 +103,14 @@ export type GenerateDescriptionResult =
 export async function generateDescription(
   input: GenerateDescriptionInput
 ): Promise<GenerateDescriptionResult> {
-  const session = await getSession()
-  const userId = session?.user?.id ?? null
-  if (!userId) return { success: false, error: "Not authenticated." }
+  const auth = await requireProUser("AI description generation is a Pro feature. Upgrade to use it.")
+  if (!auth.ok) return { success: false, error: auth.error }
+  const { userId } = auth
 
-  if (!session?.user?.isPro) {
-    return { success: false, error: "AI description generation is a Pro feature. Upgrade to use it." }
-  }
+  const parsed = safeParse(generateDescriptionSchema, input)
+  if (!parsed.ok) return { success: false, error: parsed.error }
 
-  const parsed = generateDescriptionSchema.safeParse(input)
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." }
-  }
-
-  const rl = await rateLimit("ai-suggest-tags", userId)
+  const rl = await rateLimit("ai-describe", userId)
   if (!rl.success) {
     return { success: false, error: rateLimitErrorMessage(rl.retryAfterMinutes ?? 60) }
   }
@@ -168,20 +157,14 @@ export type ExplainCodeResult =
 export async function explainCode(
   input: ExplainCodeInput
 ): Promise<ExplainCodeResult> {
-  const session = await getSession()
-  const userId = session?.user?.id ?? null
-  if (!userId) return { success: false, error: "Not authenticated." }
+  const auth = await requireProUser("AI code explanation is a Pro feature. Upgrade to use it.")
+  if (!auth.ok) return { success: false, error: auth.error }
+  const { userId } = auth
 
-  if (!session?.user?.isPro) {
-    return { success: false, error: "AI code explanation is a Pro feature. Upgrade to use it." }
-  }
+  const parsed = safeParse(explainCodeSchema, input)
+  if (!parsed.ok) return { success: false, error: parsed.error }
 
-  const parsed = explainCodeSchema.safeParse(input)
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." }
-  }
-
-  const rl = await rateLimit("ai-suggest-tags", userId)
+  const rl = await rateLimit("ai-explain", userId)
   if (!rl.success) {
     return { success: false, error: rateLimitErrorMessage(rl.retryAfterMinutes ?? 60) }
   }
@@ -226,20 +209,14 @@ export type OptimizePromptResult =
 export async function optimizePrompt(
   input: OptimizePromptInput
 ): Promise<OptimizePromptResult> {
-  const session = await getSession()
-  const userId = session?.user?.id ?? null
-  if (!userId) return { success: false, error: "Not authenticated." }
+  const auth = await requireProUser("AI prompt optimization is a Pro feature. Upgrade to use it.")
+  if (!auth.ok) return { success: false, error: auth.error }
+  const { userId } = auth
 
-  if (!session?.user?.isPro) {
-    return { success: false, error: "AI prompt optimization is a Pro feature. Upgrade to use it." }
-  }
+  const parsed = safeParse(optimizePromptSchema, input)
+  if (!parsed.ok) return { success: false, error: parsed.error }
 
-  const parsed = optimizePromptSchema.safeParse(input)
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." }
-  }
-
-  const rl = await rateLimit("ai-suggest-tags", userId)
+  const rl = await rateLimit("ai-optimize", userId)
   if (!rl.success) {
     return { success: false, error: rateLimitErrorMessage(rl.retryAfterMinutes ?? 60) }
   }

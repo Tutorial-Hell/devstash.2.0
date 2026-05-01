@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-vi.mock("@/auth", () => ({
-  auth: vi.fn(),
+vi.mock("@/lib/auth-utils", () => ({
+  getSession: vi.fn(),
 }))
 
 vi.mock("@/lib/prisma", () => ({
@@ -12,19 +12,19 @@ vi.mock("@/lib/prisma", () => ({
   },
 }))
 
-import { auth } from "@/auth"
+import { getSession } from "@/lib/auth-utils"
 import { prisma } from "@/lib/prisma"
 import { updateEditorPreferences } from "@/actions/settings"
 import { DEFAULT_EDITOR_PREFERENCES } from "@/types/editor-preferences"
 
 describe("updateEditorPreferences", () => {
   beforeEach(() => {
-    vi.mocked(auth).mockReset()
+    vi.mocked(getSession).mockReset()
     vi.mocked(prisma.user.update).mockReset()
   })
 
   it("returns error when not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null as never)
+    vi.mocked(getSession).mockResolvedValue(null as never)
 
     const result = await updateEditorPreferences({ fontSize: 14 })
 
@@ -33,7 +33,7 @@ describe("updateEditorPreferences", () => {
   })
 
   it("returns error when session has no user id", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: {} } as never)
+    vi.mocked(getSession).mockResolvedValue({ user: {} } as never)
 
     const result = await updateEditorPreferences({ fontSize: 14 })
 
@@ -42,7 +42,7 @@ describe("updateEditorPreferences", () => {
   })
 
   it("merges partial prefs with defaults and saves", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as never)
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" } } as never)
     vi.mocked(prisma.user.update).mockResolvedValue({} as never)
 
     const result = await updateEditorPreferences({ fontSize: 16 })
@@ -60,7 +60,7 @@ describe("updateEditorPreferences", () => {
   })
 
   it("saves full prefs when all fields provided", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-2" } } as never)
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-2" } } as never)
     vi.mocked(prisma.user.update).mockResolvedValue({} as never)
 
     const fullPrefs = {
@@ -81,7 +81,7 @@ describe("updateEditorPreferences", () => {
   })
 
   it("uses all defaults when empty object passed", async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-3" } } as never)
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-3" } } as never)
     vi.mocked(prisma.user.update).mockResolvedValue({} as never)
 
     const result = await updateEditorPreferences({})
