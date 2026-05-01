@@ -1,5 +1,8 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { LANGUAGE_OPTIONS } from "@/lib/languages"
+
+type LanguageValue = (typeof LANGUAGE_OPTIONS)[number]["value"]
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -12,7 +15,7 @@ export function formatDate(date: Date) {
   })
 }
 
-const LANGUAGE_ALIAS_MAP: Record<string, string> = {
+const LANGUAGE_ALIAS_MAP: Record<string, LanguageValue> = {
   js: "javascript",
   ts: "typescript",
   tsx: "typescript",

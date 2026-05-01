@@ -2,15 +2,27 @@
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+Refactor `src/lib` to eliminate duplicated patterns identified in a refactor scan:
+
+- **L-001** ⭐ — Extract ownership-check helpers to `src/lib/db/ownership.ts` — the pattern `prisma.<model>.findFirst({ where: { id, userId }, select: { id: true } })` + null guard appears 7 times across `db/items.ts` (lines 176, 401, 463, 481) and `db/collections.ts` (lines 233, 259, 301); propose two narrow typed helpers: `assertItemOwnership(itemId, userId, select?)` and `assertCollectionOwnership(collectionId, userId, select?)`
+- **L-002** ⭐ — Extract `mapCollectionWithMeta(col)` helper inside `db/collections.ts` — the `typeCounts` accumulator loop and `CollectionWithMeta` object shape is copy-pasted verbatim (~27 lines) between `getCollections` (lines 41–67) and `getCollectionsPaginated` (lines 187–213)
+- **L-003** — Extract `toItemDetail(item, collections)` mapper inside `db/items.ts` — the 14-field `ItemDetail` return object is manually spread in both `updateItemById` (lines 239–256) and `getItemById` (lines 272–290); a file-private mapping function removes ~16 duplicated lines
+- **L-004** — Resolve dual canonical source for `FREE_ITEM_LIMIT` / `FREE_COLLECTION_LIMIT` — `constants.ts` defines them, `usage-limits.ts` re-exports them; pick one home and remove the re-export to eliminate the ambiguous import path
+- **L-005** — Add type constraint to `LANGUAGE_ALIAS_MAP` in `utils.ts` — map values should be derived from `typeof LANGUAGE_OPTIONS[number]['value']` (defined in `languages.ts`) so a type error fires if an alias points to an unrecognized canonical language name
 
 ## Notes
 
-<!-- Add notes here -->
+- L-001 and L-002 are the highest-value wins — L-002 is a verbatim copy-paste; L-001 is 7 sites
+- L-003 is a smaller version of the same problem but within a single file; low-risk extraction
+- L-004 is a 2-minute housekeeping item — no bugs today, but a latent import confusion risk
+- L-005 is documentation/type-level only — no runtime change
+- For L-001: use two narrow overloads (`assertItemOwnership`, `assertCollectionOwnership`) rather than a single dynamic `assertOwnership(model, ...)` to preserve full Prisma static typing
+- Do NOT extract `orderBy: { createdAt: "desc" }` or repeated `itemType` select shapes — Prisma type inference doesn't propagate factored constants correctly and the reward is noise
+- `safeParse` in `settings.ts` using Zod's native API directly (not the `validation.ts` wrapper) is intentional — not a duplication
 
 ## History
 

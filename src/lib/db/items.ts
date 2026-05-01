@@ -2,6 +2,7 @@ import { cache } from "react"
 import { prisma } from "@/lib/prisma"
 import { slugToTypeName } from "@/lib/utils"
 import { ITEMS_PER_PAGE } from "@/lib/constants"
+import { assertItemOwnership } from "@/lib/db/ownership"
 
 export type ItemDetail = {
   id: string
@@ -91,6 +92,46 @@ function mapItem(item: {
   }
 }
 
+type ItemDetailRow = {
+  id: string
+  title: string
+  description: string | null
+  content: string | null
+  url: string | null
+  fileUrl: string | null
+  fileName: string | null
+  fileSize: number | null
+  language: string | null
+  isFavorite: boolean
+  isPinned: boolean
+  tags: { id: string; name: string }[]
+  collections: { collection: { id: string; name: string } }[]
+  itemType: { id: string; name: string; icon: string; color: string }
+  createdAt: Date
+  updatedAt: Date
+}
+
+function toItemDetail(item: ItemDetailRow): ItemDetail {
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    content: item.content,
+    url: item.url,
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
+    language: item.language,
+    isFavorite: item.isFavorite,
+    isPinned: item.isPinned,
+    tags: item.tags,
+    collections: item.collections.map((ic) => ic.collection),
+    itemType: item.itemType,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
+}
+
 export async function getPinnedItems(userId: string): Promise<ItemWithMeta[]> {
   const items = await prisma.item.findMany({
     where: { userId, isPinned: true },
@@ -172,12 +213,7 @@ export async function updateItemById(
   itemId: string,
   data: UpdateItemData
 ): Promise<ItemDetail | null> {
-  // Verify ownership (update's where only accepts unique fields)
-  const existing = await prisma.item.findFirst({
-    where: { id: itemId, userId },
-    select: { id: true },
-  })
-  if (!existing) return null
+  if (!await assertItemOwnership(itemId, userId)) return null
 
   // Upsert each tag, then set the full list (set + connectOrCreate can't be combined in Prisma)
   const tagRecords = await Promise.all(
@@ -214,9 +250,16 @@ export async function updateItemById(
     if (data.collectionIds !== undefined) {
       await tx.itemCollection.deleteMany({ where: { itemId } })
       if (data.collectionIds.length > 0) {
-        await tx.itemCollection.createMany({
-          data: data.collectionIds.map((collectionId) => ({ itemId, collectionId })),
+        const ownedCollections = await tx.collection.findMany({
+          where: { id: { in: data.collectionIds }, userId },
+          select: { id: true },
         })
+        const ownedIds = ownedCollections.map((c) => c.id)
+        if (ownedIds.length > 0) {
+          await tx.itemCollection.createMany({
+            data: ownedIds.map((collectionId) => ({ itemId, collectionId })),
+          })
+        }
       }
       // Re-fetch collections after sync
       const updatedCollections = await tx.itemCollection.findMany({
@@ -229,24 +272,7 @@ export async function updateItemById(
     return item
   })
 
-  return {
-    id: updated.id,
-    title: updated.title,
-    description: updated.description,
-    content: updated.content,
-    url: updated.url,
-    fileUrl: updated.fileUrl,
-    fileName: updated.fileName,
-    fileSize: updated.fileSize,
-    language: updated.language,
-    isFavorite: updated.isFavorite,
-    isPinned: updated.isPinned,
-    tags: updated.tags,
-    collections: updated.collections.map((ic) => ic.collection),
-    itemType: updated.itemType,
-    createdAt: updated.createdAt,
-    updatedAt: updated.updatedAt,
-  }
+  return toItemDetail(updated)
 }
 
 export async function getItemById(userId: string, itemId: string): Promise<ItemDetail | null> {
@@ -263,24 +289,7 @@ export async function getItemById(userId: string, itemId: string): Promise<ItemD
 
   if (!item) return null
 
-  return {
-    id: item.id,
-    title: item.title,
-    description: item.description,
-    content: item.content,
-    url: item.url,
-    fileUrl: item.fileUrl,
-    fileName: item.fileName,
-    fileSize: item.fileSize,
-    language: item.language,
-    isFavorite: item.isFavorite,
-    isPinned: item.isPinned,
-    tags: item.tags,
-    collections: item.collections.map((ic) => ic.collection),
-    itemType: item.itemType,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-  }
+  return toItemDetail(item)
 }
 
 export type CreateItemData = {
@@ -344,12 +353,19 @@ export async function createItemInDb(
     })
 
     if (data.collectionIds && data.collectionIds.length > 0) {
-      await tx.itemCollection.createMany({
-        data: data.collectionIds.map((collectionId) => ({
-          itemId: created.id,
-          collectionId,
-        })),
+      const ownedCollections = await tx.collection.findMany({
+        where: { id: { in: data.collectionIds }, userId },
+        select: { id: true },
       })
+      const ownedIds = ownedCollections.map((c) => c.id)
+      if (ownedIds.length > 0) {
+        await tx.itemCollection.createMany({
+          data: ownedIds.map((collectionId) => ({
+            itemId: created.id,
+            collectionId,
+          })),
+        })
+      }
       const updatedCollections = await tx.itemCollection.findMany({
         where: { itemId: created.id },
         select: { collection: { select: { id: true, name: true } } },
@@ -360,24 +376,7 @@ export async function createItemInDb(
     return created
   })
 
-  return {
-    id: item.id,
-    title: item.title,
-    description: item.description,
-    content: item.content,
-    url: item.url,
-    fileUrl: item.fileUrl,
-    fileName: item.fileName,
-    fileSize: item.fileSize,
-    language: item.language,
-    isFavorite: item.isFavorite,
-    isPinned: item.isPinned,
-    tags: item.tags,
-    collections: item.collections.map((ic) => ic.collection),
-    itemType: item.itemType,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-  }
+  return toItemDetail(item)
 }
 
 export async function deleteItemById(
