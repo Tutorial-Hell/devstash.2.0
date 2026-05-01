@@ -8,7 +8,8 @@ vi.mock("@/lib/prisma", () => ({
 }))
 
 import { prisma } from "@/lib/prisma"
-import { FREE_ITEM_LIMIT, FREE_COLLECTION_LIMIT, isAtItemLimit, isAtCollectionLimit } from "@/lib/usage-limits"
+import { FREE_ITEM_LIMIT, FREE_COLLECTION_LIMIT } from "@/lib/constants"
+import { isAtItemLimit, isAtCollectionLimit } from "@/lib/usage-limits"
 
 describe("isAtItemLimit", () => {
   beforeEach(() => {

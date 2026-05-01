@@ -1,6 +1,7 @@
 import { cache } from "react"
 import { prisma } from "@/lib/prisma"
 import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
+import { assertCollectionOwnership } from "@/lib/db/ownership"
 
 export type CollectionWithMeta = {
   id: string
@@ -23,6 +24,41 @@ export type CollectionWithMeta = {
   createdAt: Date
 }
 
+function mapCollectionWithMeta(col: {
+  id: string
+  name: string
+  description: string | null
+  isFavorite: boolean
+  createdAt: Date
+  items: { item: { itemType: { id: string; name: string; icon: string; color: string } } }[]
+}): CollectionWithMeta {
+  const typeCounts: Record<
+    string,
+    { count: number; type: { id: string; name: string; icon: string; color: string } }
+  > = {}
+
+  for (const ic of col.items) {
+    const t = ic.item.itemType
+    if (!typeCounts[t.id]) {
+      typeCounts[t.id] = { count: 0, type: { id: t.id, name: t.name, icon: t.icon, color: t.color } }
+    }
+    typeCounts[t.id].count++
+  }
+
+  const sorted = Object.values(typeCounts).sort((a, b) => b.count - a.count)
+
+  return {
+    id: col.id,
+    name: col.name,
+    description: col.description,
+    isFavorite: col.isFavorite,
+    itemCount: col.items.length,
+    dominantType: sorted[0]?.type ?? null,
+    allTypes: sorted.map((e) => e.type),
+    createdAt: col.createdAt,
+  }
+}
+
 export const getCollections = cache(async function getCollections(userId: string): Promise<CollectionWithMeta[]> {
   const collections = await prisma.collection.findMany({
     where: { userId },
@@ -38,33 +74,7 @@ export const getCollections = cache(async function getCollections(userId: string
     },
   })
 
-  return collections.map((col) => {
-    const typeCounts: Record<
-      string,
-      { count: number; type: { id: string; name: string; icon: string; color: string } }
-    > = {}
-
-    for (const ic of col.items) {
-      const t = ic.item.itemType
-      if (!typeCounts[t.id]) {
-        typeCounts[t.id] = { count: 0, type: { id: t.id, name: t.name, icon: t.icon, color: t.color } }
-      }
-      typeCounts[t.id].count++
-    }
-
-    const sorted = Object.values(typeCounts).sort((a, b) => b.count - a.count)
-
-    return {
-      id: col.id,
-      name: col.name,
-      description: col.description,
-      isFavorite: col.isFavorite,
-      itemCount: col.items.length,
-      dominantType: sorted[0]?.type ?? null,
-      allTypes: sorted.map((e) => e.type),
-      createdAt: col.createdAt,
-    }
-  })
+  return collections.map(mapCollectionWithMeta)
 })
 
 export type CollectionDetail = {
@@ -184,35 +194,7 @@ export async function getCollectionsPaginated(
     prisma.collection.count({ where: { userId } }),
   ])
 
-  const collections = allCollections.map((col) => {
-    const typeCounts: Record<
-      string,
-      { count: number; type: { id: string; name: string; icon: string; color: string } }
-    > = {}
-
-    for (const ic of col.items) {
-      const t = ic.item.itemType
-      if (!typeCounts[t.id]) {
-        typeCounts[t.id] = { count: 0, type: { id: t.id, name: t.name, icon: t.icon, color: t.color } }
-      }
-      typeCounts[t.id].count++
-    }
-
-    const sorted = Object.values(typeCounts).sort((a, b) => b.count - a.count)
-
-    return {
-      id: col.id,
-      name: col.name,
-      description: col.description,
-      isFavorite: col.isFavorite,
-      itemCount: col.items.length,
-      dominantType: sorted[0]?.type ?? null,
-      allTypes: sorted.map((e) => e.type),
-      createdAt: col.createdAt,
-    }
-  })
-
-  return { collections, total }
+  return { collections: allCollections.map(mapCollectionWithMeta), total }
 }
 
 export type CollectionOption = { id: string; name: string }
@@ -230,10 +212,7 @@ export async function updateCollectionById(
   collectionId: string,
   data: { name: string; description?: string | null }
 ): Promise<CollectionCreated | null> {
-  const existing = await prisma.collection.findFirst({
-    where: { id: collectionId, userId },
-  })
-  if (!existing) return null
+  if (!await assertCollectionOwnership(collectionId, userId)) return null
 
   return prisma.collection.update({
     where: { id: collectionId },
@@ -256,10 +235,7 @@ export async function deleteCollectionById(
   userId: string,
   collectionId: string
 ): Promise<boolean> {
-  const existing = await prisma.collection.findFirst({
-    where: { id: collectionId, userId },
-  })
-  if (!existing) return false
+  if (!await assertCollectionOwnership(collectionId, userId)) return false
 
   await prisma.$transaction([
     prisma.itemCollection.deleteMany({ where: { collectionId } }),
