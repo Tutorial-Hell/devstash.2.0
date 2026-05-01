@@ -2,27 +2,15 @@
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-Refactor `src/lib` to eliminate duplicated patterns identified in a refactor scan:
-
-- **L-001** ⭐ — Extract ownership-check helpers to `src/lib/db/ownership.ts` — the pattern `prisma.<model>.findFirst({ where: { id, userId }, select: { id: true } })` + null guard appears 7 times across `db/items.ts` (lines 176, 401, 463, 481) and `db/collections.ts` (lines 233, 259, 301); propose two narrow typed helpers: `assertItemOwnership(itemId, userId, select?)` and `assertCollectionOwnership(collectionId, userId, select?)`
-- **L-002** ⭐ — Extract `mapCollectionWithMeta(col)` helper inside `db/collections.ts` — the `typeCounts` accumulator loop and `CollectionWithMeta` object shape is copy-pasted verbatim (~27 lines) between `getCollections` (lines 41–67) and `getCollectionsPaginated` (lines 187–213)
-- **L-003** — Extract `toItemDetail(item, collections)` mapper inside `db/items.ts` — the 14-field `ItemDetail` return object is manually spread in both `updateItemById` (lines 239–256) and `getItemById` (lines 272–290); a file-private mapping function removes ~16 duplicated lines
-- **L-004** — Resolve dual canonical source for `FREE_ITEM_LIMIT` / `FREE_COLLECTION_LIMIT` — `constants.ts` defines them, `usage-limits.ts` re-exports them; pick one home and remove the re-export to eliminate the ambiguous import path
-- **L-005** — Add type constraint to `LANGUAGE_ALIAS_MAP` in `utils.ts` — map values should be derived from `typeof LANGUAGE_OPTIONS[number]['value']` (defined in `languages.ts`) so a type error fires if an alias points to an unrecognized canonical language name
+<!-- Add goals here -->
 
 ## Notes
 
-- L-001 and L-002 are the highest-value wins — L-002 is a verbatim copy-paste; L-001 is 7 sites
-- L-003 is a smaller version of the same problem but within a single file; low-risk extraction
-- L-004 is a 2-minute housekeeping item — no bugs today, but a latent import confusion risk
-- L-005 is documentation/type-level only — no runtime change
-- For L-001: use two narrow overloads (`assertItemOwnership`, `assertCollectionOwnership`) rather than a single dynamic `assertOwnership(model, ...)` to preserve full Prisma static typing
-- Do NOT extract `orderBy: { createdAt: "desc" }` or repeated `itemType` select shapes — Prisma type inference doesn't propagate factored constants correctly and the reward is noise
-- `safeParse` in `settings.ts` using Zod's native API directly (not the `validation.ts` wrapper) is intentional — not a duplication
+<!-- Add notes here -->
 
 ## History
 
@@ -93,3 +81,4 @@ Refactor `src/lib` to eliminate duplicated patterns identified in a refactor sca
 - **2026-04-29** — UI Review Fixes completed. Playwright audit identified 4 real issues. Added Dashboard and Favorites links to the top of the sidebar with active highlighting. Improved sidebar active state from near-invisible `bg-accent` to clearly visible `bg-white/[0.1] text-foreground font-medium`. Added "Sign up with GitHub" OAuth button to register page matching sign-in. Homepage invisible sections confirmed as a Playwright scroll-animation artifact (FadeIn + IntersectionObserver), not a real rendering bug — no change needed. Added `optimizePrompt` server action to `src/actions/ai.ts` — auth, Pro gate, Zod validation, shared rate limit bucket, prompt-engineering system instruction for clarity/specificity, content truncated to 3000 chars. `MarkdownEditor` extended with `onOptimize`/`optimizedContent`/`isOptimizing`/`isPro`/`onAccept`/`onDiscard` props: Optimize button (Sparkles) in header for Pro users; Crown + tooltip for free users; Content/Optimized tab strip replaces Write/Preview tabs once optimization is active; Optimized tab shows AI result as markdown preview with Accept/Discard footer. Accepting calls `updateItem`, updates drawer state via `onUpdate`, clears optimized content, and toasts. Only wired for prompt types in `ViewBody` read view (not notes, not edit mode). 8 new unit tests (140 total).
 - **2026-04-30** — Actions Folder Refactor completed. Extracted `requireProUser(proErrorMessage?)` to `src/lib/auth-utils.ts` (4 AI action callsites). Extracted `safeParse<T>()` to `src/lib/validation.ts` (8 callsites across items, collections, ai actions). Extracted generic `ActionResult<T>` to `src/types/actions.ts` (used by updateItem, createItem, createCollection, updateCollection). Added dedicated rate-limit keys `ai-describe`, `ai-explain`, `ai-optimize` to `src/lib/rate-limit.ts` (3 AI actions now use correct keys instead of sharing `ai-suggest-tags`). Fixed `settings.ts` to use `getSession()` from `auth-utils` instead of importing `auth()` directly. Added `auth-utils.test.ts` (5 tests) and `validation.test.ts` (5 tests); updated ai-actions and settings-actions tests to match new mock targets. 150 tests total, all passing.
 - **2026-04-30** — Components Folder Refactor completed. Eliminated 9 duplicated patterns: `useOutsideClick(onClose, enabled?)` hook (4 callsites: topbar, new-item-dialog, collection-select, collection-card); `useCopy(value)` hook (code-editor, markdown-editor); `GitHubIcon` SVG component (sign-in, register); `BackToDashboard` link component (3 pages); `FormField(label, required, spacing)` shared wrapper (new-collection-dialog, collection-edit-delete-dialogs); `AiFeatureButton` Pro-gate button (code-editor, markdown-editor); `CollectionEditDeleteDialogs` shared dialog component with `onDeleted` callback (collection-card, collection-detail-actions); `ItemFormFields` fully-controlled form component with `afterDescriptionSlot` for file upload (new-item-dialog, item-drawer-edit); `BadgeList` exported with `size` prop (3 pages use `size="sm"`). 25 files changed, net −95 lines. 150 tests, all passing.
+- **2026-05-01** — Lib Folder Refactor completed. Extracted `assertItemOwnership` / `assertCollectionOwnership` to `src/lib/db/ownership.ts` (L-001: replaces 3 inline findFirst ownership guards); extracted `mapCollectionWithMeta` file-private helper in `collections.ts` (L-002: eliminates 27-line verbatim copy-paste between `getCollections` and `getCollectionsPaginated`); extracted `toItemDetail` file-private mapper in `items.ts` (L-003: removes 14-field spread from 3 callsites — `updateItemById`, `getItemById`, `createItemInDb`); removed `FREE_ITEM_LIMIT`/`FREE_COLLECTION_LIMIT` re-export from `usage-limits.ts` so `constants.ts` is the sole source of truth (L-004); typed `LANGUAGE_ALIAS_MAP` values as `LanguageValue` derived from `LANGUAGE_OPTIONS` (L-005). 8 unit tests added for ownership helpers (158 total, all passing).
