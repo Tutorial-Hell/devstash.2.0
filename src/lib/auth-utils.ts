@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import type { Session } from "next-auth"
+import { NextResponse } from "next/server"
 
 export async function getAuthenticatedUserId(): Promise<string | null> {
   const session = await auth()
@@ -13,6 +14,16 @@ export async function getSession(): Promise<Session | null> {
 type RequireProResult =
   | { ok: true; userId: string; session: Session }
   | { ok: false; error: string }
+
+type RequireAuthResult =
+  | { ok: true; userId: string }
+  | { ok: false; response: NextResponse }
+
+export async function requireAuth(): Promise<RequireAuthResult> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return { ok: false, response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
+  return { ok: true, userId }
+}
 
 export async function requireProUser(
   proErrorMessage = "This feature requires a Pro subscription."

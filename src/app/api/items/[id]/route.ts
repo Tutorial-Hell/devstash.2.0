@@ -1,22 +1,18 @@
-import { NextResponse } from "next/server"
-import { getAuthenticatedUserId } from "@/lib/auth-utils"
+import { requireAuth } from "@/lib/auth-utils"
 import { getItemById } from "@/lib/db/items"
+import { apiError, apiSuccess } from "@/lib/api-response"
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireAuth()
+  if (!auth.ok) return auth.response
 
   const { id } = await params
-  const item = await getItemById(userId, id)
+  const item = await getItemById(auth.userId, id)
 
-  if (!item) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 })
-  }
+  if (!item) return apiError("Not found", 404)
 
-  return NextResponse.json(item)
+  return apiSuccess(item)
 }

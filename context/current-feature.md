@@ -2,15 +2,28 @@
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Add goals here -->
+Refactor `src/app/api` to eliminate duplicated patterns identified in a refactor scan:
+
+- **R-001** ⭐ — Standardize auth guard across all route handlers — 5 routes use 3 different call patterns (`getAuthenticatedUserId()`, `getSession()` + manual `.user?.id`, raw `auth()`) to do the same thing; add `requireAuth(): Promise<{ userId: string } | NextResponse>` to `src/lib/auth-utils.ts` and apply across `items/[id]/route.ts`, `download/[id]/route.ts`, `upload/route.ts`, `stripe/checkout/route.ts`, `stripe/portal/route.ts`
+- **R-002** ⭐ — Extract `getOrCreateStripeCustomer(userId)` to `src/lib/stripe.ts` — the Stripe customer fetch → lazy-create → write-back block is copy-pasted verbatim (~15 lines) between `stripe/checkout/route.ts` (lines 18–38) and `src/actions/subscription.ts` (lines 31–57); two live divergent copies of the same mutation
+- **R-003** — Extract `apiError(message, status)` / `apiSuccess(data, status?)` helpers to `src/lib/api-response.ts` — `NextResponse.json({ error: "..." }, { status: N })` is inlined ~18 times across 6 route files; a typed helper enforces a consistent response contract and makes shape changes a one-line edit
+- **R-004** — Align `stripe/checkout` and `stripe/portal` auth import — both routes import `auth` from `@/auth` directly instead of using the abstraction in `auth-utils.ts`; after R-001 these become consistent automatically; the Prisma `findUnique` setup can be extracted to `getStripeUser(userId)` in `src/lib/db/profile.ts`
+- **R-005** — Fix `upload/route.ts` inconsistent auth call — uses `getSession()` + manual `.user?.id ?? null` (lines 34–36) instead of `getAuthenticatedUserId()`; resolved as a side-effect of R-001 but worth noting as an isolated bug risk
 
 ## Notes
 
-<!-- Add notes here -->
+- R-002 is the highest-risk duplication — two live copies of the same Prisma + Stripe mutation that can silently drift; highest priority
+- R-001 is the broadest fix — 5 routes, 3 divergent call patterns; `requireAuth()` already has a natural home in `auth-utils.ts` alongside the existing `requireProUser()`
+- R-003 is moderate value — primarily a contract/consistency win; the `{ error: "..." }` shape is simple enough that divergence risk is low today
+- R-004 resolves automatically after R-001 (both Stripe routes will use `requireAuth()`); the `getStripeUser()` Prisma extraction is optional cleanup
+- R-005 is the lowest priority — isolated to one file, resolved by R-001
+- Do NOT add `requireAuth()` to `stripe/webhook/route.ts` — webhook auth is via Stripe signature verification, not session
+- Do NOT add `requireAuth()` to `auth/verify-email/route.ts` — intentionally unauthenticated; the token is the credential
+- The upload route validation chain (MIME type + size checks) is intentionally verbose per-branch — do not extract
 
 ## History
 

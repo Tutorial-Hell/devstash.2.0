@@ -1,27 +1,21 @@
-import { NextResponse } from "next/server"
-import { getAuthenticatedUserId } from "@/lib/auth-utils"
+import { requireAuth } from "@/lib/auth-utils"
 import { getItemById } from "@/lib/db/items"
 import { getFromR2 } from "@/lib/r2"
+import { apiError } from "@/lib/api-response"
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireAuth()
+  if (!auth.ok) return auth.response
 
   const { id } = await params
-  const item = await getItemById(userId, id)
+  const item = await getItemById(auth.userId, id)
 
-  if (!item) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 })
-  }
+  if (!item) return apiError("Not found", 404)
 
-  if (!item.fileUrl) {
-    return NextResponse.json({ error: "No file attached to this item" }, { status: 404 })
-  }
+  if (!item.fileUrl) return apiError("No file attached to this item", 404)
 
   let body: ReadableStream
   let contentType: string | undefined
@@ -31,7 +25,7 @@ export async function GET(
     body = result.body
     contentType = result.contentType
   } catch {
-    return NextResponse.json({ error: "Failed to fetch file" }, { status: 502 })
+    return apiError("Failed to fetch file", 502)
   }
 
   const isImage = contentType?.startsWith("image/")

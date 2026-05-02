@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server"
 import type Stripe from "stripe"
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
+import { apiError, apiSuccess } from "@/lib/api-response"
 
 export const config = { api: { bodyParser: false } }
 
@@ -25,15 +25,13 @@ export async function POST(req: Request) {
   const body = await req.text()
   const sig = req.headers.get("stripe-signature")
 
-  if (!sig) {
-    return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 })
-  }
+  if (!sig) return apiError("Missing stripe-signature header", 400)
 
   let event: Stripe.Event
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
+    return apiError("Invalid signature", 400)
   }
 
   switch (event.type) {
@@ -86,5 +84,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ received: true })
+  return apiSuccess({ received: true })
 }

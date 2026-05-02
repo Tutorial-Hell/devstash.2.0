@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers"
 import { auth } from "@/auth"
-import { stripe } from "@/lib/stripe"
+import { stripe, getOrCreateStripeCustomer } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 
 async function getAppUrl(): Promise<string> {
@@ -28,12 +28,6 @@ export async function createCheckoutSession(
 
   const userId = session.user.id
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true, name: true, stripeCustomerId: true },
-  })
-  if (!user) return { url: null, error: "User not found." }
-
   const priceId =
     planKey === "monthly"
       ? process.env.STRIPE_PRICE_ID_MONTHLY
@@ -42,19 +36,8 @@ export async function createCheckoutSession(
   if (!priceId) return { url: null, error: "Price ID is not configured." }
 
   try {
-    let customerId = user.stripeCustomerId
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user.email ?? undefined,
-        name: user.name ?? undefined,
-        metadata: { userId },
-      })
-      customerId = customer.id
-      await prisma.user.update({
-        where: { id: userId },
-        data: { stripeCustomerId: customerId },
-      })
-    }
+    const customerId = await getOrCreateStripeCustomer(userId)
+    if (!customerId) return { url: null, error: "User not found." }
 
     const appUrl = await getAppUrl()
     const checkoutSession = await stripe.checkout.sessions.create({
