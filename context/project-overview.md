@@ -113,145 +113,13 @@ Full-text search across:
 | **Explain This Code** | Plain-english explanation of a code snippet |
 | **Prompt Optimizer** | Refine and improve AI prompts |
 
-**AI Model:** OpenAI `gpt-5-nano`
+**AI Model:** OpenAI API (see `src/lib/openai.ts` for model config)
 
 ---
 
 ## 🗃️ Data Models
 
-Below are the Prisma schema models. These extend the NextAuth default schema (User, Account, Session, VerificationToken).
-
-```prisma
-// ──────────────────────────────────────────
-// User (extends NextAuth User)
-// ──────────────────────────────────────────
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  isPro         Boolean   @default(false)
-
-  stripeCustomerId     String? @unique
-  stripeSubscriptionId String? @unique
-
-  items       Item[]
-  collections Collection[]
-  itemTypes   ItemType[]
-  tags        Tag[]
-  accounts    Account[]
-  sessions    Session[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// ──────────────────────────────────────────
-// Item
-// ──────────────────────────────────────────
-model Item {
-  id          String  @id @default(cuid())
-  title       String
-  description String?
-
-  contentType String  // "text" | "url" | "file"
-  content     String? // text body (null if file)
-  url         String? // for link types
-  fileUrl     String? // Cloudflare R2 URL (null if text)
-  fileName    String? // original filename
-  fileSize    Int?    // bytes
-
-  language    String? // programming language (optional)
-  isFavorite  Boolean @default(false)
-  isPinned    Boolean @default(false)
-
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  itemTypeId String
-  itemType   ItemType @relation(fields: [itemTypeId], references: [id])
-
-  collections ItemCollection[]
-  tags        Tag[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([itemTypeId])
-}
-
-// ──────────────────────────────────────────
-// ItemType
-// ──────────────────────────────────────────
-model ItemType {
-  id       String  @id @default(cuid())
-  name     String  // "snippet", "prompt", etc.
-  icon     String  // Lucide icon name
-  color    String  // hex color
-  isSystem Boolean @default(false)
-
-  userId String? // null for system types
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items  Item[]
-
-  @@unique([name, userId])
-  @@index([userId])
-}
-
-// ──────────────────────────────────────────
-// Collection
-// ──────────────────────────────────────────
-model Collection {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
-  isFavorite  Boolean @default(false)
-
-  defaultTypeId String?  // fallback type for empty collections
-  defaultType   ItemType? @relation(fields: [defaultTypeId], references: [id])
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  items ItemCollection[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-}
-
-// ──────────────────────────────────────────
-// ItemCollection (join table)
-// ──────────────────────────────────────────
-model ItemCollection {
-  itemId       String
-  item         Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  collectionId String
-  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-
-  addedAt DateTime @default(now())
-
-  @@id([itemId, collectionId])
-  @@index([collectionId])
-}
-
-// ──────────────────────────────────────────
-// Tag
-// ──────────────────────────────────────────
-model Tag {
-  id   String @id @default(cuid())
-  name String
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items  Item[]
-
-  @@unique([name, userId])
-  @@index([userId])
-}
-```
+See `prisma/schema.prisma` for the authoritative schema. Models: User, Item, ItemType, Collection, ItemCollection, Tag, EmailVerificationToken, and the NextAuth models (Account, Session, VerificationToken).
 
 > **⚠️ Migration policy:** Never use `db push` or directly modify DB structure. All schema changes go through Prisma Migrate — run in dev first, then apply to prod.
 
@@ -314,8 +182,10 @@ Freemium model with a single Pro tier.
 
 Refer to the screenshots below as a base for the dashboard UI. It does not have to be exact - use it as a reference.
 
-- @context/screenshots/dashboard-ui-main.png
-- @context/screenshots/dashboard-ui-drawer.png
+- @context/screenshots/dashboard-main.png
+- @context/screenshots/dashboard-snippets.png
+- @context/screenshots/dashboard-favorites.png
+- @context/screenshots/dashboard-settings.png
 
 ### Layout
 
@@ -333,66 +203,16 @@ Refer to the screenshots below as a base for the dashboard UI. It does not have 
 
 ---
 
-## 🗂️ Suggested Project Structure
+## 🗂️ Project Structure
 
-```
-devstash/
-├── prisma/
-│   ├── schema.prisma
-│   ├── migrations/
-│   └── seed.ts               # Seed system item types
-├── src/
-│   ├── app/
-│   │   ├── (auth)/
-│   │   │   ├── login/
-│   │   │   └── register/
-│   │   ├── (dashboard)/
-│   │   │   ├── layout.tsx     # Sidebar + main shell
-│   │   │   ├── page.tsx       # Home / recent items
-│   │   │   ├── items/
-│   │   │   │   └── [type]/    # /items/snippets, /items/prompts ...
-│   │   │   ├── collections/
-│   │   │   │   └── [id]/
-│   │   │   ├── search/
-│   │   │   └── settings/
-│   │   ├── api/
-│   │   │   ├── items/
-│   │   │   ├── collections/
-│   │   │   ├── tags/
-│   │   │   ├── ai/
-│   │   │   ├── upload/
-│   │   │   └── stripe/
-│   │   │       └── webhook/
-│   │   └── layout.tsx
-│   ├── components/
-│   │   ├── ui/               # shadcn/ui primitives
-│   │   ├── items/
-│   │   │   ├── item-card.tsx
-│   │   │   ├── item-drawer.tsx
-│   │   │   └── item-form.tsx
-│   │   ├── collections/
-│   │   ├── layout/
-│   │   │   ├── sidebar.tsx
-│   │   │   └── topbar.tsx
-│   │   └── shared/
-│   ├── lib/
-│   │   ├── prisma.ts          # Prisma client singleton
-│   │   ├── auth.ts            # NextAuth config
-│   │   ├── stripe.ts
-│   │   ├── r2.ts              # Cloudflare R2 helpers
-│   │   ├── ai.ts              # OpenAI helpers
-│   │   └── utils.ts
-│   ├── hooks/
-│   ├── types/
-│   └── styles/
-│       └── globals.css
-├── public/
-├── .env.local
-├── next.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
-└── package.json
-```
+- `prisma/` — schema, migrations, seed
+- `src/app/(auth)/` — sign-in, register, forgot/reset-password, verify-email pages
+- `src/app/(dashboard)/` — all authenticated app pages (dashboard, items, collections, favorites, profile, settings)
+- `src/app/api/` — webhook handlers, file upload/download, item fetch, Stripe routes
+- `src/actions/` — server actions by domain (items, collections, ai, subscription, settings)
+- `src/components/` — UI components; `ui/` for shadcn primitives, `layout/` for sidebar/topbar, `marketing/` for homepage
+- `src/lib/` — shared utilities and singletons (prisma, stripe, openai, r2, rate-limit, auth-utils, constants); `db/` subfolder for data-access functions
+- `src/types/` — shared TypeScript types and module augmentations
 
 ---
 
