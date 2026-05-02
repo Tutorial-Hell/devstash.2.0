@@ -2,28 +2,15 @@
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-Refactor `src/app/api` to eliminate duplicated patterns identified in a refactor scan:
-
-- **R-001** ⭐ — Standardize auth guard across all route handlers — 5 routes use 3 different call patterns (`getAuthenticatedUserId()`, `getSession()` + manual `.user?.id`, raw `auth()`) to do the same thing; add `requireAuth(): Promise<{ userId: string } | NextResponse>` to `src/lib/auth-utils.ts` and apply across `items/[id]/route.ts`, `download/[id]/route.ts`, `upload/route.ts`, `stripe/checkout/route.ts`, `stripe/portal/route.ts`
-- **R-002** ⭐ — Extract `getOrCreateStripeCustomer(userId)` to `src/lib/stripe.ts` — the Stripe customer fetch → lazy-create → write-back block is copy-pasted verbatim (~15 lines) between `stripe/checkout/route.ts` (lines 18–38) and `src/actions/subscription.ts` (lines 31–57); two live divergent copies of the same mutation
-- **R-003** — Extract `apiError(message, status)` / `apiSuccess(data, status?)` helpers to `src/lib/api-response.ts` — `NextResponse.json({ error: "..." }, { status: N })` is inlined ~18 times across 6 route files; a typed helper enforces a consistent response contract and makes shape changes a one-line edit
-- **R-004** — Align `stripe/checkout` and `stripe/portal` auth import — both routes import `auth` from `@/auth` directly instead of using the abstraction in `auth-utils.ts`; after R-001 these become consistent automatically; the Prisma `findUnique` setup can be extracted to `getStripeUser(userId)` in `src/lib/db/profile.ts`
-- **R-005** — Fix `upload/route.ts` inconsistent auth call — uses `getSession()` + manual `.user?.id ?? null` (lines 34–36) instead of `getAuthenticatedUserId()`; resolved as a side-effect of R-001 but worth noting as an isolated bug risk
+<!-- Add goals here -->
 
 ## Notes
 
-- R-002 is the highest-risk duplication — two live copies of the same Prisma + Stripe mutation that can silently drift; highest priority
-- R-001 is the broadest fix — 5 routes, 3 divergent call patterns; `requireAuth()` already has a natural home in `auth-utils.ts` alongside the existing `requireProUser()`
-- R-003 is moderate value — primarily a contract/consistency win; the `{ error: "..." }` shape is simple enough that divergence risk is low today
-- R-004 resolves automatically after R-001 (both Stripe routes will use `requireAuth()`); the `getStripeUser()` Prisma extraction is optional cleanup
-- R-005 is the lowest priority — isolated to one file, resolved by R-001
-- Do NOT add `requireAuth()` to `stripe/webhook/route.ts` — webhook auth is via Stripe signature verification, not session
-- Do NOT add `requireAuth()` to `auth/verify-email/route.ts` — intentionally unauthenticated; the token is the credential
-- The upload route validation chain (MIME type + size checks) is intentionally verbose per-branch — do not extract
+<!-- Add notes here -->
 
 ## History
 
@@ -95,3 +82,4 @@ Refactor `src/app/api` to eliminate duplicated patterns identified in a refactor
 - **2026-04-30** — Actions Folder Refactor completed. Extracted `requireProUser(proErrorMessage?)` to `src/lib/auth-utils.ts` (4 AI action callsites). Extracted `safeParse<T>()` to `src/lib/validation.ts` (8 callsites across items, collections, ai actions). Extracted generic `ActionResult<T>` to `src/types/actions.ts` (used by updateItem, createItem, createCollection, updateCollection). Added dedicated rate-limit keys `ai-describe`, `ai-explain`, `ai-optimize` to `src/lib/rate-limit.ts` (3 AI actions now use correct keys instead of sharing `ai-suggest-tags`). Fixed `settings.ts` to use `getSession()` from `auth-utils` instead of importing `auth()` directly. Added `auth-utils.test.ts` (5 tests) and `validation.test.ts` (5 tests); updated ai-actions and settings-actions tests to match new mock targets. 150 tests total, all passing.
 - **2026-04-30** — Components Folder Refactor completed. Eliminated 9 duplicated patterns: `useOutsideClick(onClose, enabled?)` hook (4 callsites: topbar, new-item-dialog, collection-select, collection-card); `useCopy(value)` hook (code-editor, markdown-editor); `GitHubIcon` SVG component (sign-in, register); `BackToDashboard` link component (3 pages); `FormField(label, required, spacing)` shared wrapper (new-collection-dialog, collection-edit-delete-dialogs); `AiFeatureButton` Pro-gate button (code-editor, markdown-editor); `CollectionEditDeleteDialogs` shared dialog component with `onDeleted` callback (collection-card, collection-detail-actions); `ItemFormFields` fully-controlled form component with `afterDescriptionSlot` for file upload (new-item-dialog, item-drawer-edit); `BadgeList` exported with `size` prop (3 pages use `size="sm"`). 25 files changed, net −95 lines. 150 tests, all passing.
 - **2026-05-01** — Lib Folder Refactor completed. Extracted `assertItemOwnership` / `assertCollectionOwnership` to `src/lib/db/ownership.ts` (L-001: replaces 3 inline findFirst ownership guards); extracted `mapCollectionWithMeta` file-private helper in `collections.ts` (L-002: eliminates 27-line verbatim copy-paste between `getCollections` and `getCollectionsPaginated`); extracted `toItemDetail` file-private mapper in `items.ts` (L-003: removes 14-field spread from 3 callsites — `updateItemById`, `getItemById`, `createItemInDb`); removed `FREE_ITEM_LIMIT`/`FREE_COLLECTION_LIMIT` re-export from `usage-limits.ts` so `constants.ts` is the sole source of truth (L-004); typed `LANGUAGE_ALIAS_MAP` values as `LanguageValue` derived from `LANGUAGE_OPTIONS` (L-005). 8 unit tests added for ownership helpers (158 total, all passing).
+- **2026-05-02** — API Folder Refactor completed. Added `requireAuth()` to `src/lib/auth-utils.ts` (discriminated union `{ ok: true; userId } | { ok: false; response: NextResponse }`); applied to 4 routes replacing 3 divergent auth patterns (R-001/R-004). Extracted `getOrCreateStripeCustomer(userId)` to `src/lib/stripe.ts` — eliminated verbatim 15-line Prisma + Stripe lazy-create block shared between `stripe/checkout/route.ts` and `src/actions/subscription.ts` (R-002). Created `src/lib/api-response.ts` with `apiError` / `apiSuccess` — replaced ~18 inline `NextResponse.json({ error })` calls across 6 route files (R-003). Fixed `upload/route.ts` auth inconsistency (R-005). 158 tests, all passing.
