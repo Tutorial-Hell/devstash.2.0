@@ -14,8 +14,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { iconMap } from "@/lib/icon-map"
 import { createItem, type CreateItemInput } from "@/actions/items"
-import { generateAutoTags, generateDescription } from "@/actions/ai"
 import { fetchCollectionsForSelect } from "@/actions/collections"
+import { useItemAiFeatures } from "@/hooks/use-item-ai-features"
 import { FileUpload, type UploadedFile } from "@/components/file-upload"
 import { useOutsideClick } from "@/hooks/use-outside-click"
 import { ItemFormFields } from "@/components/item-form-fields"
@@ -136,9 +136,15 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
   const [collections, setCollections] = useState<{ id: string; name: string }[]>([])
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([])
   const [collectionSelectOpen, setCollectionSelectOpen] = useState(false)
-  const [suggestions, setSuggestions] = useState<string[]>([])
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
-  const [loadingDescription, setLoadingDescription] = useState(false)
+  const { suggestions, setSuggestions, loadingSuggestions, loadingDescription, handleGenerateDescription, handleSuggestTags, acceptTag, rejectTag } = useItemAiFeatures({
+    title,
+    content,
+    url,
+    type,
+    tagsInput,
+    setTagsInput,
+    setDescription,
+  })
 
   const showContent = CONTENT_TYPES.has(type)
   const showLanguage = LANGUAGE_TYPES.has(type)
@@ -165,51 +171,6 @@ export function NewItemDialog({ defaultType, open: controlledOpen, onOpenChange:
     setSuggestions([])
     setError(null)
     setSaving(false)
-  }
-
-  // ─── Description generation ────────────────────────────────────────────────
-
-  async function handleGenerateDescription() {
-    setLoadingDescription(true)
-    const result = await generateDescription({
-      title,
-      type,
-      content: content || null,
-      url: url || null,
-    })
-    setLoadingDescription(false)
-    if (!result.success) {
-      toast.error(result.error)
-      return
-    }
-    setDescription(result.description)
-  }
-
-  // ─── Tag suggestions ───────────────────────────────────────────────────────
-
-  async function handleSuggestTags() {
-    setLoadingSuggestions(true)
-    const result = await generateAutoTags({ title, content: content || null, type })
-    setLoadingSuggestions(false)
-    if (!result.success) {
-      toast.error(result.error)
-      return
-    }
-    const existing = tagsInput.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
-    setSuggestions(result.tags.filter((t) => !existing.includes(t)))
-  }
-
-  function acceptTag(tag: string) {
-    setSuggestions((prev) => prev.filter((t) => t !== tag))
-    setTagsInput((prev) => {
-      const existing = prev.split(",").map((t) => t.trim()).filter(Boolean)
-      if (existing.map((t) => t.toLowerCase()).includes(tag.toLowerCase())) return prev
-      return [...existing, tag].join(", ")
-    })
-  }
-
-  function rejectTag(tag: string) {
-    setSuggestions((prev) => prev.filter((t) => t !== tag))
   }
 
   // ─── Submit ────────────────────────────────────────────────────────────────

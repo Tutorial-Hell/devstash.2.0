@@ -3,10 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { toggleCollectionFavorite } from "@/actions/collections"
 import { useOutsideClick } from "@/hooks/use-outside-click"
+import { useToggleCollectionFavorite } from "@/hooks/use-toggle-collection-favorite"
 import { CollectionEditDeleteDialogs } from "@/components/collection-edit-delete-dialogs"
 import type { CollectionWithMeta } from "@/lib/db/collections"
 
@@ -24,27 +23,12 @@ export function CollectionCard({ collection, children }: Props) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [favorite, setFavorite] = useState(collection.isFavorite)
-  const [togglingFavorite, setTogglingFavorite] = useState(false)
+  const { favorite, togglingFavorite, handleToggleFavorite: toggleFavorite } = useToggleCollectionFavorite(collection.id, collection.isFavorite)
   const dropdownRef = useOutsideClick<HTMLDivElement>(() => setDropdownOpen(false), dropdownOpen)
 
-  async function handleToggleFavorite() {
+  function handleToggleFavorite() {
     setDropdownOpen(false)
-    setTogglingFavorite(true)
-    try {
-      const result = await toggleCollectionFavorite(collection.id)
-      if (!result.success) {
-        toast.error(result.error)
-        return
-      }
-      setFavorite(result.isFavorite)
-      router.refresh()
-      toast.success(result.isFavorite ? "Added to favorites." : "Removed from favorites.")
-    } catch {
-      toast.error("Something went wrong.")
-    } finally {
-      setTogglingFavorite(false)
-    }
+    toggleFavorite()
   }
 
   return (

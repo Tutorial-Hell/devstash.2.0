@@ -7,8 +7,8 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils"
 import { updateItem } from "@/actions/items"
-import { generateAutoTags, generateDescription } from "@/actions/ai"
 import { fetchCollectionsForSelect } from "@/actions/collections"
+import { useItemAiFeatures } from "@/hooks/use-item-ai-features"
 import { ItemFormFields } from "@/components/item-form-fields"
 import {
   type ItemDetailResponse,
@@ -43,9 +43,15 @@ export function EditBody({
   const [url, setUrl] = useState(item.url ?? "")
   const [language, setLanguage] = useState(item.language ?? "")
   const [tagsInput, setTagsInput] = useState(item.tags.map((t) => t.name).join(", "))
-  const [suggestions, setSuggestions] = useState<string[]>([])
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
-  const [loadingDescription, setLoadingDescription] = useState(false)
+  const { suggestions, loadingSuggestions, loadingDescription, handleGenerateDescription, handleSuggestTags, acceptTag, rejectTag } = useItemAiFeatures({
+    title,
+    content,
+    url,
+    type: typeName,
+    tagsInput,
+    setTagsInput,
+    setDescription,
+  })
 
   const [allCollections, setAllCollections] = useState<{ id: string; name: string }[]>([])
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>(
@@ -61,47 +67,6 @@ export function EditBody({
   const showLanguage = LANGUAGE_TYPES.has(typeName)
   const showMarkdown = MARKDOWN_TYPES.has(typeName)
   const showUrl = typeName === "link"
-
-  async function handleGenerateDescription() {
-    setLoadingDescription(true)
-    const result = await generateDescription({
-      title,
-      type: typeName,
-      content: content || null,
-      url: url || null,
-    })
-    setLoadingDescription(false)
-    if (!result.success) {
-      toast.error(result.error)
-      return
-    }
-    setDescription(result.description)
-  }
-
-  async function handleSuggestTags() {
-    setLoadingSuggestions(true)
-    const result = await generateAutoTags({ title, content: content || null, type: typeName })
-    setLoadingSuggestions(false)
-    if (!result.success) {
-      toast.error(result.error)
-      return
-    }
-    const existing = tagsInput.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
-    setSuggestions(result.tags.filter((t) => !existing.includes(t)))
-  }
-
-  function acceptTag(tag: string) {
-    setSuggestions((prev) => prev.filter((t) => t !== tag))
-    setTagsInput((prev) => {
-      const existing = prev.split(",").map((t) => t.trim()).filter(Boolean)
-      if (existing.map((t) => t.toLowerCase()).includes(tag.toLowerCase())) return prev
-      return [...existing, tag].join(", ")
-    })
-  }
-
-  function rejectTag(tag: string) {
-    setSuggestions((prev) => prev.filter((t) => t !== tag))
-  }
 
   async function handleSave() {
     setError(null)

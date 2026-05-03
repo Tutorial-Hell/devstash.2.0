@@ -1,18 +1,17 @@
-import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { getItemsByType } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
-import { formatDate, slugToTypeName } from "@/lib/utils"
+import { slugToTypeName } from "@/lib/utils"
 import { ITEMS_PER_PAGE } from "@/lib/constants"
-import { Pin, Star, File } from "lucide-react"
-import { ClickableItemCard } from "@/components/clickable-item-card"
+import { File } from "lucide-react"
 import { NewItemDialog } from "@/components/new-item-dialog"
 import { ImageThumbnailCard } from "@/components/image-thumbnail-card"
 import { FileListRow } from "@/components/file-list-row"
 import { CopyButton } from "@/components/copy-button"
 import { Pagination } from "@/components/pagination"
-import { BadgeList } from "@/components/item-drawer-view"
+import { ItemGridCard } from "@/components/item-grid-card"
+import { BackToDashboard } from "@/components/back-to-dashboard"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
@@ -50,9 +49,7 @@ export default async function ItemsTypePage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-6 max-w-5xl">
-      <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 inline-block">
-        ← Dashboard
-      </Link>
+      <BackToDashboard />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
@@ -93,46 +90,18 @@ export default async function ItemsTypePage({ params, searchParams }: Props) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {items.map((item) => (
-            <ClickableItemCard
+            <ItemGridCard
               key={item.id}
-              itemId={item.id}
-              className="relative overflow-hidden flex flex-col gap-2 rounded-lg border border-border bg-card px-4 py-3 hover:bg-card/80 transition-colors cursor-pointer"
-            >
-              {/* Left accent bar */}
-              <div className="absolute left-0 top-0 bottom-0 w-0.5" style={{ backgroundColor: color }} />
-
-              {/* Title row */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-foreground truncate flex-1">
-                  {item.title}
-                </span>
-                {item.isPinned && (
-                  <Pin className="h-3 w-3 text-muted-foreground/60 shrink-0" />
-                )}
-                {item.isFavorite && (
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 shrink-0" />
-                )}
-                <span className="text-xs text-muted-foreground/60 shrink-0">
-                  {formatDate(item.createdAt)}
-                </span>
-              </div>
-
-              {/* Description */}
-              {item.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {item.description}
-                </p>
-              )}
-
-              {/* Tags */}
-              {item.tags.length > 0 && <BadgeList items={item.tags} size="sm" />}
-              {/* Copy button */}
-              {(item.content ?? item.url) && (
-                <div className="flex justify-end">
-                  <CopyButton value={(item.content ?? item.url)!} />
-                </div>
-              )}
-            </ClickableItemCard>
+              item={item}
+              color={color}
+              footer={
+                (item.content ?? item.url) ? (
+                  <div className="flex justify-end">
+                    <CopyButton value={(item.content ?? item.url)!} />
+                  </div>
+                ) : undefined
+              }
+            />
           ))}
         </div>
       )}

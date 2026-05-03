@@ -2,8 +2,8 @@
 
 import { Download, File, FileText, FileArchive, FileVideo, FileAudio, FileSpreadsheet } from "lucide-react"
 import { type ItemWithMeta } from "@/lib/db/items"
-import { useItemDrawer } from "@/components/item-drawer"
-import { formatDate } from "@/lib/utils"
+import { ClickableItemCard } from "@/components/clickable-item-card"
+import { formatDate, formatBytes } from "@/lib/utils"
 
 function getFileIcon(fileName: string | null) {
   if (!fileName) return File
@@ -16,19 +16,11 @@ function getFileIcon(fileName: string | null) {
   return File
 }
 
-function formatFileSize(bytes: number | null): string {
-  if (bytes == null) return "—"
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
 interface Props {
   item: ItemWithMeta
 }
 
 export function FileListRow({ item }: Props) {
-  const { openDrawer } = useItemDrawer()
   const FileIcon = getFileIcon(item.fileName)
 
   function handleDownload(e: React.MouseEvent) {
@@ -40,9 +32,9 @@ export function FileListRow({ item }: Props) {
   }
 
   return (
-    <div
+    <ClickableItemCard
+      itemId={item.id}
       className="flex items-center gap-4 px-4 py-3 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
-      onClick={() => openDrawer(item.id)}
     >
       {/* File icon */}
       <FileIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -53,7 +45,7 @@ export function FileListRow({ item }: Props) {
           {item.fileName ?? item.title}
         </span>
         <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">
-          {formatFileSize(item.fileSize)}
+          {item.fileSize != null ? formatBytes(item.fileSize) : "—"}
         </span>
         {/* suppressHydrationWarning: toLocaleDateString is timezone-sensitive; server (UTC)
             and browser (local tz) can produce different day strings near UTC midnight */}
@@ -70,6 +62,6 @@ export function FileListRow({ item }: Props) {
       >
         <Download className="h-4 w-4" />
       </button>
-    </div>
+    </ClickableItemCard>
   )
 }

@@ -3,9 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Pencil, Trash2, Star } from "lucide-react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { toggleCollectionFavorite } from "@/actions/collections"
+import { useToggleCollectionFavorite } from "@/hooks/use-toggle-collection-favorite"
 import { CollectionEditDeleteDialogs } from "@/components/collection-edit-delete-dialogs"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -28,26 +27,7 @@ export function CollectionDetailActions({
   const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [favorite, setFavorite] = useState(isFavorite)
-  const [togglingFavorite, setTogglingFavorite] = useState(false)
-
-  async function handleToggleFavorite() {
-    setTogglingFavorite(true)
-    try {
-      const result = await toggleCollectionFavorite(collectionId)
-      if (!result.success) {
-        toast.error(result.error)
-        return
-      }
-      setFavorite(result.isFavorite)
-      router.refresh()
-      toast.success(result.isFavorite ? "Added to favorites." : "Removed from favorites.")
-    } catch {
-      toast.error("Something went wrong.")
-    } finally {
-      setTogglingFavorite(false)
-    }
-  }
+  const { favorite, togglingFavorite, handleToggleFavorite } = useToggleCollectionFavorite(collectionId, isFavorite)
 
   return (
     <>
