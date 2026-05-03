@@ -13,6 +13,7 @@ import { UserAvatar } from "@/components/user-avatar"
 import type { ItemTypeWithCount } from "@/lib/db/items"
 import type { CollectionWithMeta } from "@/lib/db/collections"
 import { iconMap } from "@/lib/icon-map"
+import { useOutsideClickMulti } from "@/hooks/use-outside-click"
 
 interface SessionUser {
   id: string
@@ -118,19 +119,7 @@ function SidebarContent({ isOpen, itemTypes, collections, user }: SidebarContent
   const favoriteCollections = collections.filter((c) => c.isFavorite)
   const otherCollections = collections.filter((c) => !c.isFavorite)
 
-  React.useEffect(() => {
-    if (!menuOpen) return
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as Node
-      const inExpanded = menuRef.current?.contains(target)
-      const inCollapsed = collapsedMenuRef.current?.contains(target)
-      if (!inExpanded && !inCollapsed) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [menuOpen])
+  useOutsideClickMulti([menuRef, collapsedMenuRef], () => setMenuOpen(false), menuOpen)
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

@@ -23,7 +23,9 @@ import {
 import { CodeEditor } from "@/components/code-editor"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { formatDate, formatBytes, cn } from "@/lib/utils"
-import { deleteItem, toggleItemFavorite, toggleItemPin, updateItem } from "@/actions/items"
+import { deleteItem, updateItem } from "@/actions/items"
+import { useToggleItemFavorite } from "@/hooks/use-toggle-item-favorite"
+import { useToggleItemPin } from "@/hooks/use-toggle-item-pin"
 import type { ItemDetail } from "@/lib/db/items"
 
 // ─── Shared types & constants ─────────────────────────────────────────────────
@@ -109,8 +111,8 @@ export function ViewBody({
 }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
-  const [togglingFavorite, setTogglingFavorite] = useState(false)
-  const [togglingPin, setTogglingPin] = useState(false)
+  const { togglingFavorite, handleToggleFavorite } = useToggleItemFavorite(item, onUpdate)
+  const { togglingPin, handleTogglePin } = useToggleItemPin(item, onUpdate)
   const [explanation, setExplanation] = useState<string | null>(null)
   const [isExplaining, setIsExplaining] = useState(false)
   const [optimizedContent, setOptimizedContent] = useState<string | null>(null)
@@ -186,42 +188,6 @@ export function ViewBody({
 
   function handleDiscardOptimized() {
     setOptimizedContent(null)
-  }
-
-  async function handleTogglePin() {
-    setTogglingPin(true)
-    try {
-      const result = await toggleItemPin(item.id)
-      if (!result.success) {
-        toast.error(result.error)
-        return
-      }
-      onUpdate?.({ ...item, isPinned: result.isPinned })
-      router.refresh()
-      toast.success(result.isPinned ? "Item pinned." : "Item unpinned.")
-    } catch {
-      toast.error("Something went wrong.")
-    } finally {
-      setTogglingPin(false)
-    }
-  }
-
-  async function handleToggleFavorite() {
-    setTogglingFavorite(true)
-    try {
-      const result = await toggleItemFavorite(item.id)
-      if (!result.success) {
-        toast.error(result.error)
-        return
-      }
-      onUpdate?.({ ...item, isFavorite: result.isFavorite })
-      router.refresh()
-      toast.success(result.isFavorite ? "Added to favorites." : "Removed from favorites.")
-    } catch {
-      toast.error("Something went wrong.")
-    } finally {
-      setTogglingFavorite(false)
-    }
   }
 
   async function handleDelete() {
