@@ -6,11 +6,7 @@ Not Started
 
 ## Goals
 
-<!-- Add goals here -->
-
 ## Notes
-
-<!-- Add notes here -->
 
 ## History
 
@@ -25,3 +21,11 @@ Not Started
 - Fixed `ImageThumbnailCard` and `FileListRow` to wrap in `ClickableItemCard` — removed duplicate keyboard handler in ImageThumbnailCard and fixed accessibility gap in FileListRow (plain `div onClick` had no keyboard support)
 - Replaced local `formatFileSize` in `file-list-row.tsx` with `formatBytes` from `lib/utils`
 - Replaced inline back-link in `items/[type]/page.tsx` with existing `<BackToDashboard />` component
+
+**App Folder Refactor — High Priority** (2026-05-03)
+- Extracted `getAuthenticatedUserId` and `requireUserId` to `lib/auth-utils.ts` — replaced 7 pages worth of inline `auth()` + `userId` extraction (R-001)
+- Extracted `parsePage()` to `lib/utils.ts` — centralized the double-fallback page parse logic used across 3 paginated routes (R-003)
+- Added `className` prop to `BackToDashboard`; replaced inline arrow-link in `settings/page.tsx` and `profile/page.tsx` (R-005)
+- Extracted `EmptyState` component to `src/components/empty-state.tsx` — replaced 4 inline empty-state blocks across collections, items, and favorites pages (R-007)
+- Extracted `CollectionCardBody` to `src/components/collection-card-body.tsx` — removed ~25 duplicated lines of accent bar + name + icon row JSX from `dashboard/page.tsx` and `collections/page.tsx`; accepts `descriptionClamp` prop (R-002)
+- Extracted `AuthPageShell` to `src/components/auth/auth-page-shell.tsx` and shared `signInWithGitHub` action to `src/app/(auth)/actions.ts` — replaced duplicated sign-in and register page structure (R-004)
