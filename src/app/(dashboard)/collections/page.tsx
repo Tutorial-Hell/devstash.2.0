@@ -1,12 +1,13 @@
-import { Star } from "lucide-react"
 import { getCollectionsPaginated } from "@/lib/db/collections"
-import { auth } from "@/auth"
-import { iconMap } from "@/lib/icon-map"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
+import { parsePage } from "@/lib/utils"
 import { NewCollectionDialog } from "@/components/new-collection-dialog"
 import { CollectionCard } from "@/components/collection-card"
+import { CollectionCardBody } from "@/components/collection-card-body"
 import { Pagination } from "@/components/pagination"
 import { BackToDashboard } from "@/components/back-to-dashboard"
+import { EmptyState } from "@/components/empty-state"
 
 interface Props {
   searchParams: Promise<{ page?: string }>
@@ -15,10 +16,9 @@ interface Props {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function CollectionsPage({ searchParams }: Props) {
-  const session = await auth()
-  const userId = session?.user?.id ?? null
+  const userId = await getAuthenticatedUserId()
   const { page: pageParam } = await searchParams
-  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
+  const page = parsePage(pageParam)
 
   const { collections, total } = userId
     ? await getCollectionsPaginated(userId, { page, pageSize: COLLECTIONS_PER_PAGE })
@@ -43,61 +43,18 @@ export default async function CollectionsPage({ searchParams }: Props) {
 
       {/* Grid */}
       {total === 0 ? (
-        <div className="rounded-lg border border-border bg-card p-12 text-center">
-          <p className="text-sm text-muted-foreground">No collections yet.</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">
-            Create your first collection to organize your items.
-          </p>
-        </div>
+        <EmptyState
+          padding="p-12"
+          message="No collections yet."
+          detail="Create your first collection to organize your items."
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {collections.map((col) => {
-            const accentColor = col.dominantType?.color ?? "#6b7280"
-            return (
-              <CollectionCard key={col.id} collection={col}>
-                {/* Left accent bar */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-0.5"
-                  style={{ backgroundColor: accentColor }}
-                />
-
-                <div className="flex items-start justify-between gap-2 pr-6">
-                  <span className="text-sm font-medium text-foreground leading-tight">
-                    {col.name}
-                  </span>
-                  {col.isFavorite && (
-                    <Star className="h-3.5 w-3.5 shrink-0 fill-yellow-400 text-yellow-400 mt-0.5" />
-                  )}
-                </div>
-
-                {col.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {col.description}
-                  </p>
-                )}
-
-                <p className="text-xs text-muted-foreground/70">
-                  {col.itemCount} {col.itemCount === 1 ? "item" : "items"}
-                </p>
-
-                {col.allTypes.length > 0 && (
-                  <div className="flex items-center gap-1.5 mt-1">
-                    {col.allTypes.map((t) => {
-                      const Icon = iconMap[t.icon]
-                      if (!Icon) return null
-                      return (
-                        <Icon
-                          key={t.id}
-                          className="h-3.5 w-3.5"
-                          style={{ color: t.color }}
-                        />
-                      )
-                    })}
-                  </div>
-                )}
-              </CollectionCard>
-            )
-          })}
+          {collections.map((col) => (
+            <CollectionCard key={col.id} collection={col}>
+              <CollectionCardBody collection={col} />
+            </CollectionCard>
+          ))}
         </div>
       )}
 

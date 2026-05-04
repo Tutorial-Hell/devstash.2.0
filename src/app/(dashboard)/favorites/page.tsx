@@ -1,13 +1,13 @@
 import { Star } from "lucide-react"
 import { getFavoriteCollections } from "@/lib/db/collections"
-import { auth } from "@/auth"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import { getFavoriteItems } from "@/lib/db/items"
 import { FavoritesSortable } from "@/components/favorites-sortable"
 import { BackToDashboard } from "@/components/back-to-dashboard"
+import { EmptyState } from "@/components/empty-state"
 
 export default async function FavoritesPage() {
-  const session = await auth()
-  const userId = session?.user?.id ?? null
+  const userId = await getAuthenticatedUserId()
 
   const [items, collections] = await Promise.all([
     userId ? getFavoriteItems(userId) : Promise.resolve([]),
@@ -27,13 +27,12 @@ export default async function FavoritesPage() {
       </div>
 
       {isEmpty ? (
-        <div className="rounded-lg border border-border bg-card p-12 text-center">
-          <Star className="h-8 w-8 mx-auto mb-3 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">No favorites yet.</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">
-            Star items and collections to find them here.
-          </p>
-        </div>
+        <EmptyState
+          padding="p-12"
+          icon={<Star className="h-8 w-8 mx-auto text-muted-foreground/40" />}
+          message="No favorites yet."
+          detail="Star items and collections to find them here."
+        />
       ) : (
         <FavoritesSortable items={items} collections={collections} />
       )}

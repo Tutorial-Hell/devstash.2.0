@@ -1,16 +1,13 @@
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import { auth } from "@/auth"
 import { getProfileData } from "@/lib/db/profile"
+import { requireUserId } from "@/lib/auth-utils"
 import { UserAvatar } from "@/components/user-avatar"
 import { iconMap } from "@/lib/icon-map"
 import { File, Package, FolderOpen, CalendarDays } from "lucide-react"
+import { BackToDashboard } from "@/components/back-to-dashboard"
 
 export default async function ProfilePage() {
-  const session = await auth()
-  if (!session?.user?.id) redirect("/sign-in")
-
-  const profile = await getProfileData(session.user.id)
+  const userId = await requireUserId()
+  const profile = await getProfileData(userId)
 
   const memberSince = profile.createdAt.toLocaleDateString("en-US", {
     month: "long",
@@ -22,12 +19,7 @@ export default async function ProfilePage() {
     <div className="space-y-8 max-w-2xl">
       {/* Header */}
       <div>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
-        >
-          ← Dashboard
-        </Link>
+        <BackToDashboard className="mb-3" />
         <h1 className="text-2xl font-bold text-foreground">Profile</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Manage your account</p>
       </div>

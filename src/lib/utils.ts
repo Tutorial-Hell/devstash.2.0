@@ -45,3 +45,7 @@ export function normalizeLanguage(lang: string): string {
   const lower = lang.toLowerCase()
   return LANGUAGE_ALIAS_MAP[lower] ?? lower
 }
+
+export function parsePage(rawPage: string | undefined): number {
+  return Math.max(1, parseInt(rawPage ?? "1", 10) || 1)
+}

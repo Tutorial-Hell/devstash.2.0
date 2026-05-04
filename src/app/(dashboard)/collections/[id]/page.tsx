@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation"
 import { Star, File } from "lucide-react"
 import { getCollectionById } from "@/lib/db/collections"
-import { auth } from "@/auth"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import { iconMap } from "@/lib/icon-map"
 import { COLLECTIONS_PER_PAGE } from "@/lib/constants"
+import { parsePage } from "@/lib/utils"
 import { ItemGridCard } from "@/components/item-grid-card"
 import { CollectionDetailActions } from "@/components/collection-detail-actions"
 import { Pagination } from "@/components/pagination"
 import { BackToDashboard } from "@/components/back-to-dashboard"
+import { EmptyState } from "@/components/empty-state"
 
 interface Props {
   params: Promise<{ id: string }>
@@ -15,11 +17,10 @@ interface Props {
 }
 
 export default async function CollectionDetailPage({ params, searchParams }: Props) {
-  const session = await auth()
-  const userId = session?.user?.id ?? null
+  const userId = await getAuthenticatedUserId()
   const { id } = await params
   const { page: pageParam } = await searchParams
-  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
+  const page = parsePage(pageParam)
 
   const collection = userId
     ? await getCollectionById(userId, id, { page, pageSize: COLLECTIONS_PER_PAGE })
@@ -56,9 +57,7 @@ export default async function CollectionDetailPage({ params, searchParams }: Pro
 
       {/* Grid */}
       {collection.total === 0 ? (
-        <div className="rounded-lg border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">No items in this collection yet.</p>
-        </div>
+        <EmptyState message="No items in this collection yet." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {collection.items.map((item) => {

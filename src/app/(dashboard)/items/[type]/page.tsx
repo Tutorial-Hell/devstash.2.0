@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { getItemsByType } from "@/lib/db/items"
 import { iconMap } from "@/lib/icon-map"
-import { slugToTypeName } from "@/lib/utils"
+import { slugToTypeName, parsePage } from "@/lib/utils"
 import { ITEMS_PER_PAGE } from "@/lib/constants"
 import { File } from "lucide-react"
 import { NewItemDialog } from "@/components/new-item-dialog"
@@ -12,6 +12,7 @@ import { CopyButton } from "@/components/copy-button"
 import { Pagination } from "@/components/pagination"
 import { ItemGridCard } from "@/components/item-grid-card"
 import { BackToDashboard } from "@/components/back-to-dashboard"
+import { EmptyState } from "@/components/empty-state"
 
 const DIALOG_TYPES = new Set(["snippet", "prompt", "command", "note", "link", "file", "image"])
 
@@ -32,7 +33,7 @@ export default async function ItemsTypePage({ params, searchParams }: Props) {
     redirect("/upgrade")
   }
 
-  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
+  const page = parsePage(pageParam)
 
   const { items, itemType, total } = userId
     ? await getItemsByType(userId, type, { page, pageSize: ITEMS_PER_PAGE })
@@ -72,9 +73,7 @@ export default async function ItemsTypePage({ params, searchParams }: Props) {
 
       {/* Grid */}
       {items.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">No {label.toLowerCase()} yet.</p>
-        </div>
+        <EmptyState message={`No ${label.toLowerCase()} yet.`} />
       ) : type === "images" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {items.map((item) => (

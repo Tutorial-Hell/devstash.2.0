@@ -2,19 +2,19 @@ import Link from "next/link"
 import { Star, Pin, Package, FolderOpen, Heart, File } from "lucide-react"
 import { getCollections } from "@/lib/db/collections"
 import { getPinnedItems, getRecentItems, getItemStats, type ItemWithMeta } from "@/lib/db/items"
-import { auth } from "@/auth"
+import { getAuthenticatedUserId } from "@/lib/auth-utils"
 import { iconMap } from "@/lib/icon-map"
 import { formatDate } from "@/lib/utils"
 import { DASHBOARD_COLLECTIONS_LIMIT, DASHBOARD_RECENT_ITEMS_LIMIT } from "@/lib/constants"
 import { ClickableItemCard } from "@/components/clickable-item-card"
 import { CollectionCard } from "@/components/collection-card"
+import { CollectionCardBody } from "@/components/collection-card-body"
 import { BadgeList } from "@/components/item-drawer-view"
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  const session = await auth()
-  const userId = session?.user?.id ?? null
+  const userId = await getAuthenticatedUserId()
 
   const [collections, pinnedItems, recentItems, itemStats] = await Promise.all([
     userId ? getCollections(userId) : Promise.resolve([]),
@@ -63,48 +63,11 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {dashboardCollections.map((col) => {
-            const accentColor = col.dominantType?.color ?? "#6b7280"
-            return (
-              <CollectionCard key={col.id} collection={col}>
-                {/* Left accent bar */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-0.5"
-                  style={{ backgroundColor: accentColor }}
-                />
-                <div className="flex items-start justify-between gap-2 pr-6">
-                  <span className="text-sm font-medium text-foreground leading-tight">
-                    {col.name}
-                  </span>
-                  {col.isFavorite && (
-                    <Star className="h-3.5 w-3.5 shrink-0 fill-yellow-400 text-yellow-400 mt-0.5" />
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground/70">
-                  {col.itemCount} {col.itemCount === 1 ? "item" : "items"}
-                </p>
-                {col.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    {col.description}
-                  </p>
-                )}
-                {col.allTypes.length > 0 && (
-                  <div className="flex items-center gap-1.5 mt-1">
-                    {col.allTypes.map((t) => {
-                      const Icon = iconMap[t.icon] ?? File
-                      return (
-                        <Icon
-                          key={t.id}
-                          className="h-3.5 w-3.5"
-                          style={{ color: t.color }}
-                        />
-                      )
-                    })}
-                  </div>
-                )}
-              </CollectionCard>
-            )
-          })}
+          {dashboardCollections.map((col) => (
+            <CollectionCard key={col.id} collection={col}>
+              <CollectionCardBody collection={col} descriptionClamp="line-clamp-1" />
+            </CollectionCard>
+          ))}
         </div>
       </section>
 
