@@ -12,6 +12,19 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   ...authConfig,
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "github" && user.email) {
+        const existing = await prisma.user.findUnique({
+          where: { email: user.email },
+          select: { accounts: { where: { provider: "github" }, select: { id: true } } },
+        })
+        // User exists with this email but no linked GitHub account — would throw OAuthAccountNotLinked
+        if (existing && existing.accounts.length === 0) {
+          return "/sign-in?error=OAuthAccountNotLinked"
+        }
+      }
+      return true
+    },
     async jwt({ token, user }) {
       if (user?.id) token.sub = user.id
       if (token.sub) {

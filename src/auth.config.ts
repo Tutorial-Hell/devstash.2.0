@@ -5,6 +5,7 @@ import type { NextAuthConfig } from "next-auth"
 export default {
   pages: {
     signIn: "/sign-in",
+    error: "/sign-in",
   },
   providers: [
     GitHub,

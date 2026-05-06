@@ -19,6 +19,9 @@ export function SignInForm() {
     if (searchParams.get("verified") === "1") {
       toast.success("Email verified! You can now sign in.", { id: "verified" })
     }
+    if (searchParams.get("error") === "OAuthAccountNotLinked") {
+      toast.error("An account with this email already exists. Sign in with your password instead.", { id: "OAuthAccountNotLinked" })
+    }
     if (searchParams.get("error") === "expired_token") {
       toast.error("Verification link expired. Please register again.", { id: "expired_token" })
     }
