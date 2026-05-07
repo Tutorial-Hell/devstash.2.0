@@ -1,1 +1,1 @@
-- [dstash project architecture](project_architecture.md) — App Router, Prisma/Neon, no auth runtime yet, demo-user bypass in production paths, duplicate iconMap/formatDate
+- [dstash project architecture](project_architecture.md) — App Router, Prisma/Postgres, auth fixed, key issues: unvalidated collectionIds IDOR, missing editor prefs validation, unbounded search fetch, no CSP
